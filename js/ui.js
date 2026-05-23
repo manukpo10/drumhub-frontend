@@ -1,0 +1,452 @@
+// Global UI: nav, footer, modal, mini-grids and shared card renderers.
+window.DH = window.DH || {};
+
+DH.UI = (function () {
+  function avatarColor(seed) {
+    var palette = ['#ff4d00', '#e8ff00', '#00c9ff', '#a855f7', '#22c55e', '#f43f5e', '#ffaa00', '#fb923c', '#84cc16', '#38bdf8'];
+    var n = 0; for (var i = 0; i < seed.length; i++) n = (n + seed.charCodeAt(i)) % palette.length;
+    return palette[n];
+  }
+
+  // Drummer avatar: usa drummer.avatar (seed elegida o URL) si existe; si no, seed = user.
+  // Guardamos solo el seed en localStorage → al migrar a Supabase, una columna varchar(32) y listo.
+  // opts: { size, color, ring }
+  function drummerAvatar(drummer, opts) {
+    opts = opts || {};
+    var size = opts.size || 64;
+    var color = opts.color || drummer.color || avatarColor(drummer.user);
+    var ringPx = opts.ring || 2;
+    var bg = color + '20';
+    var url = DH.avatarUrl(drummer.avatar || drummer.user);
+    return '<span class="drummer-portrait" style="width:' + size + 'px;height:' + size + 'px;background:' + bg + ';border:' + ringPx + 'px solid ' + color + ';">'
+      + '<img src="' + url + '" alt="' + escape(drummer.name || drummer.user) + '" loading="lazy">'
+      + '</span>';
+  }
+  function drummerOrFallback(user) {
+    return DH.findDrummer(user) || { user: user, name: user, init: (user[0] || 'D').toUpperCase(), color: avatarColor(user), grooves: 0, likes: 0, bio: '' };
+  }
+  function escape(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+
+  // ── NAV ──
+  function renderNav() {
+    var nav = document.getElementById('nav');
+    var u = DH.Store.getUser();
+    nav.innerHTML = ''
+      + '<a class="nav-logo" href="#/">Drum<em>Hub</em></a>'
+      + '<div class="nav-center">'
+      +   '<a href="#/search" data-route="/search">Explorar</a>'
+      +   '<a href="#/genres" data-route="/genres">Géneros</a>'
+      +   '<a href="#/drummers" data-route="/drummers">Bateristas</a>'
+      +   '<a href="#/page/about" data-route="/page/about">Sobre</a>'
+      + '</div>'
+      + '<div class="nav-right">'
+      +   '<form class="nav-search" id="nav-search-form">'
+      +     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>'
+      +     '<input type="text" placeholder="Buscar grooves..." id="nav-search-input">'
+      +   '</form>'
+      +   (u
+          ? '<button class="btn-ghost" data-action="upload">+ Subir</button>'
+          + '<div class="nav-notif-wrap" id="nav-notif-wrap"><button class="nav-notif-btn" id="nav-notif-btn" aria-label="Notificaciones"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nav-notif-badge" id="nav-notif-badge"></span></button></div>'
+          + '<div class="nav-user" data-action="profile">'
+          +   '<div class="nav-user-avatar" style="background:' + u.color + '20;color:' + u.color + '">' + escape(u.init) + '</div>'
+          +   '<span class="nav-user-name">' + escape(u.user) + '</span>'
+          + '</div>'
+          + '<button class="btn-ghost" data-action="logout">Salir</button>'
+          : '<button class="btn-ghost" data-action="login">Ingresar</button>'
+          + '<button class="btn-cta" data-action="register">Registrarse</button>'
+        )
+      + '</div>';
+
+    document.getElementById('nav-search-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = document.getElementById('nav-search-input').value.trim();
+      DH.Router.go('/search' + (q ? '?q=' + encodeURIComponent(q) : ''));
+    });
+    nav.querySelectorAll('[data-action]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var a = el.getAttribute('data-action');
+        if (a === 'login') openModal('login');
+        else if (a === 'register') openModal('register');
+        else if (a === 'logout') { DH.Store.logout(); DH.Notifications && DH.Notifications.clear(); renderNav(); DH.Router.go('/'); }
+        else if (a === 'profile') DH.Router.go('/profile/' + u.user);
+        else if (a === 'upload') {
+          if (!DH.Store.isLoggedIn()) openModal('login');
+          else DH.Router.go('/upload');
+        }
+      });
+    });
+
+    if (u && DH.Notifications) {
+      DH.Notifications.seedDemo(u.user);
+      mountNotifsDropdown(u);
+    }
+  }
+
+  function mountNotifsDropdown(u) {
+    var btn = document.getElementById('nav-notif-btn');
+    var badge = document.getElementById('nav-notif-badge');
+    var wrap = document.getElementById('nav-notif-wrap');
+    if (!btn) return;
+
+    function refreshBadge() {
+      var n = DH.Notifications.unreadCount();
+      badge.textContent = n > 9 ? '9+' : (n || '');
+      badge.classList.toggle('on', n > 0);
+    }
+    refreshBadge();
+
+    var open = false;
+    function close() {
+      var dd = document.getElementById('nav-notif-dd');
+      if (dd) dd.remove();
+      open = false;
+      document.removeEventListener('click', outside, true);
+    }
+    function outside(e) { if (!wrap.contains(e.target)) close(); }
+    function relTime(ts) {
+      var s = (Date.now() - ts) / 1000;
+      if (s < 60) return 'hace ' + Math.floor(s) + 's';
+      if (s < 3600) return 'hace ' + Math.floor(s / 60) + ' min';
+      if (s < 86400) return 'hace ' + Math.floor(s / 3600) + ' h';
+      return 'hace ' + Math.floor(s / 86400) + ' d';
+    }
+    function renderItem(n) {
+      var who = '<strong>' + escape(n.user) + '</strong>';
+      var body = '';
+      if (n.type === 'like') body = who + ' le dio like a <a data-go="/groove/' + escape(n.grooveSlug) + '">' + escape(n.grooveTitle) + '</a>';
+      else if (n.type === 'comment') body = who + ' comentó en <a data-go="/groove/' + escape(n.grooveSlug) + '">' + escape(n.grooveTitle) + '</a>' + (n.snippet ? '<div class="ndd-snippet">"' + escape(n.snippet) + '"</div>' : '');
+      else if (n.type === 'follow') body = who + ' empezó a seguirte';
+      else if (n.type === 'mention') body = who + ' te mencionó en <a data-go="/groove/' + escape(n.grooveSlug) + '">' + escape(n.grooveTitle) + '</a>' + (n.snippet ? '<div class="ndd-snippet">"' + escape(n.snippet) + '"</div>' : '');
+      var d = DH.findDrummer(n.user) || { color: '#6b6860', init: n.user.charAt(0).toUpperCase() };
+      var icon = { like: '♥', comment: '💬', follow: '+', mention: '@' }[n.type] || '•';
+      return '<div class="ndd-item' + (n.read ? '' : ' unread') + '">'
+        + '<div class="ndd-avatar" style="background:' + d.color + '20;color:' + d.color + ';">' + escape(d.init) + '</div>'
+        + '<div class="ndd-body"><div class="ndd-text">' + body + '</div><div class="ndd-time">' + escape(relTime(n.time)) + '</div></div>'
+        + '<span class="ndd-icon">' + icon + '</span>'
+        + '</div>';
+    }
+    function toggle() {
+      if (open) { close(); return; }
+      open = true;
+      var items = DH.Notifications.getAll();
+      var dd = document.createElement('div');
+      dd.id = 'nav-notif-dd';
+      dd.className = 'nav-notif-dd';
+      dd.innerHTML = ''
+        + '<div class="ndd-head">'
+        +   '<div class="ndd-title">Notificaciones</div>'
+        +   (items.some(function (n) { return !n.read; }) ? '<button class="ndd-mark" id="ndd-mark">Marcar todas leídas</button>' : '')
+        + '</div>'
+        + '<div class="ndd-list">'
+        + (items.length ? items.map(renderItem).join('') : '<div class="ndd-empty">Sin notificaciones todavía.</div>')
+        + '</div>'
+        + '<div class="ndd-foot">DrumHub te avisa cuando hay actividad nueva sobre tus grooves.</div>';
+      wrap.appendChild(dd);
+      dd.querySelectorAll('[data-go]').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); close(); DH.Router.go(a.getAttribute('data-go')); }); });
+      var mark = dd.querySelector('#ndd-mark');
+      if (mark) mark.addEventListener('click', function () { DH.Notifications.markAllRead(); refreshBadge(); close(); });
+      setTimeout(function () { document.addEventListener('click', outside, true); }, 0);
+    }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); toggle(); });
+  }
+  function updateNav(path) {
+    document.querySelectorAll('#nav .nav-center a').forEach(function (a) {
+      a.classList.remove('active');
+      var route = a.getAttribute('data-route') || '';
+      // Match parcial: /search?genre=Rock matchea route /search, /genre/funk matchea /genres, etc.
+      if (route && (path === route || path.indexOf(route) === 0)) a.classList.add('active');
+      if (route === '/genres' && path.indexOf('/genre') === 0) a.classList.add('active');
+    });
+  }
+
+  // ── FOOTER ──
+  function renderFooter() {
+    document.getElementById('footer').innerHTML = ''
+      + '<div class="footer-top">'
+      +   '<div class="footer-brand">'
+      +     '<div class="logo"><img src="imagenes/logo.png" alt="DrumHub" style="height:80px;width:auto;filter:brightness(1.5)"></div>'
+      +     '<p>La biblioteca de grooves para bateristas. Explorá, practicá y compartí patrones con la comunidad.</p>'
+      +   '</div>'
+      +   '<div class="footer-col"><h4>Explorar</h4>'
+      +     '<a href="#/search">Todos los grooves</a>'
+      +     '<a href="#/genres">Por género</a>'
+      +     '<a href="#/search?sort=likes">Tendencias</a>'
+      +     '<a href="#/search?sort=new">Nuevos</a>'
+      +   '</div>'
+      +   '<div class="footer-col"><h4>Comunidad</h4>'
+      +     '<a href="#/drummers">Bateristas</a>'
+      +     '<a href="#/groove/purdie-shuffle">Groove del mes</a>'
+      +     '<a href="#/page/contribute">Contribuir</a>'
+      +     '<a href="#/page/faq">FAQ</a>'
+      +   '</div>'
+      +   '<div class="footer-col"><h4>Proyecto</h4>'
+      +     '<a href="#/page/about">Sobre DrumHub</a>'
+      +     '<a href="#/page/contact">Contacto</a>'
+      +     '<a href="#/page/terms">Términos</a>'
+      +     '<a href="#/page/privacy">Privacidad</a>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="footer-bottom">'
+      +   '<div class="footer-copy">© 2026 DrumHub · Hecho para bateristas 🥁 · Samples: Pearl Master Studio by enoe (<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" style="color:inherit;text-decoration:underline;">CC-BY 3.0</a>)</div>'
+      +   '<div class="footer-socials"><a href="#/page/contact" title="Contactanos">Instagram</a><a href="#/page/contact" title="Contactanos">YouTube</a><a href="#/page/contribute" title="Contribuir">GitHub</a></div>'
+      + '</div>';
+  }
+
+  // ── MODAL ──
+  function openModal(tab) {
+    var ov = document.getElementById('modal-overlay');
+    var box = document.getElementById('modal-box');
+    box.innerHTML = ''
+      + '<button class="modal-close" data-close="1">✕</button>'
+      + '<div class="modal-tabs">'
+      +   '<button type="button" class="modal-tab" data-tab="login">Ingresar</button>'
+      +   '<button type="button" class="modal-tab" data-tab="register">Registrarse</button>'
+      + '</div>'
+      + '<div id="modal-pane-login">'
+      +   '<div class="modal-title">Bienvenido de vuelta</div>'
+      +   '<div class="modal-sub">Ingresá para acceder a tus grooves y favoritos.</div>'
+      +   '<form id="form-login">'
+      +     '<div class="modal-field"><label>Email o usuario</label><input type="text" name="email" placeholder="tu@email.com o user" required></div>'
+      +     '<div class="modal-field"><label>Contraseña</label><input type="password" name="password" placeholder="••••••••" required></div>'
+      +     '<div style="text-align:right;margin-bottom:8px;"><a data-action="forgot" style="font-size:0.62rem;color:var(--muted);font-family:DM Mono,monospace;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">¿Olvidaste tu contraseña?</a></div>'
+      +     '<button class="btn-modal-submit" type="submit">Ingresar</button>'
+      +   '</form>'
+      +   '<div class="modal-divider">¿No tenés cuenta? <a data-tab="register">Registrate gratis</a></div>'
+      + '</div>'
+      + '<div id="modal-pane-register" style="display:none;">'
+      +   '<div class="modal-title">Creá tu cuenta</div>'
+      +   '<div class="modal-sub">Gratis para siempre. Sin tarjeta de crédito.</div>'
+      +   '<form id="form-register">'
+      +     '<div class="modal-field"><label>Elegí tu avatar</label>'
+      +       '<div class="avatar-picker" id="avatar-picker"></div>'
+      +       '<input type="hidden" name="avatar" id="avatar-selected" value="">'
+      +     '</div>'
+      +     '<div class="modal-field"><label>Usuario</label><input type="text" name="username" placeholder="tu_nombre_baterista" required></div>'
+      +     '<div class="modal-field"><label>Email</label><input type="email" name="email" placeholder="tu@email.com" required></div>'
+      +     '<div class="modal-field"><label>Contraseña</label><input type="password" name="password" placeholder="••••••••" required></div>'
+      +     '<button class="btn-modal-submit" type="submit">Crear cuenta</button>'
+      +   '</form>'
+      +   '<div class="modal-divider">¿Ya tenés cuenta? <a data-tab="login">Ingresá</a></div>'
+      + '</div>';
+    ov.classList.add('open');
+    switchTab(tab || 'login');
+
+    box.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', closeModal); });
+    box.querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); }); });
+    var forgot = box.querySelector('[data-action="forgot"]');
+    if (forgot) forgot.addEventListener('click', function () {
+      alert('Próximamente: recuperación por email. Mientras tanto, podés crear una cuenta nueva con otro usuario.');
+    });
+    box.querySelector('#form-login').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fd = new FormData(e.target);
+      var id = (fd.get('email') || '').toString().trim();
+      var pw = (fd.get('password') || '').toString();
+      if (id.length < 3) { alert('Ingresá un usuario o email válido (mínimo 3 caracteres).'); return; }
+      if (pw.length < 4) { alert('La contraseña debe tener al menos 4 caracteres.'); return; }
+      var username = id.indexOf('@') !== -1 ? id.split('@')[0] : id;
+      var u = DH.Store.login(username, id.indexOf('@') !== -1 ? id : '');
+      closeModal(); renderNav();
+      DH.Router.go('/profile/' + u.user);
+    });
+    // Avatar picker: galería de 24 seeds curadas, default a uno random para que arranque elegido.
+    var picker = box.querySelector('#avatar-picker');
+    var hidden = box.querySelector('#avatar-selected');
+    var seeds = DH.AVATAR_SEEDS || [];
+    var initialSeed = seeds[Math.floor(Math.random() * seeds.length)];
+    hidden.value = initialSeed;
+    seeds.forEach(function (seed) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'avatar-option' + (seed === initialSeed ? ' selected' : '');
+      btn.setAttribute('data-seed', seed);
+      btn.title = seed;
+      btn.innerHTML = '<img src="' + DH.avatarUrl(seed) + '" alt="" loading="lazy">';
+      btn.addEventListener('click', function () {
+        picker.querySelectorAll('.avatar-option').forEach(function (x) { x.classList.remove('selected'); });
+        btn.classList.add('selected');
+        hidden.value = seed;
+      });
+      picker.appendChild(btn);
+    });
+
+    box.querySelector('#form-register').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fd = new FormData(e.target);
+      var username = (fd.get('username') || '').toString().trim();
+      var email = (fd.get('email') || '').toString().trim();
+      var pw = (fd.get('password') || '').toString();
+      if (username.length < 3) { alert('El usuario debe tener al menos 3 caracteres.'); return; }
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) { alert('El usuario solo puede tener letras, números y guión bajo.'); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Ingresá un email válido.'); return; }
+      if (pw.length < 6) { alert('La contraseña debe tener al menos 6 caracteres.'); return; }
+      var u = DH.Store.login(username, email, (fd.get('avatar') || '').toString());
+      closeModal(); renderNav();
+      DH.Router.go('/profile/' + u.user);
+    });
+  }
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+  // Modal independiente para cambiar el avatar después de creada la cuenta
+  function openAvatarPicker(onPick) {
+    var ov = document.getElementById('modal-overlay');
+    var box = document.getElementById('modal-box');
+    var u = DH.Store.getUser(); if (!u) return;
+    var current = u.avatar || u.user;
+    box.innerHTML = ''
+      + '<button class="modal-close" data-close-avatar="1">✕</button>'
+      + '<div class="modal-title">Cambiá tu <em style="color:var(--accent);font-style:normal;">avatar</em></div>'
+      + '<div class="modal-sub">Elegí uno de la galería. El cambio es inmediato.</div>'
+      + '<div class="avatar-picker" id="avatar-picker-modal"></div>'
+      + '<button class="btn-modal-submit" id="avatar-confirm" style="margin-top:14px;">Guardar avatar</button>';
+    ov.classList.add('open');
+
+    var picker = box.querySelector('#avatar-picker-modal');
+    var selected = current;
+    (DH.AVATAR_SEEDS || []).forEach(function (seed) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'avatar-option' + (seed === current ? ' selected' : '');
+      btn.title = seed;
+      btn.innerHTML = '<img src="' + DH.avatarUrl(seed) + '" alt="" loading="lazy">';
+      btn.addEventListener('click', function () {
+        picker.querySelectorAll('.avatar-option').forEach(function (x) { x.classList.remove('selected'); });
+        btn.classList.add('selected');
+        selected = seed;
+      });
+      picker.appendChild(btn);
+    });
+
+    box.querySelector('[data-close-avatar]').addEventListener('click', closeModal);
+    box.querySelector('#avatar-confirm').addEventListener('click', function () {
+      DH.Store.updateAvatar(selected);
+      closeModal();
+      renderNav();
+      if (onPick) onPick(selected);
+    });
+  }
+  function switchTab(tab) {
+    var box = document.getElementById('modal-box');
+    box.querySelectorAll('.modal-tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
+    box.querySelector('#modal-pane-login').style.display = tab === 'login' ? '' : 'none';
+    box.querySelector('#modal-pane-register').style.display = tab === 'register' ? '' : 'none';
+  }
+
+  // ── MINI GRID (3-row visualization for cards) ──
+  function miniGrid(pattern, extraClass) {
+    var html = '<div class="mini-grid ' + (extraClass || '') + '">';
+    var rows = [
+      { id: 'hihat', cls: '' },
+      { id: 'snare', cls: ' s' },
+      { id: 'kick',  cls: ' k' }
+    ];
+    rows.forEach(function (r) {
+      var arr = (pattern && pattern[r.id]) || new Array(16).fill(0);
+      for (var i = 0; i < 16; i++) html += '<div class="mc' + (arr[i] ? ' on' + r.cls : '') + '"></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function grooveCard(g) {
+    var el = document.createElement('div');
+    el.className = 'gcard';
+    el.innerHTML = ''
+      + '<button class="gc-compare" title="Comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></button>'
+      + '<div class="gc-genre">' + escape(g.genre) + '</div>'
+      + '<div class="gc-title">' + escape(g.title) + '</div>'
+      + '<div class="gc-author">por <span>' + escape(g.author) + '</span></div>'
+      + miniGrid(g.pattern, 'gc-mini')
+      + '<div class="gc-footer">'
+      +   '<div class="gc-tags"><span class="gc-tag">' + g.bpm + ' BPM</span><span class="gc-tag">' + escape(g.level) + '</span></div>'
+      +   '<div class="gc-right">'
+      +     '<div class="gc-likes"><em>♥</em> ' + g.likes + '</div>'
+      +     '<button class="btn-play-sm" data-play="1" title="Preview"><svg class="ico-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg><svg class="ico-stop" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="5" width="14" height="14" rx="1"/></svg></button>'
+      +   '</div>'
+      + '</div>';
+
+    var cmpBtn = el.querySelector('.gc-compare');
+    function refreshCmpVisual() { cmpBtn.classList.toggle('selected', DH.Compare && DH.Compare.isSelected(g.id)); }
+    refreshCmpVisual();
+    cmpBtn.addEventListener('click', function (e) { e.stopPropagation(); if (DH.Compare) { DH.Compare.toggle(g); refreshCmpVisual(); } });
+    if (DH.Compare) DH.Compare.subscribe(refreshCmpVisual, el);
+
+    var playBtn = el.querySelector('.btn-play-sm');
+    var icoPlay = playBtn.querySelector('.ico-play');
+    var icoStop = playBtn.querySelector('.ico-stop');
+    var token = null;
+    function setPlaying(on) {
+      playBtn.classList.toggle('playing', on);
+      el.classList.toggle('previewing', on);
+      icoPlay.style.display = on ? 'none' : '';
+      icoStop.style.display = on ? '' : 'none';
+    }
+    playBtn.addEventListener('click', function (e) {
+      e.stopPropagation();  // no navegar al groove
+      if (token && DH.PreviewPlayer.isPlaying(token)) {
+        DH.PreviewPlayer.stop();
+        setPlaying(false);
+        token = null;
+        return;
+      }
+      setPlaying(true);
+      token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; });
+    });
+    el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
+    return el;
+  }
+
+  // ── Hero animated background ──
+  // Hero animated cells. Registra el interval globalmente para que el router lo cancele al navegar.
+  var _activeHeroIntervals = [];
+  function stopAllHeroIntervals() {
+    _activeHeroIntervals.forEach(function (iv) { clearInterval(iv); });
+    _activeHeroIntervals = [];
+  }
+  function heroBg(host) {
+    var HCOLS = 16, HROWS = 7;
+    var hPattern = [
+      [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+      [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
+      [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0],
+      [0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ];
+    var hColors = ['lit', 'lit', 'lit2', 'lit', '', 'lit2', ''];
+    var cells = [];
+    for (var r = 0; r < HROWS; r++) for (var c = 0; c < HCOLS; c++) {
+      var el = document.createElement('div');
+      el.className = 'hero-cell' + (hPattern[r][c] ? ' ' + hColors[r] : '');
+      host.appendChild(el);
+      cells.push({ el: el, row: r, col: c, on: !!hPattern[r][c] });
+    }
+    var step = 0;
+    var iv = setInterval(function () {
+      cells.forEach(function (c) { if (c.col === step && c.on) { c.el.style.opacity = '0.7'; setTimeout(function () { c.el.style.opacity = ''; }, 120); } });
+      step = (step + 1) % HCOLS;
+    }, 120);
+    _activeHeroIntervals.push(iv);
+    return iv;
+  }
+
+  return {
+    escape: escape, avatarColor: avatarColor, drummerOrFallback: drummerOrFallback,
+    drummerAvatar: drummerAvatar,
+    renderNav: renderNav, updateNav: updateNav, renderFooter: renderFooter,
+    openModal: openModal, closeModal: closeModal,
+    miniGrid: miniGrid, grooveCard: grooveCard,
+    heroBg: heroBg, stopAllHeroIntervals: stopAllHeroIntervals,
+    openAvatarPicker: openAvatarPicker
+  };
+})();
+
+// Global escape to close modal
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') DH.UI && DH.UI.closeModal && DH.UI.closeModal();
+});
+document.addEventListener('click', function (e) {
+  var ov = document.getElementById('modal-overlay');
+  if (ov && e.target === ov) DH.UI.closeModal();
+});
