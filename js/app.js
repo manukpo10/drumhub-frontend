@@ -30,4 +30,19 @@
       setTimeout(function () { splash.remove(); }, 500);
     }, 400);
   }
+
+  // Demo banner — solo se muestra si nunca fue cerrado.
+  try {
+    if (!localStorage.getItem('dh.demoBannerDismissed')) {
+      var banner = document.getElementById('demo-banner');
+      if (banner) {
+        setTimeout(function () { banner.style.display = 'flex'; banner.classList.add('show'); }, 1200);
+        document.getElementById('demo-banner-close').addEventListener('click', function () {
+          banner.classList.remove('show');
+          setTimeout(function () { banner.style.display = 'none'; }, 300);
+          try { localStorage.setItem('dh.demoBannerDismissed', '1'); } catch (e) {}
+        });
+      }
+    }
+  } catch (e) {}
 })();

@@ -16,17 +16,17 @@ DH.Audio = (function () {
       tag: 'acoustic',
       basePath: 'audio/pearl/',
       samples: {
-        kick:       ['kick-01.wav'],
-        snare:      ['snare-01.wav', 'snare-02.wav', 'snare-03.wav'],
-        hihat:      ['hihat-closed.wav'],
-        hihat_open: ['hihat-open.wav'],
-        ride:       ['ride-01.wav'],
-        ride_bell:  ['ride-02.wav'],
-        crash:      ['crash-01.wav', 'crash-02.wav'],
-        splash:     ['splash-01.wav', 'splash-02.wav'],
-        tom1:       ['tom-01.wav'],
-        tom2:       ['tom-02.wav'],
-        tom3:       ['tom-03.wav']
+        kick:       ['kick-01.ogg'],
+        snare:      ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
+        hihat:      ['hihat-closed.ogg'],
+        hihat_open: ['hihat-open.ogg'],
+        ride:       ['ride-01.ogg'],
+        ride_bell:  ['ride-02.ogg'],
+        crash:      ['crash-01.ogg', 'crash-02.ogg'],
+        splash:     ['splash-01.ogg', 'splash-02.ogg'],
+        tom1:       ['tom-01.ogg'],
+        tom2:       ['tom-02.ogg'],
+        tom3:       ['tom-03.ogg']
       }
     },
     tr909: {
@@ -34,15 +34,15 @@ DH.Audio = (function () {
       tag: 'electronic',
       basePath: 'audio/tr909/',
       samples: {
-        kick:       ['kick.wav', 'kick-short.wav'],
-        snare:      ['snare.wav'],
-        hihat:      ['hihat-closed.wav'],
-        hihat_open: ['hihat-open-1.wav', 'hihat-open-2.wav'],
-        ride:       ['ride.wav'],
-        crash:      ['cymbal.wav'],
-        tom1:       ['tom-h.wav'],
-        tom2:       ['tom-l.wav'],
-        clap:       ['clap-1.wav', 'clap-2.wav']
+        kick:       ['kick.ogg', 'kick-short.ogg'],
+        snare:      ['snare.ogg'],
+        hihat:      ['hihat-closed.ogg'],
+        hihat_open: ['hihat-open-1.ogg', 'hihat-open-2.ogg'],
+        ride:       ['ride.ogg'],
+        crash:      ['cymbal.ogg'],
+        tom1:       ['tom-h.ogg'],
+        tom2:       ['tom-l.ogg'],
+        clap:       ['clap-1.ogg', 'clap-2.ogg']
       }
     },
     lm2: {
@@ -50,21 +50,21 @@ DH.Audio = (function () {
       tag: '80s',
       basePath: 'audio/lm2/',
       samples: {
-        kick:       ['kick.wav', 'kick-alt.wav'],
-        snare:      ['snare-m.wav', 'snare-h.wav', 'snare-l.wav'],
-        hihat:      ['hihat-closed.wav', 'hihat-closed-long.wav', 'hihat-closed-short.wav'],
-        hihat_open: ['hihat-open.wav'],
-        ride:       ['ride.wav'],
-        crash:      ['crash.wav'],
-        tom1:       ['tom-h.wav', 'tom-hh.wav'],
-        tom2:       ['tom-m.wav'],
-        tom3:       ['tom-l.wav', 'tom-ll.wav'],
-        clap:       ['clap.wav'],
-        conga:      ['conga-h.wav', 'conga-hh.wav', 'conga-m.wav', 'conga-l.wav', 'conga-ll.wav', 'conga-lll.wav'],
-        cowbell:    ['cowb.wav'],
-        cabasa:     ['cabasa.wav'],
-        tamb:       ['tamb.wav'],
-        stick:      ['stick-h.wav', 'stick-m.wav', 'stick-l.wav']
+        kick:       ['kick.ogg', 'kick-alt.ogg'],
+        snare:      ['snare-m.ogg', 'snare-h.ogg', 'snare-l.ogg'],
+        hihat:      ['hihat-closed.ogg', 'hihat-closed-long.ogg', 'hihat-closed-short.ogg'],
+        hihat_open: ['hihat-open.ogg'],
+        ride:       ['ride.ogg'],
+        crash:      ['crash.ogg'],
+        tom1:       ['tom-h.ogg', 'tom-hh.ogg'],
+        tom2:       ['tom-m.ogg'],
+        tom3:       ['tom-l.ogg', 'tom-ll.ogg'],
+        clap:       ['clap.ogg'],
+        conga:      ['conga-h.ogg', 'conga-hh.ogg', 'conga-m.ogg', 'conga-l.ogg', 'conga-ll.ogg', 'conga-lll.ogg'],
+        cowbell:    ['cowb.ogg'],
+        cabasa:     ['cabasa.ogg'],
+        tamb:       ['tamb.ogg'],
+        stick:      ['stick-h.ogg', 'stick-m.ogg', 'stick-l.ogg']
       }
     },
     cr78: {
@@ -72,11 +72,11 @@ DH.Audio = (function () {
       tag: 'vintage',
       basePath: 'audio/cr78/',
       samples: {
-        kick:       ['kick.wav', 'kick-accent.wav'],
-        snare:      ['snare.wav', 'snare-accent.wav'],
-        hihat:      ['hihat.wav'],
-        hihat_open: ['hihat-metal.wav'],
-        stick:      ['rim.wav']
+        kick:       ['kick.ogg', 'kick-accent.ogg'],
+        snare:      ['snare.ogg', 'snare-accent.ogg'],
+        hihat:      ['hihat.ogg'],
+        hihat_open: ['hihat-metal.ogg'],
+        stick:      ['rim.ogg']
       }
     }
   };

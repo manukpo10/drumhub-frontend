@@ -33,9 +33,14 @@ DH.AVATAR_SEEDS = [
   'baker',   'rich',    'krupa',   'roach',
   'paice',   'peart',   'moon',    'copeland'
 ];
+// 24 SVGs pre-bajados a /imagenes/avatars/{seed}.svg (zero deps externas).
+// Si llega un seed que no está en el set (usuario antiguo, fallback dinámico), cae a DiceBear API.
 DH.avatarUrl = function (seed) {
   if (!seed) return '';
   if (seed.indexOf('http') === 0) return seed; // legacy: si vino URL completa, usarla tal cual
+  if (DH.AVATAR_SEEDS && DH.AVATAR_SEEDS.indexOf(seed) !== -1) {
+    return 'imagenes/avatars/' + encodeURIComponent(seed) + '.svg';
+  }
   return 'https://api.dicebear.com/7.x/notionists/svg?seed=' + encodeURIComponent(seed) + '&backgroundColor=transparent';
 };
 
