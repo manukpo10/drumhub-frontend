@@ -6,7 +6,8 @@ window.DH = window.DH || {};
 
 DH.createPlayer = function (opts) {
   var ROWS = opts.rows || DH.ROWS;
-  var STEPS = DH.STEPS;
+  var STEPS = opts.steps || DH.STEPS;
+  var stepsPerBeat = opts.stepsPerBeat || 4;
   var grid = {};
   ROWS.forEach(function (r) { grid[r.id] = (opts.pattern && opts.pattern[r.id]) ? opts.pattern[r.id].map(Boolean) : new Array(STEPS).fill(false); });
   var vols = {}; Object.keys(DH.DEFAULT_VOLS).forEach(function (k) { vols[k] = DH.DEFAULT_VOLS[k]; });
@@ -41,7 +42,7 @@ DH.createPlayer = function (opts) {
       +       '<div class="tags">'
       +         '<span class="tag genre" id="' + idPrefix + '-genre">' + (opts.genre || 'Rock') + '</span>'
       +         '<span class="tag level" id="' + idPrefix + '-level">' + (opts.level || 'Básico') + '</span>'
-      +         '<span class="tag">4/4</span>'
+      +         '<span class="tag">' + (opts.timeSig || '4/4') + '</span>'
       +       '</div>'
       +     '</div>'
       +     '<div class="bpm-ctrl">'
@@ -67,6 +68,7 @@ DH.createPlayer = function (opts) {
       + '</div>';
   }
   root.innerHTML = html;
+  root.style.setProperty('--grid-steps', STEPS);
 
   var $ = function (s) { return document.getElementById(idPrefix + '-' + s); };
 
@@ -74,8 +76,8 @@ DH.createPlayer = function (opts) {
   var bn = $('beat-nums'), sr = $('step-row'), dg = $('drum-grid');
   for (var s = 0; s < STEPS; s++) {
     var n = document.createElement('div');
-    n.className = 'beat-num' + (s % 4 === 0 ? ' dn' : '');
-    n.textContent = s % 4 === 0 ? (s / 4 + 1) : '·';
+    n.className = 'beat-num' + (s % stepsPerBeat === 0 ? ' dn' : '');
+    n.textContent = s % stepsPerBeat === 0 ? (s / stepsPerBeat + 1) : '·';
     bn.appendChild(n);
     var dot = document.createElement('div'); dot.className = 'sdot'; dot.id = idPrefix + '-dot-' + s;
     sr.appendChild(dot);

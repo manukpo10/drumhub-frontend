@@ -19,6 +19,7 @@
   DH.Router.add('/genre/:slug',       function (p, q)   { DH.pages.genre(p, q); });
   DH.Router.add('/drummers',          function (p, q)   { DH.pages.drummers(p, q); });
   DH.Router.add('/page/:slug',        function (p)      { DH.pages.staticPage(p); });
+  DH.Router.add('/settings',          function ()       { DH.pages.settings(); });
 
   DH.Router.start();
 

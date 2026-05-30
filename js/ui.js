@@ -51,11 +51,59 @@ DH.UI = (function () {
           +   '<div class="nav-user-avatar" style="background:' + u.color + '20;color:' + u.color + '">' + escape(u.init) + '</div>'
           +   '<span class="nav-user-name">' + escape(u.user) + '</span>'
           + '</div>'
+          + '<button class="btn-ghost" data-action="settings" title="Configuración">⚙</button>'
           + '<button class="btn-ghost" data-action="logout">Salir</button>'
           : '<button class="btn-ghost" data-action="login">Ingresar</button>'
           + '<button class="btn-cta" data-action="register">Registrarse</button>'
         )
+      + '</div>'
+      + '<button class="nav-burger" id="nav-burger" aria-label="Menú"><span></span><span></span><span></span></button>';
+
+    // Inject mobile drawer (remove previous if re-rendered)
+    var oldDrawer = document.getElementById('nav-drawer');
+    if (oldDrawer) oldDrawer.remove();
+    var oldOverlay = document.getElementById('nav-drawer-overlay');
+    if (oldOverlay) oldOverlay.remove();
+
+    var drawer = document.createElement('div');
+    drawer.id = 'nav-drawer';
+    drawer.className = 'nav-drawer';
+    var drawerLinks = [
+      { icon: '▶', label: 'Explorar', href: '#/search' },
+      { icon: '♩', label: 'Géneros', href: '#/genres' },
+      { icon: '🥁', label: 'Bateristas', href: '#/drummers' },
+      { icon: '◉', label: 'Sobre', href: '#/page/about' }
+    ];
+    var userNow = DH.Store.getUser();
+    if (userNow) {
+      drawerLinks.push({ icon: '◎', label: 'Mi perfil', href: '#/profile/' + userNow.user });
+      drawerLinks.push({ icon: '⚙', label: 'Configuración', href: '#/settings' });
+      drawerLinks.push({ icon: '▲', label: 'Subir groove', href: '#/upload' });
+    }
+    drawer.innerHTML = '<div class="nav-drawer-inner">'
+      + '<div class="nav-drawer-logo">Drum<em>Hub</em></div>'
+      + drawerLinks.map(function(l) { return '<a class="nav-drawer-link" href="' + l.href + '"><span class="nd-icon">' + l.icon + '</span>' + l.label + '</a>'; }).join('')
+      + (userNow ? '<button class="nav-drawer-logout" id="nav-drawer-logout"><span class="nd-icon">←</span>Cerrar sesión</button>' : '<button class="nav-drawer-cta" id="nav-drawer-register">✦ Crear cuenta gratis</button>')
       + '</div>';
+
+    var overlay = document.createElement('div');
+    overlay.id = 'nav-drawer-overlay';
+    overlay.className = 'nav-drawer-overlay';
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(drawer);
+
+    function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow = ''; }
+
+    var burger = document.getElementById('nav-burger');
+    if (burger) burger.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('.nav-drawer-link').forEach(function(a) { a.addEventListener('click', closeDrawer); });
+    var drawerLogout = document.getElementById('nav-drawer-logout');
+    if (drawerLogout) drawerLogout.addEventListener('click', function() { DH.Store.logout(); closeDrawer(); renderNav(); DH.Router.go('/'); });
+    var drawerRegister = document.getElementById('nav-drawer-register');
+    if (drawerRegister) drawerRegister.addEventListener('click', function() { closeDrawer(); openModal('register'); });
 
     document.getElementById('nav-search-form').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -67,6 +115,7 @@ DH.UI = (function () {
         var a = el.getAttribute('data-action');
         if (a === 'login') openModal('login');
         else if (a === 'register') openModal('register');
+        else if (a === 'settings') DH.Router.go('/settings');
         else if (a === 'logout') { DH.Store.logout(); DH.Notifications && DH.Notifications.clear(); renderNav(); DH.Router.go('/'); }
         else if (a === 'profile') DH.Router.go('/profile/' + u.user);
         else if (a === 'upload') {
@@ -227,6 +276,20 @@ DH.UI = (function () {
       +     '<button class="btn-modal-submit" type="submit">Crear cuenta</button>'
       +   '</form>'
       +   '<div class="modal-divider">¿Ya tenés cuenta? <a data-tab="login">Ingresá</a></div>'
+      + '</div>'
+      + '<div id="modal-pane-forgot" style="display:none;">'
+      +   '<div class="modal-title">Recuperar <em>contraseña</em></div>'
+      +   '<div class="modal-sub">Ingresá tu email y te enviamos las instrucciones.</div>'
+      +   '<form id="modal-forgot-form">'
+      +     '<div class="modal-field"><label>Email</label><input type="email" name="email" id="modal-forgot-email" placeholder="tu@email.com" required></div>'
+      +     '<button class="btn-modal-submit" type="submit">Enviar instrucciones</button>'
+      +   '</form>'
+      +   '<div id="modal-forgot-success" style="display:none;text-align:center;padding:16px 0">'
+      +     '<div style="font-size:1.8rem;margin-bottom:8px">📬</div>'
+      +     '<div style="font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Revisá tu bandeja</div>'
+      +     '<div style="font-size:0.78rem;color:var(--muted);font-weight:300">Si el email está registrado, recibirás las instrucciones para recuperar tu contraseña.</div>'
+      +   '</div>'
+      +   '<div class="modal-divider"><a data-tab="login">← Volver al inicio de sesión</a></div>'
       + '</div>';
     ov.classList.add('open');
     switchTab(tab || 'login');
@@ -235,7 +298,16 @@ DH.UI = (function () {
     box.querySelectorAll('[data-tab]').forEach(function (b) { b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); }); });
     var forgot = box.querySelector('[data-action="forgot"]');
     if (forgot) forgot.addEventListener('click', function () {
-      alert('Próximamente: recuperación por email. Mientras tanto, podés crear una cuenta nueva con otro usuario.');
+      box.querySelector('#modal-pane-login').style.display = 'none';
+      box.querySelector('#modal-pane-register').style.display = 'none';
+      box.querySelector('#modal-pane-forgot').style.display = '';
+      box.querySelectorAll('.modal-tab').forEach(function (t) { t.style.display = 'none'; });
+    });
+    var forgotForm = box.querySelector('#modal-forgot-form');
+    if (forgotForm) forgotForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      forgotForm.style.display = 'none';
+      box.querySelector('#modal-forgot-success').style.display = '';
     });
     box.querySelector('#form-login').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -274,16 +346,39 @@ DH.UI = (function () {
       e.preventDefault();
       var fd = new FormData(e.target);
       var username = (fd.get('username') || '').toString().trim();
-      var email = (fd.get('email') || '').toString().trim();
-      var pw = (fd.get('password') || '').toString();
+      var email    = (fd.get('email')    || '').toString().trim();
+      var pw       = (fd.get('password') || '').toString();
       if (username.length < 3) { alert('El usuario debe tener al menos 3 caracteres.'); return; }
       if (!/^[a-zA-Z0-9_]+$/.test(username)) { alert('El usuario solo puede tener letras, números y guión bajo.'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Ingresá un email válido.'); return; }
       if (pw.length < 6) { alert('La contraseña debe tener al menos 6 caracteres.'); return; }
       var u = DH.Store.login(username, email, (fd.get('avatar') || '').toString());
-      closeModal(); renderNav();
-      DH.Router.go('/profile/' + u.user);
+      closeModal();
+      renderNav();
+      showWelcome(u);
     });
+  }
+  function showWelcome(u) {
+    var ov = document.createElement('div');
+    ov.id = 'welcome-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML = ''
+      + '<div class="welcome-box">'
+      +   '<div class="welcome-logo"><svg width="52" height="52" viewBox="0 0 40 40" fill="none" stroke="var(--accent)" stroke-width="1.8"><circle cx="20" cy="20" r="16"/><circle cx="20" cy="20" r="8"/><circle cx="20" cy="20" r="2.5" fill="var(--accent)" stroke="none"/></svg></div>'
+      +   '<div class="welcome-title">¡Bienvenido, <em>' + DH.UI.escape(u.user) + '</em>!</div>'
+      +   '<div class="welcome-sub">Tu cuenta está lista. ¿Por dónde querés empezar?</div>'
+      +   '<div class="welcome-steps">'
+      +     '<button class="welcome-step" id="wc-explore"><div class="wc-icon"><svg width="20" height="20" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7"/><circle cx="20" cy="20" r="2.5" fill="currentColor" stroke="none"/></svg></div><div><div class="wc-label">Explorar grooves</div><div class="wc-hint">Buscá patrones por género o BPM</div></div></button>'
+      +     '<button class="welcome-step" id="wc-upload"><div class="wc-icon"><svg width="20" height="20" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="9" width="7" height="7" rx="1"/><rect x="16" y="9" width="7" height="7" rx="1"/><rect x="26" y="9" width="7" height="7" rx="1"/><rect x="6" y="22" width="7" height="7" rx="1" fill="currentColor" stroke="none"/><rect x="16" y="22" width="7" height="7" rx="1"/><rect x="26" y="22" width="7" height="7" rx="1" fill="currentColor" stroke="none"/></svg></div><div><div class="wc-label">Subir mi primer groove</div><div class="wc-hint">Compartí un patrón con la comunidad</div></div></button>'
+      +     '<button class="welcome-step" id="wc-profile"><div class="wc-icon"><svg width="20" height="20" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="20" cy="11" rx="12" ry="2.5"/><rect x="8" y="11" width="24" height="18" rx="1"/><ellipse cx="20" cy="29" rx="12" ry="2.5"/><line x1="8" y1="20" x2="32" y2="20"/></svg></div><div><div class="wc-label">Completar mi perfil</div><div class="wc-hint">Agregá tu bio y elegí tu avatar</div></div></button>'
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    function closeWelcome() { ov.remove(); }
+    document.getElementById('wc-explore').addEventListener('click', function() { closeWelcome(); DH.Router.go('/search'); });
+    document.getElementById('wc-upload').addEventListener('click', function() { closeWelcome(); DH.Router.go('/upload'); });
+    document.getElementById('wc-profile').addEventListener('click', function() { closeWelcome(); DH.Router.go('/settings'); });
+    ov.addEventListener('click', function(e) { if (e.target === ov) closeWelcome(); });
   }
   function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
@@ -327,7 +422,9 @@ DH.UI = (function () {
   }
   function switchTab(tab) {
     var box = document.getElementById('modal-box');
-    box.querySelectorAll('.modal-tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
+    var forgotPane = box.querySelector('#modal-pane-forgot');
+    if (forgotPane) forgotPane.style.display = 'none';
+    box.querySelectorAll('.modal-tab').forEach(function (t) { t.style.display = ''; t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
     box.querySelector('#modal-pane-login').style.display = tab === 'login' ? '' : 'none';
     box.querySelector('#modal-pane-register').style.display = tab === 'register' ? '' : 'none';
   }

@@ -6,6 +6,7 @@ DH.Store = (function () {
   var KEY_FAVS    = 'dh.favorites';
   var KEY_USER_GROOVES = 'dh.userGrooves';
   var KEY_COMMENTS = 'dh.comments';
+  var KEY_PLAN = 'dh.plan';
 
   function read(k, fallback) {
     try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }
@@ -79,6 +80,23 @@ DH.Store = (function () {
     return all.find(function (g) { return g.id === idOrSlug || g.slug === idOrSlug; });
   }
 
+  // ── plan ──
+  function getPlan() {
+    var u = getUser();
+    if (!u) return 'free';
+    return read(KEY_PLAN, 'free');
+  }
+  function setPlan(plan) {
+    write(KEY_PLAN, plan);
+  }
+  function isPro() {
+    var p = getPlan();
+    return p === 'pro' || p === 'studio';
+  }
+  function isStudio() {
+    return getPlan() === 'studio';
+  }
+
   // ── comments (extra to mock data) ──
   function getComments(grooveId) {
     var stored = read(KEY_COMMENTS, {});
@@ -99,6 +117,7 @@ DH.Store = (function () {
     getFavorites: getFavorites, isFavorite: isFavorite, toggleFavorite: toggleFavorite,
     getUserGrooves: getUserGrooves, addUserGroove: addUserGroove, updateUserGroove: updateUserGroove, deleteUserGroove: deleteUserGroove,
     allGrooves: allGrooves, findAnyGroove: findAnyGroove,
-    getComments: getComments, addComment: addComment
+    getComments: getComments, addComment: addComment,
+    getPlan: getPlan, setPlan: setPlan, isPro: isPro, isStudio: isStudio
   };
 })();

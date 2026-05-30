@@ -398,7 +398,10 @@ DH.Audio = (function () {
 
   return {
     getCtx: getCtx, trigger: trigger,
-    setKit: setKit, getKit: getKit, listKits: listKits, getKitPieces: getKitPieces
+    setKit: setKit, getKit: getKit, listKits: listKits, getKitPieces: getKitPieces,
+    getBuffers: function(kitId) { return buffers[kitId || currentKit] || {}; },
+    getKitConfig: function(kitId) { return KITS[kitId || currentKit] || null; },
+    getDefaultVols: function() { return DH.DEFAULT_VOLS; }
   };
 })();
 

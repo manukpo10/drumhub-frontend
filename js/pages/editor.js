@@ -45,7 +45,9 @@ DH.pages.editor = function (params) {
     levelCode: levelToCode[editingGroove.level] || 'b',
     desc: editingGroove.desc || '',
     tags: (editingGroove.tags || []).slice(),
-    pattern: editingGroove.pattern || DH.PRESETS.rock
+    pattern: editingGroove.pattern || DH.PRESETS.rock,
+    timeSig: editingGroove.timeSig || '4/4',
+    bars: editingGroove.bars || 1
   } : {
     title: '',
     genre: '',
@@ -54,8 +56,34 @@ DH.pages.editor = function (params) {
     levelCode: 'b',
     desc: '',
     tags: ['shuffle', 'ghost notes'],
-    pattern: DH.PRESETS.rock
+    pattern: DH.PRESETS.rock,
+    timeSig: '4/4',
+    bars: 1
   };
+
+  function getTimeSigConf(id) {
+    return DH.TIME_SIGS.find(function (t) { return t.id === id; }) || DH.TIME_SIGS[0];
+  }
+  function computeSteps() {
+    var conf = getTimeSigConf(state.timeSig);
+    state.stepsPerBeat = conf.stepsPerBeat;
+    state.steps = conf.stepsPerBar * state.bars;
+  }
+  computeSteps();
+
+  function resizePattern(newSteps) {
+    var current = player ? player.getPattern() : state.pattern;
+    var resized = {};
+    DH.ROWS.forEach(function (r) {
+      var row = current[r.id] || [];
+      if (row.length < newSteps) {
+        resized[r.id] = row.concat(new Array(newSteps - row.length).fill(0));
+      } else {
+        resized[r.id] = row.slice(0, newSteps);
+      }
+    });
+    return resized;
+  }
 
   app.innerHTML = ''
     + '<div class="breadcrumb">'
@@ -80,7 +108,7 @@ DH.pages.editor = function (params) {
     +   '<div class="col-left">'
 
     +     '<div class="card-v2">'
-    +       '<div class="card-title-v2"><div class="card-icon">📝</div>Información del <em>groove</em></div>'
+    +       '<div class="card-title-v2"><div class="card-icon"><svg width="18" height="18" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="20" cy="20" r="14"/><line x1="20" y1="15" x2="20" y2="25" stroke-width="2.4"/><circle cx="20" cy="10" r="2.2" fill="currentColor" stroke="none"/></svg></div>Información del <em>groove</em></div>'
     +       '<form id="upload-form">'
     +         '<div class="field">'
     +           '<label>Nombre del groove *</label>'
@@ -126,7 +154,7 @@ DH.pages.editor = function (params) {
     +     '</div>'
 
     +     '<div class="card-v2">'
-    +       '<div class="card-title-v2"><div class="card-icon">🥁</div>Editor de <em>patrón</em></div>'
+    +       '<div class="card-title-v2"><div class="card-icon"><svg width="18" height="18" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="9" width="7" height="7" rx="1"/><rect x="16" y="9" width="7" height="7" rx="1"/><rect x="26" y="9" width="7" height="7" rx="1"/><rect x="6" y="22" width="7" height="7" rx="1" fill="currentColor" stroke="none"/><rect x="16" y="22" width="7" height="7" rx="1"/><rect x="26" y="22" width="7" height="7" rx="1" fill="currentColor" stroke="none"/></svg></div>Editor de <em>patrón</em></div>'
     +       '<div class="kit-bar">'
     +         '<div class="kit-bar-label">▸ Kit de batería</div>'
     +         '<select id="ed-kit-select" class="kit-bar-select"></select>'
@@ -141,6 +169,20 @@ DH.pages.editor = function (params) {
     +         '<button class="tool-btn" data-tpl="metal">Metal</button>'
     +         '<div class="tool-sep"></div>'
     +         '<button class="tool-btn danger" id="btn-clear">Limpiar</button>'
+    +         '<div class="tool-sep"></div>'
+    +         '<div class="timesig-wrap">'
+    +           '<span class="bpm-label">Compás</span>'
+    +           DH.TIME_SIGS.map(function (t) { return '<button type="button" class="tool-btn' + (t.id === state.timeSig ? ' active' : '') + '" data-timesig="' + t.id + '">' + t.label + '</button>'; }).join('')
+    +         '</div>'
+    +         '<div class="tool-sep"></div>'
+    +         '<div class="bars-wrap">'
+    +           '<span class="bpm-label">Largo</span>'
+    +           [1, 2, 3, 4].map(function (n) {
+                  var conf = getTimeSigConf(state.timeSig);
+                  var disabled = conf.stepsPerBar * n > DH.MAX_STEPS;
+                  return '<button type="button" class="tool-btn' + (state.bars === n ? ' active' : '') + '" data-bars="' + n + '"' + (disabled ? ' disabled' : '') + '>' + n + '</button>';
+                }).join('')
+    +         '</div>'
     +         '<div class="bpm-wrap-toolbar">'
     +           '<span class="bpm-label">BPM</span>'
     +           '<div class="bpm-val" id="bpm-val">' + state.bpm + '</div>'
@@ -158,7 +200,7 @@ DH.pages.editor = function (params) {
     +     '</div>'
 
     +     '<div class="card-v2">'
-    +       '<div class="card-title-v2"><div class="card-icon">👁</div>Preview del <em>groove</em></div>'
+    +       '<div class="card-title-v2"><div class="card-icon"><svg width="18" height="18" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="20" cy="20" rx="16" ry="3.5" transform="rotate(-12 20 20)"/><circle cx="20" cy="20" r="3" fill="currentColor" stroke="none"/><line x1="20" y1="23" x2="20" y2="35"/></svg></div>Preview del <em>groove</em></div>'
     +       '<p style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;font-weight:300">Así va a verse tu groove en la plataforma cuando otros bateristas lo busquen.</p>'
     +       '<div class="preview-box">'
     +         '<div class="preview-genre" id="prev-genre">' + esc(state.genre || '—') + '</div>'
@@ -202,10 +244,10 @@ DH.pages.editor = function (params) {
     +     '<div class="sidebar-card-v2">'
     +       '<div class="section-title-sm">Consejos para un <em>buen groove</em></div>'
     +       '<div class="tips-list">'
-    +         '<div class="tip-item"><div class="tip-icon">🎯</div><div class="tip-text"><strong>Nombre descriptivo:</strong> incluí el estilo o la técnica. "Funk Ghost Note" es mejor que "Mi groove".</div></div>'
-    +         '<div class="tip-item"><div class="tip-icon">📝</div><div class="tip-text"><strong>Describí el contexto:</strong> en qué canciones aparece, qué técnica requiere, cómo practicarlo.</div></div>'
-    +         '<div class="tip-item"><div class="tip-icon">🎚️</div><div class="tip-text"><strong>BPM honesto:</strong> poné el tempo al que el groove "suena bien", no el máximo que podés tocar.</div></div>'
-    +         '<div class="tip-item"><div class="tip-icon">🏷️</div><div class="tip-text"><strong>Etiquetas útiles:</strong> pensá cómo lo buscaría otro baterista.</div></div>'
+    +         '<div class="tip-item"><div class="tip-icon"><svg width="16" height="16" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7"/><circle cx="20" cy="20" r="2.5" fill="currentColor" stroke="none"/></svg></div><div class="tip-text"><strong>Nombre descriptivo:</strong> incluí el estilo o la técnica. "Funk Ghost Note" es mejor que "Mi groove".</div></div>'
+    +         '<div class="tip-item"><div class="tip-icon"><svg width="16" height="16" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="13" width="24" height="16" rx="2"/><ellipse cx="20" cy="13" rx="12" ry="3"/><ellipse cx="20" cy="29" rx="12" ry="3"/></svg></div><div class="tip-text"><strong>Describí el contexto:</strong> en qué canciones aparece, qué técnica requiere, cómo practicarlo.</div></div>'
+    +         '<div class="tip-item"><div class="tip-icon"><svg width="16" height="16" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="20" y1="4" x2="20" y2="36"/><line x1="20" y1="4" x2="30" y2="18"/><line x1="10" y1="28" x2="30" y2="28"/><circle cx="20" cy="36" r="3" fill="currentColor" stroke="none"/></svg></div><div class="tip-text"><strong>BPM honesto:</strong> poné el tempo al que el groove "suena bien", no el máximo que podés tocar.</div></div>'
+    +         '<div class="tip-item"><div class="tip-icon"><svg width="16" height="16" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="20" cy="20" r="14"/><circle cx="13" cy="7" r="3"/><circle cx="27" cy="7" r="3"/><circle cx="34" cy="20" r="3"/><circle cx="27" cy="33" r="3"/><circle cx="13" cy="33" r="3"/></svg></div><div class="tip-text"><strong>Etiquetas útiles:</strong> pensá cómo lo buscaría otro baterista.</div></div>'
     +       '</div>'
     +     '</div>'
 
@@ -237,6 +279,9 @@ DH.pages.editor = function (params) {
       chrome: 'minimal',
       rows: DH.Audio.getKitPieces(DH.Audio.getKit()),
       idPrefix: 'edv2',
+      steps: state.steps,
+      stepsPerBeat: state.stepsPerBeat,
+      timeSig: state.timeSig,
       onPatternChange: function (p) { state.pattern = p; updatePreview(); updatePatternProgress(); },
       onPlayStateChange: function (playing) {
         var b = document.getElementById('ed-play');
@@ -332,6 +377,50 @@ DH.pages.editor = function (params) {
     });
   });
 
+  // ── Time signature selector ──
+  function updateBarsButtonState() {
+    var conf = getTimeSigConf(state.timeSig);
+    var maxBars = 1;
+    app.querySelectorAll('[data-bars]').forEach(function (btn) {
+      var n = parseInt(btn.getAttribute('data-bars'), 10);
+      var exceeds = conf.stepsPerBar * n > DH.MAX_STEPS;
+      btn.disabled = exceeds;
+      if (!exceeds) maxBars = Math.max(maxBars, n);
+    });
+    if (state.bars > maxBars) {
+      state.bars = maxBars;
+      app.querySelectorAll('[data-bars]').forEach(function (x) { x.classList.remove('active'); });
+      var active = app.querySelector('[data-bars="' + maxBars + '"]');
+      if (active) active.classList.add('active');
+    }
+  }
+  app.querySelectorAll('[data-timesig]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      app.querySelectorAll('[data-timesig]').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      state.timeSig = b.getAttribute('data-timesig');
+      updateBarsButtonState();
+      computeSteps();
+      state.pattern = resizePattern(state.steps);
+      buildEditorPlayer();
+      updatePreview();
+    });
+  });
+
+  // ── Bars selector ──
+  app.querySelectorAll('[data-bars]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.disabled) return;
+      app.querySelectorAll('[data-bars]').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      state.bars = parseInt(b.getAttribute('data-bars'), 10);
+      computeSteps();
+      state.pattern = resizePattern(state.steps);
+      buildEditorPlayer();
+      updatePreview();
+    });
+  });
+
   // ── Form ──
   var form = document.getElementById('upload-form');
   var titleInput = form.querySelector('[name="title"]');
@@ -374,13 +463,14 @@ DH.pages.editor = function (params) {
   var prevHost = document.getElementById('preview-rows');
   function updatePreview() {
     prevHost.innerHTML = '';
+    prevHost.style.setProperty('--grid-steps', state.steps);
     var rows = [
       { id: 'hihat', label: 'Hi-Hat' },
       { id: 'snare', label: 'Redob.' },
       { id: 'kick',  label: 'Bombo'  }
     ];
     rows.forEach(function (r) {
-      var arr = state.pattern[r.id] || new Array(16).fill(0);
+      var arr = state.pattern[r.id] || new Array(state.steps).fill(0);
       var row = document.createElement('div'); row.className = 'prev-row';
       var lbl = document.createElement('div'); lbl.className = 'prev-lbl'; lbl.textContent = r.label;
       var cells = document.createElement('div'); cells.className = 'prev-cells';
@@ -435,7 +525,8 @@ DH.pages.editor = function (params) {
   document.getElementById('btn-draft').addEventListener('click', function () {
     var draft = {
       title: state.title, genre: state.genre, level: state.level, bpm: state.bpm,
-      desc: state.desc, tags: state.tags.slice(), pattern: player.getPattern(), savedAt: Date.now()
+      desc: state.desc, tags: state.tags.slice(), pattern: player.getPattern(),
+      timeSig: state.timeSig, bars: state.bars, savedAt: Date.now()
     };
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) {}
     var btn = this; var orig = btn.textContent;
@@ -458,7 +549,9 @@ DH.pages.editor = function (params) {
       bpm: state.bpm,
       desc: state.desc.trim(),
       tags: state.tags.slice(),
-      pattern: player.getPattern()
+      pattern: player.getPattern(),
+      timeSig: state.timeSig,
+      bars: state.bars
     };
 
     if (editingGroove) {

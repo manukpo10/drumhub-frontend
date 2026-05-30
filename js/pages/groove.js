@@ -32,6 +32,15 @@ DH.pages.groove = function (params) {
     return String(n);
   }
 
+  // Resolve time-sig display values (falls back to 4/4 / 16 for grooves without metadata)
+  var gDisplayTimeSig = g.timeSig || '4/4';
+  var gDisplayTimeSigConf = DH.TIME_SIGS
+    ? (DH.TIME_SIGS.find(function (t) { return t.id === gDisplayTimeSig; }) || DH.TIME_SIGS[0])
+    : null;
+  var gDisplaySteps = gDisplayTimeSigConf
+    ? gDisplayTimeSigConf.stepsPerBar * (g.bars || 1)
+    : 16;
+
   app.innerHTML = ''
     + '<div class="breadcrumb">'
     +   '<a data-go="/">Inicio</a><span>/</span>'
@@ -53,8 +62,8 @@ DH.pages.groove = function (params) {
     +             '<span class="gtag-v2">' + esc(g.genre) + '</span>'
     +             '<span class="gtag-v2">' + g.bpm + ' BPM</span>'
     +             '<span class="gtag-v2">' + esc(g.level) + '</span>'
-    +             '<span class="gtag-v2">4/4</span>'
-    +             '<span class="gtag-v2">16 pasos</span>'
+    +             '<span class="gtag-v2">' + gDisplayTimeSig + '</span>'
+    +             '<span class="gtag-v2">' + gDisplaySteps + ' pasos</span>'
     +           '</div>'
     +         '</div>'
     +         '<div class="groove-stats-inline">'
@@ -93,6 +102,16 @@ DH.pages.groove = function (params) {
     +       '</div>'
     +     '</div>'
 
+    +     '<div class="export-section" id="export-section">'
+    +       '<div class="export-title">Exportar</div>'
+    +       '<div class="export-btns">'
+    +         '<button class="export-btn" id="exp-json" title="Gratis">JSON</button>'
+    +         '<button class="export-btn pro-gate" id="exp-midi" title="Plan Pro">MIDI</button>'
+    +         '<button class="export-btn pro-gate" id="exp-pdf"  title="Plan Pro">PDF</button>'
+    +         '<button class="export-btn pro-gate" id="exp-mp3"  title="Plan Pro">MP3</button>'
+    +       '</div>'
+    +     '</div>'
+
     +     (g.desc
         ? '<div class="desc-section-v2">'
           + '<div class="section-title-sm">Sobre este <em>groove</em></div>'
@@ -101,7 +120,7 @@ DH.pages.groove = function (params) {
           +   '<span class="dtag">' + esc(g.genre) + '</span>'
           +   '<span class="dtag">' + esc(g.level) + '</span>'
           +   '<span class="dtag">' + g.bpm + ' bpm</span>'
-          +   '<span class="dtag">16 pasos</span>'
+          +   '<span class="dtag">' + gDisplaySteps + ' pasos</span>'
           + '</div>'
           + '</div>'
         : '')
@@ -146,8 +165,8 @@ DH.pages.groove = function (params) {
     +       '<div class="info-list">'
     +         '<div class="info-item"><span class="info-key">Género</span><span class="info-val">' + esc(g.genre) + '</span></div>'
     +         '<div class="info-item"><span class="info-key">Tempo</span><span class="info-val"><em>' + g.bpm + '</em> BPM</span></div>'
-    +         '<div class="info-item"><span class="info-key">Compás</span><span class="info-val">4/4</span></div>'
-    +         '<div class="info-item"><span class="info-key">Pasos</span><span class="info-val">16</span></div>'
+    +         '<div class="info-item"><span class="info-key">Compás</span><span class="info-val">' + gDisplayTimeSig + '</span></div>'
+    +         '<div class="info-item"><span class="info-key">Pasos</span><span class="info-val">' + gDisplaySteps + '</span></div>'
     +         '<div class="info-item"><span class="info-key">Dificultad</span><div class="diff-bar" id="diff-bar"></div></div>'
     +         '<div class="info-item"><span class="info-key">Subido</span><span class="info-val">' + (g.createdAt ? new Date(g.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'hace 3 días') + '</span></div>'
     +       '</div>'
@@ -177,6 +196,30 @@ DH.pages.groove = function (params) {
     +     '</div>'
 
     +   '</div>'
+    + '</div>'
+
+    + '<div class="upgrade-modal-bg" id="upgrade-modal-bg" style="display:none">'
+    +   '<div class="upgrade-modal">'
+    +     '<button class="upgrade-close" id="upgrade-close">×</button>'
+    +     '<div class="upgrade-icon">🔒</div>'
+    +     '<div class="upgrade-title">Función <em>Pro</em></div>'
+    +     '<div class="upgrade-sub">Esta exportación está disponible en el plan Pro o Estudio.</div>'
+    +     '<div class="upgrade-plans">'
+    +       '<div class="upgrade-plan">'
+    +         '<div class="upgrade-plan-name">Pro</div>'
+    +         '<div class="upgrade-plan-price">$5.990/mes</div>'
+    +         '<div class="upgrade-plan-features">MIDI · PDF · MP3 · Stats</div>'
+    +         '<button class="upgrade-btn-pro" id="upgrade-btn-pro">Obtener Pro</button>'
+    +       '</div>'
+    +       '<div class="upgrade-plan studio">'
+    +         '<div class="upgrade-plan-name">Estudio</div>'
+    +         '<div class="upgrade-plan-price">$14.990/mes</div>'
+    +         '<div class="upgrade-plan-features">Todo Pro + API + Privados</div>'
+    +         '<button class="upgrade-btn-studio" id="upgrade-btn-studio">Obtener Estudio</button>'
+    +       '</div>'
+    +     '</div>'
+    +     '<button class="upgrade-btn-demo" id="upgrade-btn-demo">Simular Pro (demo)</button>'
+    +   '</div>'
     + '</div>';
 
   // ── Mount minimal player — rows come from the currently selected kit so the grid
@@ -184,6 +227,11 @@ DH.pages.groove = function (params) {
   var player = null;
   function buildPlayer(bpmOverride) {
     if (player) { try { player.destroy(); } catch (e) {} }
+    var gTimeSigConf = (DH.TIME_SIGS && g.timeSig)
+      ? (DH.TIME_SIGS.find(function (t) { return t.id === g.timeSig; }) || DH.TIME_SIGS[0])
+      : null;
+    var gSteps = gTimeSigConf ? gTimeSigConf.stepsPerBar * (g.bars || 1) : DH.STEPS;
+    var gStepsPerBeat = gTimeSigConf ? gTimeSigConf.stepsPerBeat : 4;
     player = DH.createPlayer({
       container: document.getElementById('player-host'),
       pattern: g.pattern,
@@ -192,6 +240,9 @@ DH.pages.groove = function (params) {
       chrome: 'minimal',
       rows: DH.Audio.getKitPieces(DH.Audio.getKit()),
       idPrefix: 'gpv2',
+      steps: gSteps,
+      stepsPerBeat: gStepsPerBeat,
+      timeSig: g.timeSig || '4/4',
       onPlayStateChange: function (playing) {
         var btn = document.getElementById('g-btn-play');
         var st = document.getElementById('g-status');
@@ -389,6 +440,56 @@ DH.pages.groove = function (params) {
     e.target.classList.toggle('following');
     e.target.textContent = e.target.classList.contains('following') ? '✓ Siguiendo' : '+ Seguir';
   });
+
+  // ── Export ──
+  function openUpgradeModal() {
+    var m = document.getElementById('upgrade-modal-bg');
+    if (m) m.style.display = 'flex';
+  }
+  function closeUpgradeModal() {
+    var m = document.getElementById('upgrade-modal-bg');
+    if (m) m.style.display = 'none';
+  }
+  var expJson = document.getElementById('exp-json');
+  var expMidi = document.getElementById('exp-midi');
+  var expPdf  = document.getElementById('exp-pdf');
+  var expMp3  = document.getElementById('exp-mp3');
+  if (expJson) expJson.addEventListener('click', function() { DH.Export.json(g); });
+  if (expMidi) expMidi.addEventListener('click', function() {
+    if (!DH.Store.isPro()) { openUpgradeModal(); return; }
+    DH.Export.midi(g);
+  });
+  if (expPdf) expPdf.addEventListener('click', function() {
+    if (!DH.Store.isPro()) { openUpgradeModal(); return; }
+    DH.Export.pdf(g);
+  });
+  if (expMp3) expMp3.addEventListener('click', function() {
+    if (!DH.Store.isPro()) { openUpgradeModal(); return; }
+    expMp3.textContent = 'Renderizando...';
+    expMp3.disabled = true;
+    DH.Export.mp3(g);
+    setTimeout(function() { if(expMp3){ expMp3.textContent = 'MP3'; expMp3.disabled = false; } }, 8000);
+  });
+  var closeBtn = document.getElementById('upgrade-close');
+  var modalBg  = document.getElementById('upgrade-modal-bg');
+  if (closeBtn) closeBtn.addEventListener('click', closeUpgradeModal);
+  if (modalBg)  modalBg.addEventListener('click', function(e) { if (e.target === modalBg) closeUpgradeModal(); });
+  var demoPro   = document.getElementById('upgrade-btn-demo');
+  var upgPro    = document.getElementById('upgrade-btn-pro');
+  var upgStudio = document.getElementById('upgrade-btn-studio');
+  if (demoPro) demoPro.addEventListener('click', function() {
+    DH.Store.setPlan('pro');
+    closeUpgradeModal();
+    document.querySelectorAll('.export-btn.pro-gate').forEach(function(b) { b.classList.add('unlocked'); });
+    alert('Plan Pro activado (modo demo).');
+  });
+  if (upgPro)    upgPro.addEventListener('click',    function() { DH.UI.openModal('register'); closeUpgradeModal(); });
+  if (upgStudio) upgStudio.addEventListener('click', function() { DH.UI.openModal('register'); closeUpgradeModal(); });
+
+  // Update button styles based on current plan
+  if (DH.Store.isPro()) {
+    document.querySelectorAll('.export-btn.pro-gate').forEach(function(b) { b.classList.add('unlocked'); });
+  }
 
   app.querySelectorAll('[data-go]').forEach(function (el) {
     el.addEventListener('click', function (ev) { ev.preventDefault(); DH.Router.go(el.getAttribute('data-go')); });

@@ -106,6 +106,85 @@ DH.pages.home = function () {
     +   '</div>'
     + '</section>'
 
+    + '<section class="section plans-section" id="plans-section">'
+    +   '<div class="section-head"><div><div class="section-eyebrow"><em>[ 07 ]</em> Planes</div><div class="section-title">Elegí tu <em>plan.</em></div></div></div>'
+    +   '<div class="plans-toggle-wrap">'
+    +     '<span class="plans-period-label" id="plans-lbl-monthly">Mensual</span>'
+    +     '<button class="plans-toggle" id="plans-toggle" aria-pressed="false">'
+    +       '<span class="plans-toggle-thumb"></span>'
+    +     '</button>'
+    +     '<span class="plans-period-label" id="plans-lbl-annual">Anual</span>'
+    +     '<span class="plans-save-badge visible" id="plans-save-badge">Ahorrás 19% pagando anual</span>'
+    +   '</div>'
+    +   '<div class="plans-grid">'
+
+    +     '<div class="plan-card free">'
+    +       '<div class="plan-name">Gratis</div>'
+    +       '<div class="plan-price-wrap">'
+    +         '<div class="plan-price">$0</div>'
+    +         '<div class="plan-period">para siempre</div>'
+    +       '</div>'
+    +       '<div class="plan-desc">Para empezar a explorar y practicar.</div>'
+    +       '<ul class="plan-features">'
+    +         '<li class="plan-feature">Explorar y escuchar grooves ilimitado</li>'
+    +         '<li class="plan-feature">Guardar hasta 20 favoritos</li>'
+    +         '<li class="plan-feature">Subir hasta 5 grooves</li>'
+    +         '<li class="plan-feature">Exportar JSON</li>'
+    +         '<li class="plan-feature excluded">Badge de perfil</li>'
+    +         '<li class="plan-feature excluded">Exportar MIDI, PDF y MP3</li>'
+    +         '<li class="plan-feature excluded">Estadísticas de grooves</li>'
+    +         '<li class="plan-feature excluded">API pública</li>'
+    +       '</ul>'
+    +       '<button class="plan-btn" id="plan-btn-free">Crear cuenta gratis</button>'
+    +     '</div>'
+
+    +     '<div class="plan-card pro">'
+    +       '<div class="plan-popular">MÁS POPULAR</div>'
+    +       '<div class="plan-name">Pro</div>'
+    +       '<div class="plan-price-wrap">'
+    +         '<div class="plan-price-old" id="plan-price-old-pro"></div>'
+    +         '<div class="plan-price" id="plan-price-pro">USD 5</div>'
+    +         '<div class="plan-period" id="plan-period-pro">/ mes</div>'
+    +       '</div>'
+    +       '<div class="plan-price-ref" id="plan-price-ref-pro"></div>'
+    +       '<div class="plan-desc">Para bateristas que practican en serio.</div>'
+    +       '<ul class="plan-features">'
+    +         '<li class="plan-feature">Todo lo del plan Gratis</li>'
+    +         '<li class="plan-feature">Grooves ilimitados</li>'
+    +         '<li class="plan-feature">Favoritos ilimitados</li>'
+    +         '<li class="plan-feature">Exportar MIDI, PDF y MP3</li>'
+    +         '<li class="plan-feature">Estadísticas de tus grooves</li>'
+    +         '<li class="plan-feature">Badge PRO en el perfil</li>'
+    +         '<li class="plan-feature excluded">API pública</li>'
+    +         '<li class="plan-feature excluded">Grooves privados</li>'
+    +       '</ul>'
+    +       '<button class="plan-btn pro" id="plan-btn-pro">Empezar prueba gratis</button>'
+    +     '</div>'
+
+    +     '<div class="plan-card studio coming-soon">'
+    +       '<div class="plan-coming-badge">Próximamente</div>'
+    +       '<div class="plan-name">Estudio</div>'
+    +       '<div class="plan-price-wrap">'
+    +         '<div class="plan-price-old" id="plan-price-old-studio"></div>'
+    +         '<div class="plan-price" id="plan-price-studio">USD 12</div>'
+    +         '<div class="plan-period" id="plan-period-studio">/ mes</div>'
+    +       '</div>'
+    +       '<div class="plan-price-ref" id="plan-price-ref-studio"></div>'
+    +       '<div class="plan-desc">Para estudios, docentes y profesionales.</div>'
+    +       '<ul class="plan-features">'
+    +         '<li class="plan-feature">Todo lo del plan Pro</li>'
+    +         '<li class="plan-feature">Acceso a API pública</li>'
+    +         '<li class="plan-feature">Grooves privados</li>'
+    +         '<li class="plan-feature">Soporte prioritario</li>'
+    +         '<li class="plan-feature">Badge ESTUDIO en el perfil</li>'
+    +         '<li class="plan-feature">Hasta 5 cuentas colaboradoras</li>'
+    +       '</ul>'
+    +       '<button class="plan-btn studio" id="plan-btn-studio">Contactar</button>'
+    +     '</div>'
+
+    +   '</div>'
+    + '</section>'
+
     + '<section class="section" style="padding-top:0;">'
     +   '<div class="upload-cta">'
     +     '<div class="upload-cta-bg">SHARE<br>YOUR<br>GROOVE</div>'
@@ -120,6 +199,56 @@ DH.pages.home = function () {
     +     '</div>'
     +   '</div>'
     + '</section>';
+
+  // ── Plans toggle ──
+  var plansAnnual = false;
+  var toggle = document.getElementById('plans-toggle');
+  var saveBadge = document.getElementById('plans-save-badge');
+  var lblMonthly = document.getElementById('plans-lbl-monthly');
+  var lblAnnual = document.getElementById('plans-lbl-annual');
+  function applyPrices() {
+    var period = plansAnnual ? 'annual' : 'monthly';
+
+    var proCard    = DH.Pricing.getCard('pro', period);
+    var studioCard = DH.Pricing.getCard('studio', period);
+
+    function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val || ''; }
+
+    set('plan-price-pro',     proCard.main);
+    set('plan-period-pro',    proCard.period);
+    set('plan-price-old-pro', proCard.old);
+    set('plan-price-ref-pro', proCard.ref);
+
+    set('plan-price-studio',     studioCard.main);
+    set('plan-period-studio',    studioCard.period);
+    set('plan-price-old-studio', studioCard.old);
+    set('plan-price-ref-studio', studioCard.ref);
+
+    // Toggle UI
+    toggle.classList.toggle('on', plansAnnual);
+    toggle.setAttribute('aria-pressed', String(plansAnnual));
+    saveBadge.textContent = plansAnnual ? 'Ahorrando 19%' : 'Ahorrás 19% pagando anual';
+    if (lblMonthly) lblMonthly.classList.toggle('active', !plansAnnual);
+    if (lblAnnual)  lblAnnual.classList.toggle('active',   plansAnnual);
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      plansAnnual = !plansAnnual;
+      applyPrices();
+    });
+  }
+
+  // Show USD immediately as placeholder, then update when rates load
+  applyPrices();
+  DH.Pricing.onReady(applyPrices);
+  DH.Pricing.load();
+  var planBtnFree = document.getElementById('plan-btn-free');
+  var planBtnPro  = document.getElementById('plan-btn-pro');
+  var planBtnStudio = document.getElementById('plan-btn-studio');
+  if (planBtnFree)   planBtnFree.addEventListener('click',   function () { DH.UI.openModal('register'); });
+  if (planBtnPro)    planBtnPro.addEventListener('click',    function () { DH.UI.openModal('register'); });
+  if (planBtnStudio) planBtnStudio.addEventListener('click', function () { alert('Escribinos a hola@drumhub.com'); });
 
   // ── Hero BG ──
   DH.UI.heroBg(document.getElementById('hero-bg'));

@@ -44,7 +44,18 @@ DH.Router = (function () {
         return;
       }
     }
-    document.getElementById('app').innerHTML = '<div class="page"><div class="empty empty-with-logo"><img class="empty-logo" src="imagenes/logo.png" alt="DrumHub"><h4>404</h4><p>No encontramos esa página.</p><button class="btn-primary" onclick="DH.Router.go(\'/\')">Volver al inicio</button></div></div>';
+    document.getElementById('app').innerHTML = ''
+      + '<div class="page">'
+      +   '<div class="empty empty-v2">'
+      +     '<div class="empty-code">404</div>'
+      +     '<div class="empty-title">Página <em>no encontrada</em></div>'
+      +     '<div class="empty-sub">El link que seguiste no existe o fue removido.</div>'
+      +     '<div class="empty-actions">'
+      +       '<button class="btn-primary" onclick="DH.Router.go(\'/\')">Ir al inicio</button>'
+      +       '<button class="btn-outline" onclick="DH.Router.go(\'/search\')">Explorar grooves</button>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>';
   }
 
   function go(path) { location.hash = path; }
