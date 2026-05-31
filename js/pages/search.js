@@ -536,7 +536,7 @@ DH.pages.search = function (_params, query) {
         e.stopPropagation();
         if (token && DH.PreviewPlayer.isPlaying(token)) { DH.PreviewPlayer.stop(); setPlaying(false); token = null; return; }
         setPlaying(true);
-        token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; });
+        token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; }, g.kit);
       });
       el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
       scroll.appendChild(el);
@@ -569,7 +569,7 @@ DH.pages.search = function (_params, query) {
       e.stopPropagation();
       if (token && DH.PreviewPlayer.isPlaying(token)) { DH.PreviewPlayer.stop(); setPlaying(false); token = null; return; }
       setPlaying(true);
-      token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; });
+      token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; }, g.kit);
     });
     el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
     return el;
@@ -791,7 +791,7 @@ DH.pages.search = function (_params, query) {
         e.stopPropagation();
         if (token && DH.PreviewPlayer.isPlaying(token)) { DH.PreviewPlayer.stop(); setPlaying(false); token = null; return; }
         setPlaying(true);
-        token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; });
+        token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; }, g.kit);
       });
       el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
       host.appendChild(el);

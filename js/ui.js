@@ -516,7 +516,7 @@ DH.UI = (function () {
         return;
       }
       setPlaying(true);
-      token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; });
+      token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; }, g.kit);
     });
     el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
     return el;

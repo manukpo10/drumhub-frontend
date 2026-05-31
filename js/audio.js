@@ -178,15 +178,17 @@ DH.Audio = (function () {
     return rows;
   };
 
-  function playSample(id, t, vol) {
-    var pool = buffers[currentKit] && buffers[currentKit][id];
+  function playSample(id, t, vol, kit) {
+    var k = kit || currentKit;
+    var pool = buffers[k] && buffers[k][id];
     if (!pool || !pool.length) return false;
     var n = pool.length;
-    var start = rrIdx[currentKit][id] % n;
+    if (!rrIdx[k]) rrIdx[k] = {};
+    var start = (rrIdx[k][id] || 0) % n;
     var buf = null;
     for (var i = 0; i < n; i++) {
       var idx = (start + i) % n;
-      if (pool[idx]) { buf = pool[idx]; rrIdx[currentKit][id] = (idx + 1) % n; break; }
+      if (pool[idx]) { buf = pool[idx]; rrIdx[k][id] = (idx + 1) % n; break; }
     }
     if (!buf) return false;
     var src = actx.createBufferSource();
@@ -391,14 +393,15 @@ DH.Audio = (function () {
     if (id === 'conga')       return synthConga(t, vol);
   }
 
-  function trigger(id, t, vol) {
+  function trigger(id, t, vol, kit) {
     if (vol == null) vol = 0.8;
-    if (!playSample(id, t, vol)) synthFallback(id, t, vol);
+    if (!playSample(id, t, vol, kit)) synthFallback(id, t, vol);
   }
 
   return {
     getCtx: getCtx, trigger: trigger,
     setKit: setKit, getKit: getKit, listKits: listKits, getKitPieces: getKitPieces,
+    preloadKit: preloadKit,
     getBuffers: function(kitId) { return buffers[kitId || currentKit] || {}; },
     getKitConfig: function(kitId) { return KITS[kitId || currentKit] || null; },
     getDefaultVols: function() { return DH.DEFAULT_VOLS; }
@@ -421,15 +424,16 @@ DH.PreviewPlayer = (function () {
     if (token.onStop) { try { token.onStop(); } catch (e) {} }
   }
 
-  function play(pattern, bpm, onStop) {
+  function play(pattern, bpm, onStop, kit) {
     stop();
     bpm = bpm || 90;
     DH.Audio.getCtx(); // asegurar context
+    if (kit) DH.Audio.preloadKit(kit);
     var stepMs = 60 / bpm / 4 * 1000;
     var total = STEPS * BARS;
     var rows = (window.DH && DH.ROWS) || [];
     var step = 0;
-    var token = { onStop: onStop, intervalId: null };
+    var token = { onStop: onStop, intervalId: null, kit: kit || null };
     current = token;
 
     function tick() {
@@ -439,7 +443,7 @@ DH.PreviewPlayer = (function () {
       for (var r = 0; r < rows.length; r++) {
         var row = rows[r];
         var arr = pattern && pattern[row.id];
-        if (arr && arr[idx]) DH.Audio.trigger(row.id, t);
+        if (arr && arr[idx]) DH.Audio.trigger(row.id, t, undefined, token.kit);
       }
       step++;
       if (step >= total) {

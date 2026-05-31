@@ -112,7 +112,7 @@ DH.Compare = (function () {
       btn.addEventListener('click', function () {
         if (token && DH.PreviewPlayer.isPlaying(token)) { DH.PreviewPlayer.stop(); btn.textContent = '▶ Preview'; token = null; return; }
         btn.textContent = '⏹ Stop';
-        token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { btn.textContent = '▶ Preview'; token = null; });
+        token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { btn.textContent = '▶ Preview'; token = null; }, g.kit);
       });
     });
     overlay.querySelectorAll('.cc-open').forEach(function (btn) {

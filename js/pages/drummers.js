@@ -310,7 +310,7 @@ DH.pages.drummers = function (_params, query) {
               el.classList.add('previewing');
               previewToken = DH.PreviewPlayer.play(topGroove.pattern, topGroove.bpm, function () {
                 el.classList.remove('previewing'); previewToken = null;
-              });
+              }, topGroove.kit);
             }, 250);
           });
           el.addEventListener('mouseleave', function () {
