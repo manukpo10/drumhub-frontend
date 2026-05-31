@@ -413,8 +413,7 @@ DH.Audio = (function () {
 // Mutually exclusive: empezar una nueva preview detiene la anterior.
 DH.PreviewPlayer = (function () {
   var current = null;
-  var STEPS = 16;
-  var BARS = 2;
+  var MIN_STEPS = 32; // patrones cortos se repiten hasta cubrir al menos esto
 
   function stop() {
     if (!current) return;
@@ -424,14 +423,32 @@ DH.PreviewPlayer = (function () {
     if (token.onStop) { try { token.onStop(); } catch (e) {} }
   }
 
-  function play(pattern, bpm, onStop, kit) {
+  // Reproduce el groove COMPLETO: todas las piezas del patrón (no solo DH.ROWS) y todos
+  // los compases (el largo sale del propio array, no de un 16×2 fijo). timeSig define la
+  // grilla (16avos vs 8avos) para que el tempo de compases impares sea correcto.
+  function play(pattern, bpm, onStop, kit, timeSig) {
     stop();
     bpm = bpm || 90;
     DH.Audio.getCtx(); // asegurar context
     if (kit) DH.Audio.preloadKit(kit);
-    var stepMs = 60 / bpm / 4 * 1000;
-    var total = STEPS * BARS;
-    var rows = (window.DH && DH.ROWS) || [];
+
+    var tsConf = (window.DH && DH.TIME_SIGS && timeSig)
+      ? DH.TIME_SIGS.find(function (t) { return t.id === timeSig; })
+      : null;
+    var stepsPerBeat = tsConf ? tsConf.stepsPerBeat : 4;
+    var stepMs = 60 / bpm / stepsPerBeat * 1000;
+
+    // Largo real del patrón = longitud de sus arrays (stepsPerBar × bars).
+    var pieceIds = pattern ? Object.keys(pattern) : [];
+    var len = 0;
+    for (var i = 0; i < pieceIds.length; i++) {
+      var a = pattern[pieceIds[i]];
+      if (a && a.length > len) len = a.length;
+    }
+    if (!len) { if (onStop) { try { onStop(); } catch (e) {} } return null; }
+    // Patrones largos suenan una vez completos; los cortos se repiten para que el preview dure.
+    var total = len >= MIN_STEPS ? len : len * Math.ceil(MIN_STEPS / len);
+
     var step = 0;
     var token = { onStop: onStop, intervalId: null, kit: kit || null };
     current = token;
@@ -439,11 +456,11 @@ DH.PreviewPlayer = (function () {
     function tick() {
       if (current !== token) return; // alguien llamó stop()
       var t = DH.Audio.getCtx().currentTime + 0.005;
-      var idx = step % STEPS;
-      for (var r = 0; r < rows.length; r++) {
-        var row = rows[r];
-        var arr = pattern && pattern[row.id];
-        if (arr && arr[idx]) DH.Audio.trigger(row.id, t, undefined, token.kit);
+      var idx = step % len;
+      for (var r = 0; r < pieceIds.length; r++) {
+        var id = pieceIds[r];
+        var arr = pattern[id];
+        if (arr && arr[idx]) DH.Audio.trigger(id, t, undefined, token.kit);
       }
       step++;
       if (step >= total) {
