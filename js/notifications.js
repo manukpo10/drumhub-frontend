@@ -23,7 +23,9 @@ DH.Notifications = (function () {
       var list = ((page && page.content) || []).map(function (n) {
         return {
           id: String(n.id),
-          type: n.type,
+          // Backend sends the enum uppercase (LIKE/COMMENT/FOLLOW); the UI renders by
+          // lowercase type, so normalize here or real notifications render with an empty body.
+          type: (n.type || '').toLowerCase(),
           user: n.triggeredBy,
           time: new Date(n.createdAt).getTime(),
           read: n.read,

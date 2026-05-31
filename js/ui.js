@@ -126,7 +126,8 @@ DH.UI = (function () {
     });
 
     if (u && DH.Notifications) {
-      DH.Notifications.seedDemo(u.user);
+      // No seedDemo: notifications come from the backend only. An empty panel shows
+      // "Sin notificaciones todavía." instead of injecting fake demo entries.
       mountNotifsDropdown(u);
     }
   }

@@ -27,10 +27,13 @@ DH.pages.editor = function (params) {
       app.innerHTML = '<div class="page"><div class="empty"><h4>No tenés permisos</h4><p>Solo el autor del groove puede editarlo.</p><button class="btn-primary" onclick="DH.Router.go(\'/groove/' + editingGroove.slug + '\')">Volver al groove</button></div></div>';
       return;
     }
-    // Guard adicional: solo permito editar grooves que efectivamente están en mi userGrooves storage.
-    // Los del mock global no deberían ser editables porque updateUserGroove fallaría en silencio.
+    // Un groove con ID numérico es un groove real del backend: el autor ya quedó verificado arriba
+    // y el backend revalida ownership al guardar, así que es editable desde cualquier navegador.
+    // Solo bloqueo los grooves mock de la biblioteca base (ID no numérico) que no estén en mi storage,
+    // porque esos no se pueden persistir.
+    var hasBackendId = !isNaN(parseInt(editingGroove.id, 10));
     var isInMyStorage = DH.Store.getUserGrooves().some(function (g) { return g.id === editingGroove.id; });
-    if (!isInMyStorage) {
+    if (!hasBackendId && !isInMyStorage) {
       app.innerHTML = '<div class="page"><div class="empty"><h4>Este groove no se puede editar</h4><p>Es un groove de la biblioteca base de DrumHub. Si querés una variante, podés subir uno nuevo basado en este patrón.</p><button class="btn-primary" onclick="DH.Router.go(\'/upload\')">+ Subir mi versión</button></div></div>';
       return;
     }

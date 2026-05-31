@@ -24,7 +24,11 @@ DH.pages.groove = function (params) {
   var author = DH.UI.drummerOrFallback(g.author);
   var isFav = DH.Store.isFavorite(g.id);
   var session = DH.Store.getUser();
-  var canEdit = session && session.user === g.author && DH.Store.getUserGrooves().some(function (x) { return x.id === g.id; });
+  // Author owns it AND it's persistable: a numeric backend id (editable from any browser,
+  // backend revalidates ownership) or a local-only groove present in my storage.
+  var gHasBackendId = !isNaN(parseInt(g.id, 10));
+  var canEdit = session && session.user === g.author &&
+    (gHasBackendId || DH.Store.getUserGrooves().some(function (x) { return x.id === g.id; }));
   var related = DH.GROOVES.filter(function (x) { return x.genre === g.genre && x.id !== g.id; }).slice(0, 3);
   if (related.length < 3) {
     related = related.concat(DH.GROOVES.filter(function (x) { return x.id !== g.id && related.indexOf(x) === -1; }).slice(0, 3 - related.length));
