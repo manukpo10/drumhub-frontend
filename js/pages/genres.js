@@ -75,8 +75,8 @@ DH.pages.genres = function () {
       +   '</div>'
       +   (featured ? '<div class="gx-featured">▸ Más popular: <strong>' + esc(featured.title) + '</strong> por ' + esc(featured.author) + '</div>' : '')
       +   (topDrummer ? '<div class="gx-drummer"><span class="gx-drummer-avatar" style="background:' + color + '20;color:' + color + ';border-color:' + color + '">' + esc(topDrummer.init) + '</span><span><strong>' + esc(topDrummer.name) + '</strong> · ' + esc(topDrummer.role) + '</span></div>' : '')
-      + '</div>'
-      + '<div class="gx-cta">Ver género <span>→</span></div>';
+      +   '<div class="gx-cta">Ver género <span>→</span></div>'
+      + '</div>';
     el.addEventListener('click', function () { DH.Router.go('/genre/' + slug); });
     grid.appendChild(el);
   });

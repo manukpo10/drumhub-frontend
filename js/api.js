@@ -84,6 +84,7 @@ DH.Api = (function () {
     getFavorites: function (page) {
       return request('GET', '/api/users/me/favorites?page=' + (page || 0) + '&size=100', null, true);
     },
+    getFavoriteStatus: function (grooveId) { return request('GET', '/api/users/me/favorites/' + grooveId + '/status', null, true); },
     addFavorite: function (grooveId) { return request('POST', '/api/users/me/favorites/' + grooveId, null, true); },
     removeFavorite: function (grooveId) { return request('DELETE', '/api/users/me/favorites/' + grooveId, null, true); },
 
@@ -96,6 +97,7 @@ DH.Api = (function () {
     unfollow: function (username) { return request('DELETE', '/api/users/' + username + '/follow', null, true); },
     getFollowers: function (username) { return request('GET', '/api/users/' + username + '/followers?size=50'); },
     getFollowing: function (username) { return request('GET', '/api/users/' + username + '/following?size=50'); },
+    getFollowStatus: function (username) { return request('GET', '/api/users/' + username + '/follow/status', null, true); },
 
     // Notifications
     getNotifications: function () { return request('GET', '/api/notifications?size=20', null, true); },

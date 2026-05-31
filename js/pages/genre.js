@@ -86,7 +86,6 @@ DH.pages.genre = function (params, query) {
           +   '<div class="gf-stats">'
           +     '<div class="gf-stat"><div class="n">' + (featured.plays || 0) + '</div><div class="l">Plays</div></div>'
           +     '<div class="gf-stat"><div class="n">' + (featured.likes || 0) + '</div><div class="l">Likes</div></div>'
-          +     '<div class="gf-stat"><div class="n">' + Math.round((featured.likes || 0) / 6) + '</div><div class="l">Saved</div></div>'
           +   '</div>'
           + '</div>'
           + DH.UI.miniGrid(featured.pattern)

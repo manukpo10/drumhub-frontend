@@ -6,9 +6,12 @@ DH.pages = DH.pages || {};
 DH.pages.home = function () {
   var app = document.getElementById('app');
   DH.Router.setTitle('La biblioteca de grooves');
-  var featured = DH.GROOVES.find(function (g) { return g.featured; }) || DH.GROOVES[0];
-  var trending = DH.GROOVES.filter(function (g) { return g.id !== featured.id; }).slice(0, 6);
-  var sideGrooves = DH.GROOVES.filter(function (g) { return g.id !== featured.id; }).slice(0, 3);
+  // Rank all grooves by real likes. NOTE: likes are a cumulative count with no per-like
+  // timestamp, so "de la semana" is most-liked overall (we can't filter a real 7-day window).
+  var byLikes = DH.GROOVES.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); });
+  var featured = byLikes[0] || DH.GROOVES[0];          // Groove de la semana = el más likeado
+  var sideGrooves = byLikes.slice(1, 4);               // los 3 que le siguen (a la derecha)
+  var trending = byLikes.slice(4, 10);                 // tendencia: continúa después del bloque destacado (sin repetir)
   var esc = DH.UI.escape;
 
   app.innerHTML = ''
@@ -253,10 +256,17 @@ DH.pages.home = function () {
   // ── Hero BG ──
   DH.UI.heroBg(document.getElementById('hero-bg'));
 
-  // ── Ticker ──
+  // ── Ticker ── real recent uploads (newest grooves from the backend), not hardcoded.
   var tt = document.getElementById('ticker-track');
-  var items = DH.TICKER.concat(DH.TICKER);
-  items.forEach(function (item) {
+  var tickerSource = (DH.GROOVES || []).slice().sort(function (a, b) {
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  }).slice(0, 10).map(function (g) {
+    return { text: g.author + ' subió', groove: g.title };
+  });
+  // Fallback to mock only if there are no real grooves yet (empty backend).
+  if (!tickerSource.length) tickerSource = DH.TICKER;
+  // Duplicate the list so the marquee loops seamlessly.
+  tickerSource.concat(tickerSource).forEach(function (item) {
     var el = document.createElement('div'); el.className = 'ticker-item';
     el.innerHTML = '<div class="ticker-dot"></div>' + esc(item.text) + ' <em>' + esc(item.groove) + '</em>';
     tt.appendChild(el);
@@ -370,11 +380,20 @@ DH.pages.home = function () {
     homeStatsMap[g.author].grooves++;
     homeStatsMap[g.author].likes += (g.likes || 0);
   });
-  var rankedDrummers = (DH.DRUMMERS || []).map(function (d) {
+  var withStats = (DH.DRUMMERS || []).map(function (d) {
     var s = homeStatsMap[d.user] || { grooves: 0, likes: 0 };
     return Object.assign({}, d, { grooves: s.grooves, likes: s.likes });
-  }).sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); }).slice(0, 8);
-  var maxLikes = rankedDrummers.reduce(function (m, d) { return Math.max(m, d.likes || 0); }, 1);
+  });
+  // Combined ranking score: 70% popularity (likes) + 30% activity (grooves count),
+  // each normalized 0..1 so the very different scales (likes in thousands, grooves single-digit)
+  // are comparable. A drummer who is both prolific and liked rises; a single-hit one doesn't dominate.
+  var maxL = withStats.reduce(function (m, d) { return Math.max(m, d.likes || 0); }, 0) || 1;
+  var maxG = withStats.reduce(function (m, d) { return Math.max(m, d.grooves || 0); }, 0) || 1;
+  withStats.forEach(function (d) {
+    d.score = 0.7 * ((d.likes || 0) / maxL) + 0.3 * ((d.grooves || 0) / maxG);
+  });
+  var rankedDrummers = withStats.sort(function (a, b) { return b.score - a.score; }).slice(0, 8);
+  var maxScore = rankedDrummers.length ? (rankedDrummers[0].score || 1) : 1;
   rankedDrummers.forEach(function (d, i) {
     var rank = String(i + 1).padStart(2, '0');
     var el = document.createElement('div'); el.className = 'rank-row';
@@ -385,7 +404,7 @@ DH.pages.home = function () {
       +   '<div class="rank-name">' + esc(d.user) + '</div>'
       +   '<div class="rank-meta"><em>' + d.grooves + '</em> grooves · <em>' + d.likes + '</em> likes</div>'
       + '</div>'
-      + '<div class="rank-bar"><div class="rank-bar-fill" style="width:' + Math.round((d.likes || 0) / maxLikes * 100) + '%;background:' + d.color + '"></div></div>'
+      + '<div class="rank-bar"><div class="rank-bar-fill" style="width:' + Math.round((d.score || 0) / maxScore * 100) + '%;background:' + d.color + '"></div></div>'
       + '<button class="btn-follow" type="button">+ Seguir</button>';
     el.addEventListener('click', function (e) {
       if (e.target.classList.contains('btn-follow')) { e.stopPropagation(); return; }
@@ -433,9 +452,11 @@ DH.pages.home = function () {
     el.addEventListener('click', function () { DH.Router.go(el.getAttribute('data-go')); });
   });
 
-  // Fetch real totals and update hero stats (size:1 = minimal payload, only need totalElements)
+  // Fetch real totals and update hero stats.
+  // Grooves are fetched in full (size:1000) so we can sum REAL plays across ALL grooves,
+  // not just the ~50 loaded at boot. Users only need the count (size:1 → totalElements).
   Promise.all([
-    DH.Api.getGrooves({ size: 1 }),
+    DH.Api.getGrooves({ size: 1000 }),
     DH.Api.getUsers({ size: 1 })
   ]).then(function (results) {
     var groovesPage = results[0];
@@ -455,9 +476,10 @@ DH.pages.home = function () {
     if (elU && usersPage && usersPage.totalElements != null) {
       elU.textContent = usersPage.totalElements;
     }
-    // Total plays: sum from the grooves already loaded in memory (no extra endpoint needed)
+    // Total plays: sum the REAL plays from every groove returned by the backend.
     if (elP) {
-      var totalPlays = (DH.GROOVES || []).reduce(function (a, g) { return a + (g.plays || 0); }, 0);
+      var allGrooves = (groovesPage && groovesPage.content) || [];
+      var totalPlays = allGrooves.reduce(function (a, g) { return a + (g.plays || 0); }, 0);
       elP.innerHTML = totalPlays >= 1000
         ? (totalPlays / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em>'
         : String(totalPlays);

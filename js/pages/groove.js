@@ -163,7 +163,7 @@ DH.pages.groove = function (params) {
     +       '<div class="author-stats-v2">'
     +         '<div class="astat"><div class="astat-num">' + (author.grooves || 0) + '</div><div class="astat-label">Grooves</div></div>'
     +         '<div class="astat"><div class="astat-num">' + pretty(author.likes || 0) + '</div><div class="astat-label">Likes</div></div>'
-    +         '<div class="astat"><div class="astat-num">' + (author.followers || Math.max(20, Math.round((author.likes || 0) / 5))) + '</div><div class="astat-label">Seguid.</div></div>'
+    +         '<div class="astat"><div class="astat-num">' + (author.followers || 0) + '</div><div class="astat-label">Seguid.</div></div>'
     +       '</div>'
     +       '<button class="btn-follow-block" id="follow-btn">+ Seguir</button>'
     +     '</div>'
@@ -259,6 +259,13 @@ DH.pages.groove = function (params) {
         document.getElementById('g-ico-stop').style.display = playing ? '' : 'none';
         st.textContent = playing ? 'Reproduciendo' : 'Detenido';
         st.className = playing ? 'play-status on' : 'play-status';
+        // Count every time playback starts (each Play press), even from the same client.
+        if (playing && !isNaN(numGrooveId)) {
+          DH.Api.incrementPlays(numGrooveId).catch(function () {});
+          g.plays = (g.plays || 0) + 1;
+          var playsStat = app.querySelector('.groove-stats-inline .gstat-num');
+          if (playsStat) playsStat.textContent = pretty(g.plays);
+        }
       }
     });
     DH.Router.setPlayer(player);
@@ -403,24 +410,26 @@ DH.pages.groove = function (params) {
   }
   renderComments();
 
-  // ── Increment play count via API (fire-and-forget) ──
+  // ── numGrooveId used by fav sync and comment fetch ──
   var numGrooveId = parseInt(g.id, 10);
-  if (!isNaN(numGrooveId)) {
-    DH.Api.incrementPlays(numGrooveId).catch(function () {});
-  }
 
-  // ── Sync favorite state for THIS groove from backend ──
-  // Only patch the current groove's state — never replace the full favorites array,
-  // which could wipe other favorites if the API response shape is unexpected.
-  if (DH.Store.isLoggedIn()) {
-    DH.Api.getFavorites().then(function (favPage) {
-      var content = (favPage && favPage.content) || [];
-      if (!Array.isArray(content)) return;
+  // ── Sync favorite state for THIS groove via dedicated status endpoint ──
+  // Uses /api/users/me/favorites/{id}/status — returns { favorited, totalFavorites }
+  // for exactly this groove. No pagination, no field-name ambiguity.
+  // Guard: if the user already clicked the heart, their action is authoritative —
+  // a late-arriving status response (issued before the click) must NOT overwrite it.
+  var userToggledFav = false;
+  var favSyncPending = DH.Store.isLoggedIn() && !isNaN(numGrooveId);
+  if (favSyncPending) {
+    DH.Api.getFavoriteStatus(numGrooveId).then(function (res) {
+      // Re-enable the heart buttons now that backend state is known (see disable below).
+      enableFavButtons();
+      if (userToggledFav) return; // user already acted; ignore stale sync
+      var status = res && (res.data || res);
+      if (!status || typeof status.favorited === 'undefined') return;
       var grooveIdStr = String(g.id);
-      var isInBackend = content.some(function (f) {
-        return String(f.grooveId || f.id || '') === grooveIdStr;
-      });
-      var isInLocal = DH.Store.isFavorite(g.id);
+      var isInBackend = !!status.favorited;
+      var isInLocal   = DH.Store.isFavorite(g.id);
       if (isInBackend !== isInLocal) {
         var favs = DH.Store.getFavorites();
         if (isInBackend) {
@@ -431,14 +440,14 @@ DH.pages.groove = function (params) {
         localStorage.setItem('dh.favorites', JSON.stringify(favs));
         refreshFav();
       }
-    }).catch(function () {});
+    }).catch(function () { enableFavButtons(); });
   }
 
   // ── Fetch real author stats from API and update the sidebar ──
   Promise.all([
     DH.Api.getUser(g.author),
     DH.Api.getFollowers(g.author),
-    DH.Api.getGrooves({ size: 200 })
+    DH.Api.getGrooves({ size: 1000 })
   ]).then(function (results) {
     var apiUser      = results[0];
     var followersPage = results[1];
@@ -473,6 +482,9 @@ DH.pages.groove = function (params) {
         var alreadyLocal = combined.some(function (lc) { return lc.user === ac.user && lc.text === ac.text; });
         if (!alreadyLocal) combined.push(ac);
       });
+      // Update comments section title with real count
+      var cmtTitle = app.querySelector('.comments-section-v2 .section-title-sm');
+      if (cmtTitle) cmtTitle.innerHTML = 'Comentarios <em>(' + combined.length + ')</em>';
       // Re-render with merged list
       listEl.innerHTML = '';
       if (!combined.length) {
@@ -514,16 +526,36 @@ DH.pages.groove = function (params) {
   // ── Actions ──
   var likeBtn = document.getElementById('g-like');
   var saveBtn = document.getElementById('g-save');
+  function enableFavButtons() {
+    if (likeBtn) likeBtn.disabled = false;
+    if (saveBtn) saveBtn.disabled = false;
+  }
+  // Disable the heart buttons until the status sync confirms the real backend state.
+  // This prevents a click on stale local state from sending a redundant POST → 409.
+  // The status endpoint is a single-row lookup, so this window is imperceptible.
+  if (favSyncPending) {
+    if (likeBtn) likeBtn.disabled = true;
+    if (saveBtn) saveBtn.disabled = true;
+  }
   function refreshFav() {
     var fav = DH.Store.isFavorite(g.id);
     likeBtn.classList.toggle('liked', fav);
     saveBtn.classList.toggle('saved', fav);
     saveBtn.textContent = fav ? '✓ Guardado' : '⊕ Guardar';
-    likeBtn.textContent = '♥ ' + ((g.likes || 0) + (fav ? 1 : 0));
+    // g.likes is the single source of truth (mutated optimistically in doFav).
+    // Show it directly — no "+1 if fav", that double-counted against doFav's mutation.
+    likeBtn.textContent = '♥ ' + (g.likes || 0);
+    var likesStat = app.querySelectorAll('.groove-stats-inline .gstat-num')[1];
+    if (likesStat) likesStat.textContent = g.likes || 0;
   }
   function doFav() {
     if (!DH.Store.isLoggedIn()) { DH.UI.openModal('login'); return; }
-    DH.Store.toggleFavorite(g.id);
+    userToggledFav = true; // mark interaction so the async status sync won't clobber local state
+    var added = DH.Store.toggleFavorite(g.id);
+    var delta = added ? 1 : -1;
+    g.likes = Math.max(0, (g.likes || 0) + delta);
+    var grooveInMem = DH.GROOVES.filter(function (x) { return String(x.id) === String(g.id); })[0];
+    if (grooveInMem) grooveInMem.likes = g.likes;
     refreshFav();
   }
   likeBtn.addEventListener('click', doFav);
@@ -564,6 +596,16 @@ DH.pages.groove = function (params) {
       DH.UI.toast((err && err.message) || 'Error', 'error');
     });
   });
+
+  // ── Sync initial follow state from API ──
+  if (DH.Store.isLoggedIn() && DH.Store.getUser().user !== g.author) {
+    DH.Api.getFollowStatus(g.author).then(function (st) {
+      if (st && st.following) {
+        var fb = document.getElementById('follow-btn');
+        if (fb) { fb.classList.add('following'); fb.textContent = '✓ Siguiendo'; }
+      }
+    }).catch(function () {});
+  }
 
   // ── Export ──
   function openUpgradeModal() {

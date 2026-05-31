@@ -46,11 +46,9 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
   var esc = DH.UI.escape;
   var session = DH.Store.getUser();
   var isMe = session && session.user === d.user;
-  // Am I already following this profile? Derive it from its followers list (already fetched) —
-  // no extra request needed. The followers come from the backend as raw UserResponse (.username).
-  var iFollow = !!session && !isMe && (followersUsers || []).some(function (fu) {
-    return (fu.username || fu.user) === session.user;
-  });
+  // iFollow starts false; corrected async via getFollowStatus after render.
+  // Derivation from the paginated followers list (size=50) was unreliable for >50 followers.
+  var iFollow = false;
 
   // Merge API grooves with any locally-stored grooves for the current user
   var fromUser = isMe ? DH.Store.getUserGrooves().filter(function (g) { return g.author === d.user; }) : [];
@@ -81,13 +79,9 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
   var genreEntries = Object.keys(byGenre).map(function (k) { return { name: k, count: byGenre[k] }; }).sort(function (a, b) { return b.count - a.count; });
   var genreColorMap = { Funk: '#ff4d00', Jazz: '#00c9ff', Rock: '#e8ff00', Metal: '#a855f7', Reggae: '#22c55e', Bossa: '#f43f5e', Blues: '#fb923c', Pop: '#84cc16', Soul: '#38bdf8', 'Hip-Hop': '#ffaa00', 'R&B': '#fb7185', Latin: '#22c55e' };
 
-  // Followers / following — prefer API data, fall back to mock pool
-  var followersDisplay = followersUsers.length
-    ? followersUsers.map(function (u) { return DH.Adapter.user(u); })
-    : DH.DRUMMERS.filter(function (x) { return x.user !== d.user; }).slice(0, 8);
-  var followingDisplay = followingUsers.length
-    ? followingUsers.map(function (u) { return DH.Adapter.user(u); })
-    : DH.DRUMMERS.filter(function (x) { return x.user !== d.user; }).slice(2, 6);
+  // Followers / following — use real API data only, never fall back to mock pool
+  var followersDisplay = followersUsers.map(function (u) { return DH.Adapter.user(u); });
+  var followingDisplay = followingUsers.map(function (u) { return DH.Adapter.user(u); });
 
   function relTime(ms) {
     var diff = Date.now() - ms;
@@ -171,11 +165,7 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
           +   '<span class="tg-stat"><em>' + pretty(top.plays || 0) + '</em> reproduc.</span>'
           +   '<span class="tg-stat"><em>' + (top.likes || 0) + '</em> likes</span>'
           + '</div>'
-          + DH.UI.miniGrid({
-              hihat: [1,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0],
-              snare: [0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0],
-              kick:  [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0]
-            })
+          + DH.UI.miniGrid(top.pattern || {})
           + '</div>'
         : '')
 
@@ -377,6 +367,19 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
       DH.UI.toast((err && err.message) || 'Error', 'error');
     });
   });
+
+  // ── Sync real follow state via dedicated endpoint (avoids pagination cap on followers list) ──
+  if (fb && session && !isMe) {
+    DH.Api.getFollowStatus(d.user).then(function (st) {
+      if (st && st.following) {
+        fb.classList.add('following');
+        fb.textContent = '✓ Siguiendo';
+      } else {
+        fb.classList.remove('following');
+        fb.textContent = '+ Seguir';
+      }
+    }).catch(function () {});
+  }
 
   var changeAv = document.getElementById('change-avatar-btn');
   if (changeAv) changeAv.addEventListener('click', function () {

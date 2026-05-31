@@ -68,9 +68,9 @@ DH.pages.drummers = function (_params, query) {
     +     '<h1 class="drummers-title">La <em>comunidad</em></h1>'
     +     '<p class="drummers-sub">Bateristas que comparten sus grooves con la plataforma. Filtrá por género o buscá por nombre para encontrar a quién seguir.</p>'
     +     '<div class="drummers-stats">'
-    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-count">' + drummersList.length + '</div><div class="g-stat-label">Bateristas</div></div>'
-    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-grooves">' + totalGrooves + '</div><div class="g-stat-label">Grooves subidos</div></div>'
-    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-likes">' + (totalLikes / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em></div><div class="g-stat-label">Likes totales</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-count">—</div><div class="g-stat-label">Bateristas</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-grooves">—</div><div class="g-stat-label">Grooves subidos</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-likes">—</div><div class="g-stat-label">Likes totales</div></div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
@@ -279,25 +279,27 @@ DH.pages.drummers = function (_params, query) {
           +       (isTop ? '<span class="badge top">⭐ Top</span>' : '')
           +     '</div>'
           +   '</div>'
-          +   '<p class="dx-bio">' + esc(d.bio || 'Sin bio.') + '</p>'
+          +   (d.bio ? '<p class="dx-bio">' + esc(d.bio) + '</p>' : '')
           +   (topGroove
               ? '<div class="dx-top-groove" data-go="/groove/' + esc(topGroove.slug) + '">'
-                + '<div class="dx-top-label">▸ Top groove: <strong>' + esc(topGroove.title) + '</strong> · ' + topGroove.bpm + ' BPM</div>'
+                + '<div class="dx-top-label">▸ <strong>' + esc(topGroove.title) + '</strong> · ' + topGroove.bpm + ' BPM</div>'
                 + DH.UI.miniGrid(topGroove.pattern, 'dx-mini')
                 + '</div>'
               : '')
-          +   '<div class="dx-genres">' + topGenres.map(function (g) {
-              var color = (DH.GENRE_INFO[g.name] && DH.GENRE_INFO[g.name].color) || 'var(--muted)';
-              return '<span class="dx-genre-pill" style="color:' + color + ';border-color:' + color + '40">' + esc(g.name) + ' · ' + g.count + '</span>';
-            }).join('') + '</div>'
-          +   '<div class="dx-stats">'
-          +     '<div class="dx-stat"><em>' + (d.grooves || 0) + '</em> grooves</div>'
-          +     '<div class="dx-stat"><em>' + (d.likes || 0) + '</em> likes</div>'
+          +   '<div class="dx-footer">'
+          +     '<div class="dx-genres">' + topGenres.map(function (g) {
+                  var color = (DH.GENRE_INFO[g.name] && DH.GENRE_INFO[g.name].color) || 'var(--muted)';
+                  return '<span class="dx-genre-pill" style="color:' + color + ';border-color:' + color + '40">' + esc(g.name) + ' · ' + g.count + '</span>';
+                }).join('') + '</div>'
+          +     '<div class="dx-stats">'
+          +       '<div class="dx-stat"><em>' + (d.grooves || 0) + '</em> grooves</div>'
+          +       '<div class="dx-stat"><em>' + (d.likes || 0) + '</em> likes</div>'
+          +     '</div>'
           +   '</div>'
-          + '</div>'
-          + '<div class="dx-actions">'
-          +   '<button class="btn-follow dx-follow" type="button" data-follow="' + esc(d.user) + '">+ Seguir</button>'
-          +   '<button class="btn-action dx-view" data-go="/profile/' + esc(d.user) + '">Ver perfil →</button>'
+          +   '<div class="dx-actions">'
+          +     '<button class="btn-follow dx-follow" type="button" data-follow="' + esc(d.user) + '">+ Seguir</button>'
+          +     '<button class="btn-action dx-view" data-go="/profile/' + esc(d.user) + '">Ver perfil →</button>'
+          +   '</div>'
           + '</div>';
 
         // Hover preview: arranca después de 250ms para evitar disparar en pase rápido del mouse
@@ -423,8 +425,8 @@ DH.pages.drummers = function (_params, query) {
   // Enrich drummersList with real API data: actual grooves count, total likes, real bio.
   // Runs after the initial render so the page is never blocked waiting for the API.
   Promise.all([
-    DH.Api.getUsers({ size: 200 }),
-    DH.Api.getGrooves({ size: 200 })
+    DH.Api.getUsers({ size: 1000 }),
+    DH.Api.getGrooves({ size: 1000 })
   ]).then(function (results) {
     var apiUsers  = (results[0] && results[0].content) || [];
     var apiGrooves = (results[1] && results[1].content) || [];
