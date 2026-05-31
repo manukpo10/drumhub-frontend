@@ -317,9 +317,22 @@ DH.UI = (function () {
       if (id.length < 3) { alert('Ingresá un usuario o email válido (mínimo 3 caracteres).'); return; }
       if (pw.length < 4) { alert('La contraseña debe tener al menos 4 caracteres.'); return; }
       var username = id.indexOf('@') !== -1 ? id.split('@')[0] : id;
-      var u = DH.Store.login(username, id.indexOf('@') !== -1 ? id : '');
-      closeModal(); renderNav();
-      DH.Router.go('/profile/' + u.user);
+      var submitBtn = e.target.querySelector('[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      DH.Store.login(username, pw).then(function (u) {
+        closeModal(); renderNav();
+        DH.Router.go('/profile/' + u.user);
+      }).catch(function (err) {
+        if (submitBtn) submitBtn.disabled = false;
+        var errEl = e.target.querySelector('.modal-error');
+        if (!errEl) {
+          errEl = document.createElement('p');
+          errEl.className = 'modal-error';
+          errEl.style.cssText = 'color:#ff4d4d;font-size:0.85rem;margin:0.5rem 0 0';
+          e.target.appendChild(errEl);
+        }
+        errEl.textContent = (err && err.message) || 'Usuario o contraseña incorrectos';
+      });
     });
     // Avatar picker: galería de 24 seeds curadas, default a uno random para que arranque elegido.
     var picker = box.querySelector('#avatar-picker');
@@ -344,18 +357,33 @@ DH.UI = (function () {
 
     box.querySelector('#form-register').addEventListener('submit', function (e) {
       e.preventDefault();
+      var submitBtn = e.target.querySelector('[type="submit"]');
+      if (submitBtn && submitBtn.disabled) return; // guard: prevent double submit
       var fd = new FormData(e.target);
-      var username = (fd.get('username') || '').toString().trim();
-      var email    = (fd.get('email')    || '').toString().trim();
-      var pw       = (fd.get('password') || '').toString();
+      var username    = (fd.get('username') || '').toString().trim();
+      var email       = (fd.get('email')    || '').toString().trim();
+      var pw          = (fd.get('password') || '').toString();
+      var avatarSeed  = (fd.get('avatar')   || '').toString();
       if (username.length < 3) { alert('El usuario debe tener al menos 3 caracteres.'); return; }
       if (!/^[a-zA-Z0-9_]+$/.test(username)) { alert('El usuario solo puede tener letras, números y guión bajo.'); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Ingresá un email válido.'); return; }
-      if (pw.length < 6) { alert('La contraseña debe tener al menos 6 caracteres.'); return; }
-      var u = DH.Store.login(username, email, (fd.get('avatar') || '').toString());
-      closeModal();
-      renderNav();
-      showWelcome(u);
+      if (pw.length < 8) { alert('La contraseña debe tener al menos 8 caracteres.'); return; }
+      if (submitBtn) submitBtn.disabled = true;
+      DH.Store.login(username, pw, username, email, avatarSeed).then(function (u) {
+        closeModal();
+        renderNav();
+        showWelcome(u);
+      }).catch(function (err) {
+        if (submitBtn) submitBtn.disabled = false;
+        var errEl = e.target.querySelector('.modal-error');
+        if (!errEl) {
+          errEl = document.createElement('p');
+          errEl.className = 'modal-error';
+          errEl.style.cssText = 'color:#ff4d4d;font-size:0.85rem;margin:0.5rem 0 0';
+          e.target.appendChild(errEl);
+        }
+        errEl.textContent = (err && err.message) || 'Error al crear la cuenta';
+      });
     });
   }
   function showWelcome(u) {
@@ -535,15 +563,69 @@ DH.UI = (function () {
     openModal: openModal, closeModal: closeModal,
     miniGrid: miniGrid, grooveCard: grooveCard,
     heroBg: heroBg, stopAllHeroIntervals: stopAllHeroIntervals,
-    openAvatarPicker: openAvatarPicker
+    openAvatarPicker: openAvatarPicker,
+    toast: toast
   };
+
+  function toast(message, type, action) {
+    var existing = document.getElementById('dh-toast');
+    if (existing) existing.remove();
+
+    var colors = {
+      success: { bg: '#22c55e', color: '#000' },
+      error:   { bg: '#ef4444', color: '#fff' },
+      info:    { bg: '#3b82f6', color: '#fff' }
+    };
+    var c = colors[type] || colors.info;
+
+    var el = document.createElement('div');
+    el.id = 'dh-toast';
+    el.style.cssText = [
+      'position:fixed', 'top:20px', 'left:50%', 'transform:translateX(-50%) translateY(-80px)',
+      'background:' + c.bg, 'color:' + c.color,
+      'padding:14px 24px', 'border-radius:10px',
+      'font-family:Barlow,sans-serif', 'font-size:0.95rem', 'font-weight:600',
+      'display:flex', 'align-items:center', 'gap:12px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.35)',
+      'z-index:99999', 'max-width:90vw',
+      'transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1)'
+    ].join(';');
+
+    var icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+    el.innerHTML = '<span style="font-size:1.1rem">' + icon + '</span><span>' + message + '</span>';
+
+    if (action) {
+      var btn = document.createElement('a');
+      btn.textContent = action.label;
+      btn.href = '#' + action.href;
+      btn.style.cssText = 'margin-left:8px;text-decoration:underline;cursor:pointer;white-space:nowrap;color:inherit;opacity:0.85';
+      btn.addEventListener('click', function() { el.remove(); });
+      el.appendChild(btn);
+    }
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'background:none;border:none;color:inherit;font-size:1.2rem;cursor:pointer;opacity:0.7;margin-left:4px;padding:0 2px;line-height:1';
+    closeBtn.addEventListener('click', function() { el.remove(); });
+    el.appendChild(closeBtn);
+
+    document.body.appendChild(el);
+    // Animate in
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { el.style.transform = 'translateX(-50%) translateY(0)'; });
+    });
+    // Auto-dismiss
+    setTimeout(function() {
+      if (el.parentNode) {
+        el.style.transform = 'translateX(-50%) translateY(-80px)';
+        setTimeout(function() { if (el.parentNode) el.remove(); }, 350);
+      }
+    }, type === 'error' ? 5000 : 3500);
+  }
 })();
 
 // Global escape to close modal
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') DH.UI && DH.UI.closeModal && DH.UI.closeModal();
 });
-document.addEventListener('click', function (e) {
-  var ov = document.getElementById('modal-overlay');
-  if (ov && e.target === ov) DH.UI.closeModal();
-});
+// Clicking outside the modal box no longer closes it — avoids accidental dismissal during login/register.

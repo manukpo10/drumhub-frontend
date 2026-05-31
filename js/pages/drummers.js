@@ -14,6 +14,27 @@ DH.pages.drummers = function (_params, query) {
     sort: query.sort || 'grooves'  // grooves | likes | name
   };
 
+  // Working list — starts as mock data for instant render, replaced with real API data
+  var drummersList = DH.DRUMMERS.slice();
+
+  // Which usernames the current user already follows. Filled async; until then buttons
+  // stay at their default "+ Seguir" and get corrected once the fetch resolves.
+  var myFollowing = null;
+  function applyFollowStates() {
+    if (!myFollowing) return;
+    app.querySelectorAll('[data-follow]').forEach(function (b) {
+      var following = myFollowing.indexOf(b.getAttribute('data-follow')) !== -1;
+      b.classList.toggle('following', following);
+      b.textContent = following ? '✓ Siguiendo' : '+ Seguir';
+    });
+  }
+  if (DH.Store.isLoggedIn()) {
+    DH.Api.getFollowing(DH.Store.getUser().user).then(function (page) {
+      myFollowing = ((page && page.content) || []).map(function (fu) { return fu.username; });
+      applyFollowStates();
+    }).catch(function () { myFollowing = []; });
+  }
+
   // Calcula géneros que toca cada baterista basado en sus grooves
   function genresOf(user) {
     var seen = {};
@@ -34,8 +55,8 @@ DH.pages.drummers = function (_params, query) {
     if (location.hash !== newHash) history.replaceState(null, '', newHash);
   }
 
-  var totalGrooves = DH.DRUMMERS.reduce(function (a, d) { return a + (d.grooves || 0); }, 0);
-  var totalLikes = DH.DRUMMERS.reduce(function (a, d) { return a + (d.likes || 0); }, 0);
+  var totalGrooves = drummersList.reduce(function (a, d) { return a + (d.grooves || 0); }, 0);
+  var totalLikes = drummersList.reduce(function (a, d) { return a + (d.likes || 0); }, 0);
 
   app.innerHTML = ''
     + '<div class="drummers-hero">'
@@ -47,9 +68,9 @@ DH.pages.drummers = function (_params, query) {
     +     '<h1 class="drummers-title">La <em>comunidad</em></h1>'
     +     '<p class="drummers-sub">Bateristas que comparten sus grooves con la plataforma. Filtrá por género o buscá por nombre para encontrar a quién seguir.</p>'
     +     '<div class="drummers-stats">'
-    +       '<div class="g-stat"><div class="g-stat-num">' + DH.DRUMMERS.length + '</div><div class="g-stat-label">Bateristas</div></div>'
-    +       '<div class="g-stat"><div class="g-stat-num">' + totalGrooves + '</div><div class="g-stat-label">Grooves subidos</div></div>'
-    +       '<div class="g-stat"><div class="g-stat-num">' + (totalLikes / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em></div><div class="g-stat-label">Likes totales</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-count">' + drummersList.length + '</div><div class="g-stat-label">Bateristas</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-grooves">' + totalGrooves + '</div><div class="g-stat-label">Grooves subidos</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="dh-stat-likes">' + (totalLikes / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em></div><div class="g-stat-label">Likes totales</div></div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
@@ -111,12 +132,12 @@ DH.pages.drummers = function (_params, query) {
     var banner = document.getElementById('featured-banner');
     if (!banner) return;
     // Construyo 4 slides con criterios distintos
-    var byLikes = DH.DRUMMERS.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); });
-    var byGrooves = DH.DRUMMERS.slice().sort(function (a, b) { return (b.grooves || 0) - (a.grooves || 0); });
+    var byLikes = drummersList.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); });
+    var byGrooves = drummersList.slice().sort(function (a, b) { return (b.grooves || 0) - (a.grooves || 0); });
     var slides = [
       { tag: '🏆 Top del mes',       drummer: byLikes[0],      hint: 'El baterista más likeado de la comunidad' },
       { tag: '🔥 Más activo',         drummer: byGrooves[0],    hint: 'Quien más grooves subió últimamente' },
-      { tag: '🆕 Recién unido',       drummer: DH.DRUMMERS[DH.DRUMMERS.length - 1], hint: 'Acaba de sumarse a la plataforma' },
+      { tag: '🆕 Recién unido',       drummer: drummersList[drummersList.length - 1], hint: 'Acaba de sumarse a la plataforma' },
       { tag: '🎓 Para principiantes', drummer: byGrooves[2] || byLikes[2], hint: 'Sube grooves accesibles para arrancar' }
     ].filter(function (s) { return !!s.drummer; });
 
@@ -188,10 +209,9 @@ DH.pages.drummers = function (_params, query) {
     ['Todos'].concat(DH.GENRES_LIST).forEach(function (g) {
       var c = document.createElement('span');
       c.className = 'chip' + ((state.genre || 'Todos') === g ? ' active' : '');
-      // Count drummers que tocan ese género
       var cnt;
-      if (g === 'Todos') cnt = DH.DRUMMERS.length;
-      else cnt = DH.DRUMMERS.filter(function (d) { return genresOf(d.user).some(function (x) { return x.name === g; }); }).length;
+      if (g === 'Todos') cnt = drummersList.length;
+      else cnt = drummersList.filter(function (d) { return genresOf(d.user).some(function (x) { return x.name === g; }); }).length;
       c.innerHTML = esc(g) + ' <span class="chip-count">' + cnt + '</span>';
       c.addEventListener('click', function () {
         state.genre = g === 'Todos' ? '' : g;
@@ -214,7 +234,7 @@ DH.pages.drummers = function (_params, query) {
   function render() {
     syncUrl();
     var q = state.q.toLowerCase();
-    var results = DH.DRUMMERS.filter(function (d) {
+    var results = drummersList.filter(function (d) {
       if (state.genre && !genresOf(d.user).some(function (x) { return x.name === state.genre; })) return false;
       if (q) {
         var hay = (d.user + ' ' + d.name + ' ' + (d.bio || '')).toLowerCase();
@@ -313,11 +333,21 @@ DH.pages.drummers = function (_params, query) {
 
     app.querySelectorAll('[data-follow]').forEach(function (b) {
       b.addEventListener('click', function (e) {
+        e.preventDefault();
         e.stopPropagation();
-        b.classList.toggle('following');
-        b.textContent = b.classList.contains('following') ? '✓ Siguiendo' : '+ Seguir';
+        var targetUser = b.getAttribute('data-follow');
+        if (!DH.Store.isLoggedIn()) { DH.UI.openModal('login'); return; }
+        var isFollowing = b.classList.contains('following');
+        var action = isFollowing ? DH.Api.unfollow(targetUser) : DH.Api.follow(targetUser);
+        action.then(function () {
+          b.classList.toggle('following');
+          b.textContent = b.classList.contains('following') ? '✓ Siguiendo' : '+ Seguir';
+        }).catch(function (err) {
+          DH.UI.toast((err && err.message) || 'Error', 'error');
+        });
       });
     });
+    applyFollowStates();
     app.querySelectorAll('.dx-view').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); DH.Router.go(b.getAttribute('data-go')); });
     });
@@ -325,7 +355,7 @@ DH.pages.drummers = function (_params, query) {
 
   function renderSidebar() {
     // Featured: top drummer by likes
-    var top = DH.DRUMMERS.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); })[0];
+    var top = drummersList.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); })[0];
     var topGenres = genresOf(top.user).slice(0, 2);
     var featured = document.getElementById('featured-drummer');
     featured.innerHTML = ''
@@ -356,13 +386,30 @@ DH.pages.drummers = function (_params, query) {
       gh.appendChild(el);
     });
 
-    // Recent activity
+    // Recent activity (real: latest grooves sorted by createdAt)
     var ah = document.getElementById('d-activity');
     ah.innerHTML = '';
-    DH.ACTIVITY.forEach(function (a) {
-      var d = DH.findDrummer(a.user) || { color: '#6b6860', init: a.user.charAt(0).toUpperCase() };
+    function dRelTime(ms) {
+      var diff = Date.now() - ms, min = Math.floor(diff / 60000);
+      if (min < 1) return 'ahora mismo';
+      if (min < 60) return 'hace ' + min + ' min';
+      var h = Math.floor(min / 60);
+      if (h < 24) return 'hace ' + h + ' h';
+      var d = Math.floor(h / 24);
+      return 'hace ' + d + (d === 1 ? ' día' : ' días');
+    }
+    var recentG = (DH.GROOVES || [])
+      .filter(function (g) { return g.createdAt; })
+      .slice().sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); })
+      .slice(0, 6);
+    if (!recentG.length) recentG = (DH.GROOVES || []).slice(0, 6);
+    recentG.forEach(function (g) {
+      var dr = DH.findDrummer(g.author) || { color: '#6b6860', init: (g.author || '?')[0].toUpperCase() };
+      var timeStr = g.createdAt ? dRelTime(new Date(g.createdAt).getTime()) : '';
       var el = document.createElement('div'); el.className = 'act-item-v2';
-      el.innerHTML = '<div class="act-dot" style="background:' + d.color + '"></div><div><div class="act-text-v2"><strong>' + esc(a.user) + '</strong> ' + esc(a.action) + ' <a data-go="/groove/' + esc(a.targetSlug) + '">' + esc(a.target) + '</a></div><div class="act-time-v2">' + esc(a.time) + '</div></div>';
+      el.innerHTML = '<div class="act-dot" style="background:' + dr.color + '"></div>'
+        + '<div><div class="act-text-v2"><strong>' + esc(g.author) + '</strong> subió <a data-go="/groove/' + esc(g.slug) + '">' + esc(g.title) + '</a></div>'
+        + (timeStr ? '<div class="act-time-v2">' + timeStr + '</div>' : '') + '</div>';
       ah.appendChild(el);
     });
 
@@ -372,4 +419,58 @@ DH.pages.drummers = function (_params, query) {
   }
 
   render();
+
+  // Enrich drummersList with real API data: actual grooves count, total likes, real bio.
+  // Runs after the initial render so the page is never blocked waiting for the API.
+  Promise.all([
+    DH.Api.getUsers({ size: 200 }),
+    DH.Api.getGrooves({ size: 200 })
+  ]).then(function (results) {
+    var apiUsers  = (results[0] && results[0].content) || [];
+    var apiGrooves = (results[1] && results[1].content) || [];
+
+    // Real grooves count + total likes per author
+    var statsMap = {};
+    apiGrooves.forEach(function (g) {
+      var u = g.authorUsername;
+      if (!statsMap[u]) statsMap[u] = { grooves: 0, likes: 0 };
+      statsMap[u].grooves++;
+      statsMap[u].likes += (g.likes || 0);
+    });
+
+    // Build enriched list from API users, falling back to mock for color/init
+    var enriched = apiUsers.map(function (au) {
+      var mock  = DH.findDrummer(au.username) || {};
+      var stats = statsMap[au.username] || { grooves: 0, likes: 0 };
+      return {
+        user:     au.username,
+        name:     au.name     || mock.name     || au.username,
+        bio:      au.bio      || mock.bio      || '',
+        grooves:  stats.grooves,
+        likes:    stats.likes,
+        color:    mock.color  || '#6b6860',
+        init:     mock.init   || (au.name ? au.name[0] : au.username[0]).toUpperCase(),
+        location: mock.location || ''
+      };
+    });
+
+    // Append mock-only entries not in the API (legacy / demo drummers)
+    DH.DRUMMERS.forEach(function (d) {
+      if (!enriched.some(function (x) { return x.user === d.user; })) enriched.push(d);
+    });
+
+    drummersList = enriched;
+
+    // Update hero stats
+    var realTotal = drummersList.reduce(function (a, d) { return a + (d.grooves || 0); }, 0);
+    var realLikes = drummersList.reduce(function (a, d) { return a + (d.likes  || 0); }, 0);
+    var elCount   = document.getElementById('dh-stat-count');
+    var elGrooves = document.getElementById('dh-stat-grooves');
+    var elLikes   = document.getElementById('dh-stat-likes');
+    if (elCount)   elCount.textContent   = drummersList.length;
+    if (elGrooves) elGrooves.textContent = realTotal;
+    if (elLikes)   elLikes.innerHTML     = (realLikes / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em>';
+
+    render();
+  }).catch(function () {});
 };

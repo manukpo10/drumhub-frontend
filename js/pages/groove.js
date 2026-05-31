@@ -6,7 +6,16 @@ DH.pages.groove = function (params) {
   var app = document.getElementById('app');
   var g = DH.Store.findAnyGroove(params.slug);
   if (!g) {
-    app.innerHTML = '<div class="page"><div class="empty"><h4>Groove no encontrado</h4><p>El groove que buscás no existe o fue eliminado.</p><button class="btn-primary" onclick="DH.Router.go(\'/\')">Volver al inicio</button></div></div>';
+    // Fallback: fetch from API (handles direct links, shared URLs, and freshly published grooves)
+    app.innerHTML = '<div class="page"><div class="empty"><p style="color:var(--muted)">Cargando groove...</p></div></div>';
+    DH.Api.getGroove(params.slug).then(function(apiGroove) {
+      if (!apiGroove) throw new Error('not found');
+      var adapted = DH.Adapter.groove(apiGroove);
+      DH.GROOVES.unshift(adapted);
+      DH.pages.groove(params); // re-render with the fetched groove
+    }).catch(function() {
+      app.innerHTML = '<div class="page"><div class="empty"><h4>Groove no encontrado</h4><p>El groove que buscás no existe o fue eliminado.</p><button class="btn-primary" onclick="DH.Router.go(\'/\')">Volver al inicio</button></div></div>';
+    });
     return;
   }
 
@@ -69,7 +78,6 @@ DH.pages.groove = function (params) {
     +         '<div class="groove-stats-inline">'
     +           '<div class="gstat"><div class="gstat-num">' + pretty(g.plays || 0) + '</div><div class="gstat-label">Reproduc.</div></div>'
     +           '<div class="gstat"><div class="gstat-num">' + (g.likes || 0) + '</div><div class="gstat-label">Likes</div></div>'
-    +           '<div class="gstat"><div class="gstat-num">' + Math.round((g.likes || 0) / 6) + '</div><div class="gstat-label">Guardados</div></div>'
     +         '</div>'
     +       '</div>'
     +     '</div>'
@@ -168,7 +176,7 @@ DH.pages.groove = function (params) {
     +         '<div class="info-item"><span class="info-key">Compás</span><span class="info-val">' + gDisplayTimeSig + '</span></div>'
     +         '<div class="info-item"><span class="info-key">Pasos</span><span class="info-val">' + gDisplaySteps + '</span></div>'
     +         '<div class="info-item"><span class="info-key">Dificultad</span><div class="diff-bar" id="diff-bar"></div></div>'
-    +         '<div class="info-item"><span class="info-key">Subido</span><span class="info-val">' + (g.createdAt ? new Date(g.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'hace 3 días') + '</span></div>'
+    +         (g.createdAt ? '<div class="info-item"><span class="info-key">Subido</span><span class="info-val">' + new Date(g.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }) + '</span></div>' : '')
     +       '</div>'
     +     '</div>'
 
@@ -395,6 +403,114 @@ DH.pages.groove = function (params) {
   }
   renderComments();
 
+  // ── Increment play count via API (fire-and-forget) ──
+  var numGrooveId = parseInt(g.id, 10);
+  if (!isNaN(numGrooveId)) {
+    DH.Api.incrementPlays(numGrooveId).catch(function () {});
+  }
+
+  // ── Sync favorite state for THIS groove from backend ──
+  // Only patch the current groove's state — never replace the full favorites array,
+  // which could wipe other favorites if the API response shape is unexpected.
+  if (DH.Store.isLoggedIn()) {
+    DH.Api.getFavorites().then(function (favPage) {
+      var content = (favPage && favPage.content) || [];
+      if (!Array.isArray(content)) return;
+      var grooveIdStr = String(g.id);
+      var isInBackend = content.some(function (f) {
+        return String(f.grooveId || f.id || '') === grooveIdStr;
+      });
+      var isInLocal = DH.Store.isFavorite(g.id);
+      if (isInBackend !== isInLocal) {
+        var favs = DH.Store.getFavorites();
+        if (isInBackend) {
+          if (favs.indexOf(grooveIdStr) === -1) favs.push(grooveIdStr);
+        } else {
+          favs = favs.filter(function (id) { return id !== grooveIdStr; });
+        }
+        localStorage.setItem('dh.favorites', JSON.stringify(favs));
+        refreshFav();
+      }
+    }).catch(function () {});
+  }
+
+  // ── Fetch real author stats from API and update the sidebar ──
+  Promise.all([
+    DH.Api.getUser(g.author),
+    DH.Api.getFollowers(g.author),
+    DH.Api.getGrooves({ size: 200 })
+  ]).then(function (results) {
+    var apiUser      = results[0];
+    var followersPage = results[1];
+    var allGroovesPage = results[2];
+    if (!apiUser) return;
+
+    var authorGrooves = ((allGroovesPage && allGroovesPage.content) || [])
+      .filter(function (ag) { return ag.authorUsername === g.author; });
+    var totalLikes = authorGrooves.reduce(function (acc, ag) { return acc + (ag.likes || 0); }, 0);
+    var followersCount = (followersPage && followersPage.totalElements) ||
+      ((followersPage && followersPage.content && followersPage.content.length) || 0);
+
+    var bioEl = app.querySelector('.author-bio-v2');
+    if (bioEl && apiUser.bio) bioEl.textContent = apiUser.bio;
+
+    var statNums = app.querySelectorAll('.astat-num');
+    if (statNums[0]) statNums[0].textContent = authorGrooves.length;
+    if (statNums[1]) statNums[1].textContent = pretty(totalLikes);
+    if (statNums[2]) statNums[2].textContent = followersCount;
+  }).catch(function () {});
+
+
+  // ── Fetch API comments and merge after initial render ──
+  if (!isNaN(numGrooveId)) {
+    DH.Api.getComments(numGrooveId).then(function (page) {
+      var apiComments = ((page && page.content) || []).map(DH.Adapter.comment);
+      if (!apiComments.length) return;
+      // Merge: local comments first, then API comments (dedup by user+text not feasible — just append)
+      var localComments = DH.Store.getComments(g.id);
+      var combined = localComments.slice();
+      apiComments.forEach(function (ac) {
+        var alreadyLocal = combined.some(function (lc) { return lc.user === ac.user && lc.text === ac.text; });
+        if (!alreadyLocal) combined.push(ac);
+      });
+      // Re-render with merged list
+      listEl.innerHTML = '';
+      if (!combined.length) {
+        listEl.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);font-weight:300;">Sé el primero en comentar este groove.</div>';
+        return;
+      }
+      combined.forEach(function (c, i) {
+        var d = DH.UI.drummerOrFallback(c.user);
+        var el = document.createElement('div'); el.className = 'comment-v2';
+        el.innerHTML = ''
+          + '<div class="comment-avatar" style="background:' + d.color + '20;color:' + d.color + '">' + esc(d.init) + '</div>'
+          + '<div class="comment-body">'
+          +   '<div class="comment-header"><span class="comment-user">' + esc(c.user) + '</span><span class="comment-time">' + esc(c.time) + '</span></div>'
+          +   '<div class="comment-text-v2">' + esc(c.text) + '</div>'
+          +   '<div class="comment-actions"><button class="comment-action" data-cmt-like="1">♥ Me sirve</button><button class="comment-action" data-cmt-reply="' + esc(c.user) + '">↩ Responder</button></div>'
+          + '</div>';
+        listEl.appendChild(el);
+        if (i < combined.length - 1) { var hr = document.createElement('hr'); hr.className = 'comment-divider'; listEl.appendChild(hr); }
+      });
+      listEl.querySelectorAll('[data-cmt-like]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          b.classList.toggle('liked');
+          b.style.color = b.classList.contains('liked') ? 'var(--accent2)' : '';
+        });
+      });
+      listEl.querySelectorAll('[data-cmt-reply]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var ta = document.querySelector('#comment-form textarea');
+          if (!ta) { DH.UI.openModal('login'); return; }
+          var mention = '@' + b.getAttribute('data-cmt-reply') + ' ';
+          ta.value = mention + ta.value.replace(/^@\S+\s/, '');
+          ta.focus();
+          ta.setSelectionRange(ta.value.length, ta.value.length);
+        });
+      });
+    }).catch(function () {});
+  }
+
   // ── Actions ──
   var likeBtn = document.getElementById('g-like');
   var saveBtn = document.getElementById('g-save');
@@ -437,8 +553,16 @@ DH.pages.groove = function (params) {
   });
 
   document.getElementById('follow-btn').addEventListener('click', function (e) {
-    e.target.classList.toggle('following');
-    e.target.textContent = e.target.classList.contains('following') ? '✓ Siguiendo' : '+ Seguir';
+    if (!DH.Store.isLoggedIn()) { DH.UI.openModal('login'); return; }
+    var btn = e.currentTarget;
+    var isFollowing = btn.classList.contains('following');
+    var action = isFollowing ? DH.Api.unfollow(g.author) : DH.Api.follow(g.author);
+    action.then(function () {
+      btn.classList.toggle('following');
+      btn.textContent = btn.classList.contains('following') ? '✓ Siguiendo' : '+ Seguir';
+    }).catch(function (err) {
+      DH.UI.toast((err && err.message) || 'Error', 'error');
+    });
   });
 
   // ── Export ──

@@ -7,8 +7,16 @@ DH.pages.genres = function () {
   var esc = DH.UI.escape;
   DH.Router.setTitle('Géneros');
 
-  var genres = DH.GENRES || [];
-  var totalGrooves = genres.reduce(function (a, g) { return a + (g.count || 0); }, 0);
+  // Real per-genre counts from the grooves already in memory (avoids depending on
+  // backend grooveCount field, which may not be implemented yet).
+  var countByGenre = {};
+  (DH.GROOVES || []).forEach(function (g) {
+    countByGenre[g.genre] = (countByGenre[g.genre] || 0) + 1;
+  });
+  var genres = (DH.GENRES || []).map(function (g) {
+    return Object.assign({}, g, { count: countByGenre[g.name] || 0 });
+  });
+  var totalGrooves = (DH.GROOVES || []).length;
 
   // Pre-compute featured groove per genre (highest-likes real groove of that genre, if any)
   var featuredByGenre = {};
@@ -28,8 +36,8 @@ DH.pages.genres = function () {
     +     '<p class="genres-sub">Cada género tiene su sonido, sus técnicas y sus referentes. Elegí uno para ver patrones, bateristas y sub-géneros relacionados.</p>'
     +     '<div class="genres-stats">'
     +       '<div class="g-stat"><div class="g-stat-num">' + genres.length + '</div><div class="g-stat-label">Géneros</div></div>'
-    +       '<div class="g-stat"><div class="g-stat-num">' + totalGrooves.toLocaleString('es-AR') + '</div><div class="g-stat-label">Grooves totales</div></div>'
-    +       '<div class="g-stat"><div class="g-stat-num">' + (DH.DRUMMERS || []).length + '<em>+</em></div><div class="g-stat-label">Bateristas</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="gstat-grooves">' + totalGrooves.toLocaleString('es-AR') + '</div><div class="g-stat-label">Grooves totales</div></div>'
+    +       '<div class="g-stat"><div class="g-stat-num" id="gstat-users">' + (DH.DRUMMERS || []).length + '</div><div class="g-stat-label">Bateristas</div></div>'
     +     '</div>'
     +   '</div>'
     + '</div>'
@@ -76,4 +84,21 @@ DH.pages.genres = function () {
   app.querySelectorAll('[data-go]').forEach(function (el) {
     el.addEventListener('click', function (e) { e.preventDefault(); DH.Router.go(el.getAttribute('data-go')); });
   });
+
+  // Fetch real totals from the backend (size:1 = minimal payload, we only need totalElements)
+  Promise.all([
+    DH.Api.getGrooves({ size: 1 }),
+    DH.Api.getUsers({ size: 1 })
+  ]).then(function (results) {
+    var groovesPage = results[0];
+    var usersPage   = results[1];
+    var elG = document.getElementById('gstat-grooves');
+    var elU = document.getElementById('gstat-users');
+    if (elG && groovesPage && groovesPage.totalElements != null) {
+      elG.textContent = Number(groovesPage.totalElements).toLocaleString('es-AR');
+    }
+    if (elU && usersPage && usersPage.totalElements != null) {
+      elU.textContent = usersPage.totalElements;
+    }
+  }).catch(function () {});
 };

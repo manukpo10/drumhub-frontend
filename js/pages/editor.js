@@ -556,12 +556,11 @@ DH.pages.editor = function (params) {
 
     if (editingGroove) {
       DH.Store.updateUserGroove(editingGroove.id, changes);
-      setTimeout(function () {
-        btn.textContent = '✓ Cambios guardados';
-        btn.style.background = '#22c55e';
-        btn.style.color = '#000';
-        setTimeout(function () { DH.Router.go('/groove/' + editingGroove.slug); }, 600);
-      }, 400);
+      btn.textContent = '✓ Cambios guardados';
+      btn.style.background = '#22c55e';
+      btn.style.color = '#000';
+      DH.UI.toast('Cambios guardados correctamente', 'success', { label: 'Ver groove →', href: '/groove/' + editingGroove.slug });
+      setTimeout(function () { DH.Router.go('/groove/' + editingGroove.slug); }, 1800);
     } else {
       var slug = state.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') + '-' + Date.now().toString(36);
       var newGroove = Object.assign({
@@ -571,13 +570,19 @@ DH.pages.editor = function (params) {
         likes: 0, plays: 0,
         createdAt: Date.now()
       }, changes);
-      DH.Store.addUserGroove(newGroove);
-      setTimeout(function () {
+      DH.Store.addUserGroove(newGroove).then(function(saved) {
+        var finalSlug = (saved && saved.slug) ? saved.slug : slug;
         btn.textContent = '✓ Publicado';
         btn.style.background = '#22c55e';
         btn.style.color = '#000';
-        setTimeout(function () { DH.Router.go('/groove/' + slug); }, 600);
-      }, 600);
+        DH.UI.toast('¡Groove publicado! Hacé clic para verlo.', 'success', { label: 'Ver groove →', href: '/groove/' + finalSlug });
+      }).catch(function(err) {
+        btn.textContent = 'Publicar groove →';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.disabled = false;
+        DH.UI.toast('Error al publicar: ' + (err && err.message ? err.message : 'intentá de nuevo'), 'error');
+      });
     }
   });
 

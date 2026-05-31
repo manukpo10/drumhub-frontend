@@ -20,28 +20,6 @@ function findGenreByName(name) {
   return null;
 }
 
-// Filler grooves so the grid always has 12+ cards even if the genre has few real ones.
-function fillerGroovesFor(genreName) {
-  var titles = ['Pocket Groove', 'Open Highway', 'Late Night', 'Backbeat', 'Steppers', 'Cold Sweat', 'Tight Pocket', 'Smooth Ride', 'Deep Cut', 'Soft Touch', 'Roll Out', 'After Hours'];
-  var authors = ['drummaster', 'funkybones', 'jazzcat', 'beatmaker', 'roots_r', 'zep_fan', 'samba_b', 'bernardp', 'drumqueen'];
-  return titles.map(function (t, i) {
-    var bpm = 75 + ((i * 13) % 80);
-    var lvl = ['Básico', 'Intermedio', 'Avanzado'][i % 3];
-    return {
-      id: 'demo-' + genreName + '-' + i,
-      slug: t.toLowerCase().replace(/\s+/g, '-') + '-' + genreName.toLowerCase() + '-' + i,
-      title: t, author: authors[i % authors.length],
-      genre: genreName, bpm: bpm, level: lvl,
-      likes: 50 + ((i * 37) % 280),
-      plays: 300 + ((i * 89) % 1800),
-      pattern: {
-        hihat: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-        snare: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],
-        kick:  [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0]
-      }
-    };
-  });
-}
 
 DH.pages.genre = function (params, query) {
   var app = document.getElementById('app');
@@ -57,12 +35,7 @@ DH.pages.genre = function (params, query) {
   var color = info.color || 'var(--accent)';
   DH.Router.setTitle(genre.name + ' · Grooves');
 
-  // Grooves del género: reales del mock + user-uploaded + fillers si hay <12
-  var realGrooves = DH.Store.allGrooves().filter(function (g) { return g.genre === genre.name; });
-  var fillers = realGrooves.length >= GENRE_PAGE_SIZE
-    ? []
-    : fillerGroovesFor(genre.name).slice(0, GENRE_PAGE_SIZE - realGrooves.length);
-  var grooves = realGrooves.concat(fillers);
+  var grooves = DH.Store.allGrooves().filter(function (g) { return g.genre === genre.name; });
 
   var featured = grooves.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); })[0];
 

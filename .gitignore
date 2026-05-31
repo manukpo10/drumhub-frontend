@@ -34,4 +34,5 @@ Desktop.ini
 
 # Claude Code / AI agent skills (instalados por developer, no son parte de la app)
 .agents/
+.claude/
 skills-lock.json

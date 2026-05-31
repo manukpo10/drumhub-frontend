@@ -24,10 +24,10 @@ DH.pages.home = function () {
     +       '<button class="btn-outline" id="hero-register">Crear cuenta gratis</button>'
     +     '</div>'
     +     '<div class="hero-stats">'
-    +       '<div class="stat"><div class="stat-num">4<em>.</em>200</div><div class="stat-label">Grooves</div></div>'
-    +       '<div class="stat"><div class="stat-num">830</div><div class="stat-label">Bateristas</div></div>'
-    +       '<div class="stat"><div class="stat-num">18</div><div class="stat-label">Géneros</div></div>'
-    +       '<div class="stat"><div class="stat-num">12<em>K</em></div><div class="stat-label">Reproducciones</div></div>'
+    +       '<div class="stat"><div class="stat-num" id="hs-grooves">' + (DH.GROOVES || []).length + '</div><div class="stat-label">Grooves</div></div>'
+    +       '<div class="stat"><div class="stat-num" id="hs-users">' + (DH.DRUMMERS || []).length + '</div><div class="stat-label">Bateristas</div></div>'
+    +       '<div class="stat"><div class="stat-num" id="hs-genres">' + (DH.GENRES || []).length + '</div><div class="stat-label">Géneros</div></div>'
+    +       '<div class="stat"><div class="stat-num" id="hs-plays">—</div><div class="stat-label">Reproducciones</div></div>'
     +     '</div>'
     +   '</div>'
     + '</section>'
@@ -362,9 +362,20 @@ DH.pages.home = function () {
     genreHost.appendChild(el);
   });
 
-  // ── Drummers (editorial ranking) ──
+  // ── Drummers (real stats computed from loaded grooves) ──
   var dl = document.getElementById('drummers-list');
-  DH.DRUMMERS.slice(0, 8).forEach(function (d, i) {
+  var homeStatsMap = {};
+  (DH.GROOVES || []).forEach(function (g) {
+    if (!homeStatsMap[g.author]) homeStatsMap[g.author] = { grooves: 0, likes: 0 };
+    homeStatsMap[g.author].grooves++;
+    homeStatsMap[g.author].likes += (g.likes || 0);
+  });
+  var rankedDrummers = (DH.DRUMMERS || []).map(function (d) {
+    var s = homeStatsMap[d.user] || { grooves: 0, likes: 0 };
+    return Object.assign({}, d, { grooves: s.grooves, likes: s.likes });
+  }).sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); }).slice(0, 8);
+  var maxLikes = rankedDrummers.reduce(function (m, d) { return Math.max(m, d.likes || 0); }, 1);
+  rankedDrummers.forEach(function (d, i) {
     var rank = String(i + 1).padStart(2, '0');
     var el = document.createElement('div'); el.className = 'rank-row';
     el.innerHTML = ''
@@ -374,7 +385,7 @@ DH.pages.home = function () {
       +   '<div class="rank-name">' + esc(d.user) + '</div>'
       +   '<div class="rank-meta"><em>' + d.grooves + '</em> grooves · <em>' + d.likes + '</em> likes</div>'
       + '</div>'
-      + '<div class="rank-bar"><div class="rank-bar-fill" style="width:' + Math.min(100, Math.round(d.likes / 1240 * 100)) + '%;background:' + d.color + '"></div></div>'
+      + '<div class="rank-bar"><div class="rank-bar-fill" style="width:' + Math.round((d.likes || 0) / maxLikes * 100) + '%;background:' + d.color + '"></div></div>'
       + '<button class="btn-follow" type="button">+ Seguir</button>';
     el.addEventListener('click', function (e) {
       if (e.target.classList.contains('btn-follow')) { e.stopPropagation(); return; }
@@ -383,15 +394,30 @@ DH.pages.home = function () {
     dl.appendChild(el);
   });
 
-  // ── Activity ──
+  // ── Activity (real: recent grooves sorted by createdAt) ──
   var af = document.getElementById('activity-feed');
-  DH.ACTIVITY.forEach(function (a) {
-    var d = DH.UI.drummerOrFallback(a.user);
+  function homeRelTime(ms) {
+    var diff = Date.now() - ms, min = Math.floor(diff / 60000);
+    if (min < 1) return 'ahora mismo';
+    if (min < 60) return 'hace ' + min + ' min';
+    var h = Math.floor(min / 60);
+    if (h < 24) return 'hace ' + h + ' h';
+    var d = Math.floor(h / 24);
+    return 'hace ' + d + (d === 1 ? ' día' : ' días');
+  }
+  var recentGrooves = (DH.GROOVES || [])
+    .filter(function (g) { return g.createdAt; })
+    .slice().sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); })
+    .slice(0, 8);
+  if (!recentGrooves.length) recentGrooves = (DH.GROOVES || []).slice(0, 8);
+  recentGrooves.forEach(function (g) {
+    var d = DH.UI.drummerOrFallback(g.author);
+    var timeStr = g.createdAt ? homeRelTime(new Date(g.createdAt).getTime()) : '';
     var el = document.createElement('div'); el.className = 'activity-item';
     el.innerHTML = ''
       + '<div class="act-avatar" style="background:' + d.color + '20;color:' + d.color + '">' + esc(d.init) + '</div>'
-      + '<div class="act-text"><strong>' + esc(a.user) + '</strong> ' + esc(a.action) + ' <a href="#/groove/' + esc(a.targetSlug) + '">' + esc(a.target) + '</a></div>'
-      + '<div class="act-time">' + esc(a.time) + '</div>';
+      + '<div class="act-text"><strong>' + esc(g.author) + '</strong> subió <a href="#/groove/' + esc(g.slug) + '">' + esc(g.title) + '</a></div>'
+      + (timeStr ? '<div class="act-time">' + timeStr + '</div>' : '');
     af.appendChild(el);
   });
 
@@ -406,4 +432,35 @@ DH.pages.home = function () {
   app.querySelectorAll('[data-go]').forEach(function (el) {
     el.addEventListener('click', function () { DH.Router.go(el.getAttribute('data-go')); });
   });
+
+  // Fetch real totals and update hero stats (size:1 = minimal payload, only need totalElements)
+  Promise.all([
+    DH.Api.getGrooves({ size: 1 }),
+    DH.Api.getUsers({ size: 1 })
+  ]).then(function (results) {
+    var groovesPage = results[0];
+    var usersPage   = results[1];
+
+    var elG = document.getElementById('hs-grooves');
+    var elU = document.getElementById('hs-users');
+    var elP = document.getElementById('hs-plays');
+
+    if (elG && groovesPage && groovesPage.totalElements != null) {
+      var total = groovesPage.totalElements;
+      // Format: 1234 → "1.234", 12000 → "12K"
+      elG.textContent = total >= 1000
+        ? (total / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
+        : total.toLocaleString('es-AR');
+    }
+    if (elU && usersPage && usersPage.totalElements != null) {
+      elU.textContent = usersPage.totalElements;
+    }
+    // Total plays: sum from the grooves already loaded in memory (no extra endpoint needed)
+    if (elP) {
+      var totalPlays = (DH.GROOVES || []).reduce(function (a, g) { return a + (g.plays || 0); }, 0);
+      elP.innerHTML = totalPlays >= 1000
+        ? (totalPlays / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em>'
+        : String(totalPlays);
+    }
+  }).catch(function () {});
 };

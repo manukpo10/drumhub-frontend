@@ -76,7 +76,21 @@ DH.pages.settings = function () {
     +         '<div class="field-hint" id="s-pass-msg" style="color:var(--accent2);display:none"></div>'
     +         '<button class="btn-publish" type="submit">Cambiar contraseña →</button>'
     +       '</form>'
-    +       '<p style="font-size:0.68rem;color:var(--muted);margin-top:12px;font-weight:300">La gestión real de contraseñas se activará cuando el backend esté listo.</p>'
+    +     '</div>'
+
+        // ── Plan section ──
+    +     '<div class="card-v2">'
+    +       '<div class="card-title-v2"><div class="card-icon"><svg width="18" height="18" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="20,4 25,15 37,15 27,23 31,35 20,27 9,35 13,23 3,15 15,15"/></svg></div>Plan <em>actual</em></div>'
+    +       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
+    +         '<span style="font-size:0.72rem;color:var(--muted)">Tu plan:</span>'
+    +         '<span class="badge" id="s-plan-badge" style="background:var(--surface2);border:1px solid var(--border);padding:3px 10px;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em">' + (u.plan || 'free').toUpperCase() + '</span>'
+    +       '</div>'
+    +       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    +         '<button class="btn-draft s-plan-btn' + (!u.plan || u.plan === 'free' ? ' active' : '') + '" data-plan="free">Free</button>'
+    +         '<button class="btn-draft s-plan-btn' + (u.plan === 'pro' ? ' active' : '') + '" data-plan="pro">Pro</button>'
+    +         '<button class="btn-draft s-plan-btn' + (u.plan === 'studio' ? ' active' : '') + '" data-plan="studio">Studio</button>'
+    +       '</div>'
+    +       '<p style="font-size:0.68rem;color:var(--muted);margin-top:12px;font-weight:300">Pro y Studio desbloquean exportación MIDI/PDF/MP3 y más.</p>'
     +     '</div>'
 
         // ── Danger zone ──
@@ -120,6 +134,8 @@ DH.pages.settings = function () {
     u.name = name;
     u.bio  = bio;
     try { localStorage.setItem('dh.session', JSON.stringify(u)); } catch (err) {}
+    // Sync to API
+    DH.Api.updateProfile({ name: name, bio: bio }).catch(function () {});
     var btn = document.getElementById('s-save-profile');
     var orig = btn.textContent;
     btn.textContent = '✓ Guardado';
@@ -130,39 +146,62 @@ DH.pages.settings = function () {
   });
 
   // ── Email save ──
+  // The backend requires the current password to confirm an email change. Ask for it
+  // upfront and send a single request — no throwaway empty-password attempt.
   document.getElementById('s-save-email').addEventListener('click', function () {
-    u.email = document.getElementById('s-email').value.trim();
-    try { localStorage.setItem('dh.session', JSON.stringify(u)); } catch (err) {}
+    var newEmail = document.getElementById('s-email').value.trim();
+    if (!newEmail) return;
+    if (newEmail === (u.email || '')) { DH.UI.toast('Ese ya es tu email actual', 'info'); return; }
+    var pwd = prompt('Ingresá tu contraseña actual para confirmar el cambio de email:');
+    if (!pwd) return;
     var btn = this; var orig = btn.textContent;
-    btn.textContent = '✓ Guardado';
-    setTimeout(function () { btn.textContent = orig; }, 1800);
+    DH.Api.updateEmail({ email: newEmail, currentPassword: pwd }).then(function () {
+      u.email = newEmail;
+      try { localStorage.setItem('dh.session', JSON.stringify(u)); } catch (err) {}
+      btn.textContent = '✓ Guardado';
+      setTimeout(function () { btn.textContent = orig; }, 1800);
+    }).catch(function (err) {
+      DH.UI.toast((err && err.message) || 'Error al guardar el email', 'error');
+    });
   });
 
   // ── Avatar change ──
   document.getElementById('s-change-avatar').addEventListener('click', function () {
-    DH.UI.openAvatarPicker(function (seed) {
-      u.avatar = seed;
-      DH.Store.updateAvatar(seed);
-      ['s-avatar-preview', 's-sidebar-avatar'].forEach(function (id) {
-        document.getElementById(id).innerHTML = DH.UI.drummerAvatar(u, { size: id === 's-sidebar-avatar' ? 64 : 48 });
-      });
-      if (DH.UI.renderNav) DH.UI.renderNav();
+    DH.UI.openAvatarPicker(function () {
+      // Re-render settings after the picker's event stack fully resolves
+      setTimeout(function () { DH.pages.settings(); }, 50);
     });
   });
 
-  // ── Password form (stub — real backend later) ──
+  // ── Password form ──
   document.getElementById('settings-pass-form').addEventListener('submit', function (e) {
     e.preventDefault();
+    var current = document.getElementById('s-pass-current').value;
     var n1 = document.getElementById('s-pass-new1').value;
     var n2 = document.getElementById('s-pass-new2').value;
     var msg = document.getElementById('s-pass-msg');
     if (n1 !== n2) { msg.textContent = 'Las contraseñas no coinciden.'; msg.style.display = ''; return; }
     msg.style.display = 'none';
-    var btn = e.target.querySelector('[type="submit"]');
-    btn.textContent = '✓ Contraseña actualizada';
-    btn.style.background = '#22c55e';
-    btn.style.color = '#000';
-    setTimeout(function () { btn.textContent = 'Cambiar contraseña →'; btn.style.background = ''; btn.style.color = ''; e.target.reset(); }, 2000);
+    DH.Api.updatePassword({ currentPassword: current, newPassword: n1 }).then(function () {
+      DH.UI.toast('Contraseña actualizada correctamente', 'success');
+      e.target.reset();
+    }).catch(function (err) {
+      DH.UI.toast((err && err.message) || 'Error al cambiar la contraseña', 'error');
+    });
+  });
+
+  // ── Plan selector ──
+  app.querySelectorAll('.s-plan-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var plan = btn.getAttribute('data-plan');
+      DH.Store.setPlan(plan);
+      u.plan = plan;
+      var badge = document.getElementById('s-plan-badge');
+      if (badge) badge.textContent = plan.toUpperCase();
+      app.querySelectorAll('.s-plan-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      DH.UI.toast('Plan actualizado a ' + plan, 'success');
+    });
   });
 
   // ── Logout all sessions ──
