@@ -3,7 +3,7 @@
 window.DH = window.DH || {};
 
 DH.Api = (function () {
-  var BASE = 'http://localhost:8080';
+  var BASE = 'https://drumhub-backend.onrender.com';
 
   function getToken() { return localStorage.getItem('dh.token'); }
   function setToken(t) { localStorage.setItem('dh.token', t); }
