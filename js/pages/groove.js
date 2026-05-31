@@ -234,6 +234,9 @@ DH.pages.groove = function (params) {
     +   '</div>'
     + '</div>';
 
+  // ── Apply the groove's saved kit so the player loads with the author's intended sound ──
+  if (g.kit) { DH.Audio.setKit(g.kit); }
+
   // ── Mount minimal player — rows come from the currently selected kit so the grid
   //    changes when the user picks a different kit (CR-78 = 4 rows, Pearl = up to 11).
   var player = null;
@@ -283,7 +286,7 @@ DH.pages.groove = function (params) {
     document.getElementById('g-bpm-display').innerHTML = b + '<span>BPM</span>';
   });
 
-  // ── Kit selector: persist choice across grooves via localStorage ──
+  // ── Kit selector: start with the groove's saved kit; user can still override ──
   var kitSelect = document.getElementById('g-kit-select');
   var kitHint = document.getElementById('g-kit-hint');
   var KIT_HINTS = {
@@ -292,17 +295,16 @@ DH.pages.groove = function (params) {
     lm2:   'LinnDrum · sonido 80s',
     cr78:  'Roland CR-78 · vintage analógica'
   };
-  var storedKit = null;
-  try { storedKit = localStorage.getItem('dh.selectedKit'); } catch (e) {}
-  if (storedKit && DH.Audio.setKit(storedKit)) { /* applied */ } else { storedKit = DH.Audio.getKit(); }
+  // The groove's kit was already applied above; getKit() returns the active one.
+  var activeKit = DH.Audio.getKit();
   DH.Audio.listKits().forEach(function (k) {
     var opt = document.createElement('option');
     opt.value = k.id;
     opt.textContent = k.label + ' · ' + k.tag;
-    if (k.id === storedKit) opt.selected = true;
+    if (k.id === activeKit) opt.selected = true;
     kitSelect.appendChild(opt);
   });
-  if (kitHint) kitHint.textContent = KIT_HINTS[storedKit] || '';
+  if (kitHint) kitHint.textContent = KIT_HINTS[activeKit] || '';
   kitSelect.addEventListener('change', function () {
     DH.Audio.setKit(this.value);
     if (kitHint) kitHint.textContent = KIT_HINTS[this.value] || '';

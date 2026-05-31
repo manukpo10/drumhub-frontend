@@ -50,7 +50,8 @@ DH.pages.editor = function (params) {
     tags: (editingGroove.tags || []).slice(),
     pattern: editingGroove.pattern || DH.PRESETS.rock,
     timeSig: editingGroove.timeSig || '4/4',
-    bars: editingGroove.bars || 1
+    bars: editingGroove.bars || 1,
+    kit: editingGroove.kit || 'pearl'
   } : {
     title: '',
     genre: '',
@@ -61,7 +62,8 @@ DH.pages.editor = function (params) {
     tags: ['shuffle', 'ghost notes'],
     pattern: DH.PRESETS.rock,
     timeSig: '4/4',
-    bars: 1
+    bars: 1,
+    kit: DH.Audio.getKit()
   };
 
   function getTimeSigConf(id) {
@@ -311,19 +313,25 @@ DH.pages.editor = function (params) {
     lm2:   'LinnDrum · sonido 80s',
     cr78:  'Roland CR-78 · vintage analógica'
   };
-  var storedKit = null;
-  try { storedKit = localStorage.getItem('dh.selectedKit'); } catch (e) {}
-  if (storedKit && DH.Audio.setKit(storedKit)) { /* applied */ } else { storedKit = DH.Audio.getKit(); }
+  // When editing an existing groove, use its saved kit; otherwise fall back to localStorage.
+  var initialKit = state.kit;
+  if (!DH.Audio.setKit(initialKit)) {
+    var storedKit = null;
+    try { storedKit = localStorage.getItem('dh.selectedKit'); } catch (e) {}
+    if (storedKit && DH.Audio.setKit(storedKit)) { initialKit = storedKit; } else { initialKit = DH.Audio.getKit(); }
+  }
+  state.kit = initialKit;
   DH.Audio.listKits().forEach(function (k) {
     var opt = document.createElement('option');
     opt.value = k.id;
     opt.textContent = k.label + ' · ' + k.tag;
-    if (k.id === storedKit) opt.selected = true;
+    if (k.id === initialKit) opt.selected = true;
     kitSelect.appendChild(opt);
   });
-  if (kitHint) kitHint.textContent = KIT_HINTS[storedKit] || '';
+  if (kitHint) kitHint.textContent = KIT_HINTS[initialKit] || '';
   kitSelect.addEventListener('change', function () {
     DH.Audio.setKit(this.value);
+    state.kit = this.value;
     if (kitHint) kitHint.textContent = KIT_HINTS[this.value] || '';
     try { localStorage.setItem('dh.selectedKit', this.value); } catch (e) {}
     // Capture current bpm so the rebuild doesn't reset it
@@ -554,7 +562,8 @@ DH.pages.editor = function (params) {
       tags: state.tags.slice(),
       pattern: player.getPattern(),
       timeSig: state.timeSig,
-      bars: state.bars
+      bars: state.bars,
+      kit: state.kit
     };
 
     if (editingGroove) {

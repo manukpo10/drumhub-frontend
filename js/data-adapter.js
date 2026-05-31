@@ -24,6 +24,7 @@ DH.Adapter = (function () {
       pattern: g.pattern || {},
       timeSig: g.timeSig || '4/4',
       bars: g.bars || 1,
+      kit: g.kit || 'pearl',
       createdAt: g.createdAt
     };
   }
