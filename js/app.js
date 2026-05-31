@@ -71,6 +71,10 @@
     DH.Router.add('/drummers',          function (p, q)   { DH.pages.drummers(p, q); });
     DH.Router.add('/page/:slug',        function (p)      { DH.pages.staticPage(p); });
     DH.Router.add('/settings',          function ()       { DH.pages.settings(); });
+    DH.Router.add('/pricing',           function ()       { DH.pages.pricing(); });
+    DH.Router.add('/payment-success',   function ()       { DH.pages.paymentSuccess(); });
+    DH.Router.add('/payment-failure',   function ()       { DH.pages.paymentFailure(); });
+    DH.Router.add('/payment-pending',   function ()       { DH.pages.paymentPending(); });
 
     DH.Router.start();
 

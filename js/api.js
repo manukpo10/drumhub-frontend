@@ -78,7 +78,14 @@ DH.Api = (function () {
     updateEmail: function (data) { return request('PUT', '/api/users/me/email', data, true); },
     updatePassword: function (data) { return request('PUT', '/api/users/me/password', data, true); },
     updateAvatar: function (avatarSeed) { return request('PUT', '/api/users/me/avatar', { avatarSeed: avatarSeed }, true); },
-    updatePlan: function (plan) { return request('PUT', '/api/users/me/plan', { plan: plan }, true); },
+
+    // Subscription & Payments
+    checkoutPlan: function (planId, period) {
+      return request('POST', '/api/payments/checkout', { planId: planId, period: period }, true);
+    },
+    activateTrial: function () {
+      return request('POST', '/api/users/me/trial', null, true);
+    },
 
     // Favorites
     getFavorites: function (page) {

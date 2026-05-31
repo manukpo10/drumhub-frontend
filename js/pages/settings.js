@@ -86,9 +86,7 @@ DH.pages.settings = function () {
     +         '<span class="badge" id="s-plan-badge" style="background:var(--surface2);border:1px solid var(--border);padding:3px 10px;border-radius:2px;font-size:0.72rem;letter-spacing:0.06em">' + (u.plan || 'free').toUpperCase() + '</span>'
     +       '</div>'
     +       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-    +         '<button class="btn-draft s-plan-btn' + (!u.plan || u.plan === 'free' ? ' active' : '') + '" data-plan="free">Free</button>'
-    +         '<button class="btn-draft s-plan-btn' + (u.plan === 'pro' ? ' active' : '') + '" data-plan="pro">Pro</button>'
-    +         '<button class="btn-draft s-plan-btn' + (u.plan === 'studio' ? ' active' : '') + '" data-plan="studio">Studio</button>'
+    +         '<button class="btn-draft" id="s-upgrade-btn" data-go="/pricing">Ver planes y precios</button>'
     +       '</div>'
     +       '<p style="font-size:0.68rem;color:var(--muted);margin-top:12px;font-weight:300">Pro y Studio desbloquean exportación MIDI/PDF/MP3 y más.</p>'
     +     '</div>'
@@ -187,20 +185,6 @@ DH.pages.settings = function () {
       e.target.reset();
     }).catch(function (err) {
       DH.UI.toast((err && err.message) || 'Error al cambiar la contraseña', 'error');
-    });
-  });
-
-  // ── Plan selector ──
-  app.querySelectorAll('.s-plan-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var plan = btn.getAttribute('data-plan');
-      DH.Store.setPlan(plan);
-      u.plan = plan;
-      var badge = document.getElementById('s-plan-badge');
-      if (badge) badge.textContent = plan.toUpperCase();
-      app.querySelectorAll('.s-plan-btn').forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      DH.UI.toast('Plan actualizado a ' + plan, 'success');
     });
   });
 
