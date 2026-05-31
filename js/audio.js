@@ -120,7 +120,9 @@ DH.Audio = (function () {
       masterGain = actx.createGain();
       masterGain.gain.value = 0.85;
       masterGain.connect(actx.destination);
-      preloadKit(currentKit);
+      // Warm every kit, not just the current one: card previews can use any kit and
+      // must play real samples immediately instead of racing the async load (synth fallback).
+      Object.keys(KITS).forEach(preloadKit);
     }
     if (actx.state === 'suspended') actx.resume();
     return actx;
@@ -476,4 +478,17 @@ DH.PreviewPlayer = (function () {
   }
   function isPlaying(token) { return !!current && (!token || current === token); }
   return { play: play, stop: stop, isPlaying: isPlaying };
+})();
+
+// Warm the audio engine on the first user interaction (browsers require a gesture to
+// create an AudioContext). This kicks off loading of every kit's samples before the
+// user hits a preview, so previews play real samples instead of the thin synth fallback.
+(function () {
+  function warm() {
+    document.removeEventListener('pointerdown', warm, true);
+    document.removeEventListener('keydown', warm, true);
+    try { DH.Audio.getCtx(); } catch (e) {}
+  }
+  document.addEventListener('pointerdown', warm, true);
+  document.addEventListener('keydown', warm, true);
 })();
