@@ -387,7 +387,13 @@ footer { border-top: 1px solid var(--border); padding: 48px var(--side-pad) 32px
 /* ============================================================
    ====== STATIC PAGES (about, FAQ, terms, privacy, contact) ======
    ============================================================ */
-.static-page { padding: 40px var(--side-pad) 80px; }
+.static-page { padding: 40px var(--side-pad) 80px; position: relative; }
+.static-page > *:not(.static-hero-bg) { position: relative; z-index: 1; }
+.static-hero-bg { position: absolute; top: 0; left: 0; right: 0; height: 300px; display: grid; grid-template-columns: repeat(16, 1fr); grid-template-rows: repeat(7, 1fr); gap: 3px; opacity: 0.08; pointer-events: none; z-index: 0; -webkit-mask-image: linear-gradient(to bottom, #000 32%, transparent 100%); mask-image: linear-gradient(to bottom, #000 32%, transparent 100%); }
+.static-hero-bg .hero-cell { background: var(--surface2); border-radius: 2px; transition: all 0.15s; }
+.static-hero-bg .hero-cell.lit  { background: var(--accent); }
+.static-hero-bg .hero-cell.lit2 { background: var(--accent2); }
+.static-hero-bg .hero-cell.lit3 { background: var(--accent3); }
 .static-page .breadcrumb { padding: 0 0 14px; }
 .static-page .page-eyebrow { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
 .static-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 7vw, 5rem); letter-spacing: 0.02em; line-height: 0.95; margin-bottom: 40px; }
@@ -403,6 +409,47 @@ footer { border-top: 1px solid var(--border); padding: 48px var(--side-pad) 32px
 .sp-q:last-child { border-bottom: none; }
 .sp-q-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; color: var(--text); margin-bottom: 8px; }
 .sp-q-body { color: var(--muted); font-size: 0.88rem; }
+.sp-links { list-style: none; padding-left: 0; }
+.sp-links li { margin-bottom: 6px; }
+.sp-links a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+.sp-links a:hover { border-bottom-color: var(--accent); }
+
+/* ====== Contact form (Web3Forms) ====== */
+.contact-form { max-width: 600px; margin: 16px 0 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 26px 26px 24px; position: relative; overflow: hidden; }
+.contact-form::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, var(--accent), var(--accent2)); }
+.cf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+.cf-head-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.04em; color: var(--text); line-height: 1; }
+.cf-head-title em { color: var(--accent); font-style: normal; }
+.cf-head-hint { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cf-deco { margin: 0 0 22px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.cf-deco-grid { gap: 3px; opacity: 0.85; }
+.cf-deco-grid .mc { height: 7px; }
+.cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.cf-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.cf-grid .cf-field { margin-bottom: 0; }
+.cf-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+.cf-opt { font-size: 0.9em; color: var(--muted2); text-transform: none; letter-spacing: 0.04em; opacity: 0.75; }
+.cf-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-family: inherit; font-size: 0.9rem; padding: 12px 14px; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
+.cf-input::placeholder { color: var(--muted2); }
+.cf-input:hover { border-color: var(--border2); }
+.cf-input:focus { outline: none; border-color: var(--accent); background: var(--surface2); box-shadow: 0 0 0 3px rgba(232,255,0,0.12); }
+.cf-textarea { resize: vertical; min-height: 122px; line-height: 1.55; }
+.cf-submit { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; margin-top: 6px; padding: 12px 24px; background: var(--accent); color: #0a0a08; border: none; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s; }
+.cf-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,255,0,0.25); }
+.cf-submit-ico { width: 15px; height: 15px; transition: transform 0.18s; }
+.cf-submit:hover:not(:disabled) .cf-submit-ico { transform: translateX(4px); }
+.cf-submit:disabled { opacity: 0.55; cursor: default; }
+.cf-submit.loading .cf-submit-ico { animation: cf-spin 0.7s linear infinite; }
+@keyframes cf-spin { to { transform: rotate(360deg); } }
+.cf-status { font-size: 0.82rem; font-weight: 300; min-height: 1.2em; margin-top: 14px; }
+.cf-status.ok { color: var(--accent); }
+.cf-status.err { color: var(--accent2); }
+@media (max-width: 520px) {
+  .cf-grid { grid-template-columns: 1fr; gap: 0; margin-bottom: 0; }
+  .cf-grid .cf-field { margin-bottom: 14px; }
+  .contact-form { padding: 20px 18px; }
+  .cf-submit { width: 100%; justify-content: center; }
+}
 
 /* ============================================================
    ====== NOTIFICATIONS dropdown ======
