@@ -1,9 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/((?!.*\\.[\\w]+$).*)", "destination": "/index.html" }
-  ],
   "redirects": [
     { "source": "/(.*)", "destination": "https://drumhub.io/$1", "permanent": true, "has": [{ "type": "host", "value": "www.drumhub.io" }] }
   ],
