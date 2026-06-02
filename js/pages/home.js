@@ -413,8 +413,9 @@ DH.pages.home = function () {
     dl.appendChild(el);
   });
 
-  // ── Activity (real: recent grooves sorted by createdAt) ──
+  // ── Activity feed — fetched from /api/activity/feed ──
   var af = document.getElementById('activity-feed');
+
   function homeRelTime(ms) {
     var diff = Date.now() - ms, min = Math.floor(diff / 60000);
     if (min < 1) return 'ahora mismo';
@@ -424,21 +425,60 @@ DH.pages.home = function () {
     var d = Math.floor(h / 24);
     return 'hace ' + d + (d === 1 ? ' día' : ' días');
   }
-  var recentGrooves = (DH.GROOVES || [])
+
+  // Icon + text per event type
+  var ACT_TYPE = {
+    upload:  { icon: '↑', label: 'subió' },
+    comment: { icon: '💬', label: 'comentó en' },
+    like:    { icon: '♥', label: 'marcó como favorito' },
+    follow:  { icon: '→', label: 'empezó a seguir a' }
+  };
+
+  function renderActivityItems(events) {
+    af.innerHTML = '';
+    if (!events || !events.length) return;
+    events.forEach(function (ev) {
+      var meta = ACT_TYPE[ev.type] || ACT_TYPE.upload;
+      var d = DH.UI.drummerOrFallback(ev.actor);
+      var timeStr = ev.createdAt ? homeRelTime(new Date(ev.createdAt).getTime()) : '';
+
+      var actionHtml;
+      if (ev.type === 'follow') {
+        actionHtml = '<strong>' + esc(ev.actor) + '</strong> '
+          + meta.label + ' <a href="#/profile/' + esc(ev.targetUser) + '">@' + esc(ev.targetUser) + '</a>';
+      } else {
+        actionHtml = '<strong>' + esc(ev.actor) + '</strong> '
+          + meta.label + ' <a href="#/groove/' + esc(ev.grooveSlug) + '">' + esc(ev.grooveTitle) + '</a>';
+      }
+
+      var el = document.createElement('div'); el.className = 'activity-item';
+      el.innerHTML = ''
+        + '<div class="act-avatar" style="background:' + d.color + '20;color:' + d.color + '">'
+        +   esc(d.init)
+        + '</div>'
+        + '<div class="act-text">' + actionHtml + '</div>'
+        + (timeStr ? '<div class="act-time">' + timeStr + '</div>' : '');
+      af.appendChild(el);
+    });
+  }
+
+  // Seed with local groove uploads for instant render (no network wait)
+  var seedGrooves = (DH.GROOVES || [])
     .filter(function (g) { return g.createdAt; })
     .slice().sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); })
     .slice(0, 8);
-  if (!recentGrooves.length) recentGrooves = (DH.GROOVES || []).slice(0, 8);
-  recentGrooves.forEach(function (g) {
-    var d = DH.UI.drummerOrFallback(g.author);
-    var timeStr = g.createdAt ? homeRelTime(new Date(g.createdAt).getTime()) : '';
-    var el = document.createElement('div'); el.className = 'activity-item';
-    el.innerHTML = ''
-      + '<div class="act-avatar" style="background:' + d.color + '20;color:' + d.color + '">' + esc(d.init) + '</div>'
-      + '<div class="act-text"><strong>' + esc(g.author) + '</strong> subió <a href="#/groove/' + esc(g.slug) + '">' + esc(g.title) + '</a></div>'
-      + (timeStr ? '<div class="act-time">' + timeStr + '</div>' : '');
-    af.appendChild(el);
-  });
+  renderActivityItems(seedGrooves.map(function (g) {
+    return { type: 'upload', actor: g.author, grooveSlug: g.slug, grooveTitle: g.title, createdAt: g.createdAt };
+  }));
+
+  // Replace with real mixed feed from the API (public endpoint, no auth needed)
+  fetch('https://drumhub-backend.onrender.com/api/activity/feed?size=20')
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      var events = (json && json.data) || [];
+      if (events.length) renderActivityItems(events);
+    })
+    .catch(function () {});
 
   // ── CTA wiring ──
   document.getElementById('hero-explore').addEventListener('click', function () { DH.Router.go('/search'); });
