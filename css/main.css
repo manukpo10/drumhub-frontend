@@ -542,7 +542,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .beat-nums { display: grid; grid-template-columns: 72px repeat(var(--grid-steps, 16), minmax(0, 1fr)); gap: 3px; min-width: 640px; margin-bottom: 4px; }
 .beat-num { text-align: center; font-size: 0.55rem; color: var(--muted); padding-bottom: 4px; font-family: 'DM Mono', monospace; }
 .beat-num.dn { color: var(--accent); }
-.drum-grid { display: grid; grid-template-columns: 72px repeat(var(--grid-steps, 16), minmax(0, 1fr)); gap: 3px; min-width: 640px; row-gap: 5px; position: relative; }
+.drum-grid { display: grid; grid-template-columns: 72px repeat(var(--grid-steps, 16), minmax(0, 1fr)); gap: 3px; min-width: 640px; row-gap: 5px; position: relative; overflow: hidden; }
 .row-lbl { display: flex; align-items: center; gap: 6px; padding-right: 6px; overflow: hidden; min-width: 0; grid-column: 1; }
 .row-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .row-name { font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Mono', monospace; min-width: 0; display: block; flex: 1; }
@@ -622,17 +622,6 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 }
 .card-shake { animation: card-shake 0.13s ease-out; }
 
-/* Ripple ring that expands outward on hit */
-@keyframes cell-ripple {
-  0%   { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(3.2); opacity: 0; }
-}
-.cell-ripple {
-  position: absolute; inset: 0; border-radius: 3px;
-  border: 1.5px solid var(--rc);
-  pointer-events: none; z-index: 20;
-  animation: cell-ripple 0.6s ease-out forwards;
-}
 
 /* Row label glows with its instrument color on hit */
 @keyframes lbl-glow {

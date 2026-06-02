@@ -188,9 +188,6 @@ DH.createPlayer = function (opts) {
         var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + step);
         if (c) {
           c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit');
-          var rip = document.createElement('div'); rip.className = 'cell-ripple';
-          c.appendChild(rip);
-          setTimeout(function() { if (rip.parentNode) rip.parentNode.removeChild(rip); }, 650);
           var lblEl = document.getElementById(idPrefix + '-lbl-' + r.id);
           if (lblEl) { lblEl.classList.remove('lbl-hit'); void lblEl.offsetWidth; lblEl.classList.add('lbl-hit'); }
         }
