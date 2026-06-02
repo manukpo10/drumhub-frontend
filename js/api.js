@@ -83,6 +83,9 @@ DH.Api = (function () {
     updateAvatar: function (avatarSeed) { return request('PUT', '/api/users/me/avatar', { avatarSeed: avatarSeed }, true); },
 
     // Subscription & Payments
+    getPlans: function () {
+      return request('GET', '/api/pricing/plans');
+    },
     checkoutPlan: function (planId, period) {
       return request('POST', '/api/payments/checkout', { planId: planId, period: period }, true);
     },
