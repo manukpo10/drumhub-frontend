@@ -104,6 +104,11 @@ DH.createPlayer = function (opts) {
     }
   });
 
+  // ── Playhead (moved each highlight() call) ──
+  var phEl = document.createElement('div');
+  phEl.className = 'playhead'; phEl.id = idPrefix + '-playhead';
+  dg.appendChild(phEl);
+
   // ── Volume sliders (only in full chrome) ──
   if (!minimal) {
     var vr = $('vol-row');
@@ -162,7 +167,28 @@ DH.createPlayer = function (opts) {
     var dp = document.getElementById(idPrefix + '-dot-' + prev); if (dp) dp.classList.remove('active');
     ROWS.forEach(function (r) { var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + prev); if (c) c.classList.remove('playing'); });
     var dc = document.getElementById(idPrefix + '-dot-' + step); if (dc) dc.classList.add('active');
-    ROWS.forEach(function (r) { if (grid[r.id][step]) { var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + step); if (c) c.classList.add('playing'); } });
+    ROWS.forEach(function (r) {
+      if (grid[r.id][step]) {
+        var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + step);
+        if (c) {
+          c.classList.add('playing');
+          // Inject a new flash span — fresh element guarantees animation restarts on consecutive hits
+          var fl = document.createElement('span'); fl.className = 'cell-flash';
+          c.appendChild(fl);
+          setTimeout(function () { if (fl.parentNode) fl.parentNode.removeChild(fl); }, 550);
+        }
+      }
+    });
+    // Move playhead to center of current step column
+    var ph = document.getElementById(idPrefix + '-playhead');
+    if (ph) {
+      var fc = document.getElementById(idPrefix + '-c-' + ROWS[0].id + '-' + step);
+      if (fc) {
+        var cr = fc.getBoundingClientRect(), dr = dg.getBoundingClientRect();
+        ph.style.left = Math.round(cr.left - dr.left + cr.width / 2 - 1) + 'px';
+        ph.style.display = 'block';
+      }
+    }
   }
   function start() {
     var ctx = DH.Audio.getCtx();
@@ -190,6 +216,7 @@ DH.createPlayer = function (opts) {
       var d = document.getElementById(idPrefix + '-dot-' + s); if (d) d.classList.remove('active');
       ROWS.forEach(function (r) { var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + s); if (c) c.classList.remove('playing'); });
     }
+    var ph = document.getElementById(idPrefix + '-playhead'); if (ph) ph.style.display = 'none';
     curStep = 0;
     if (opts.onPlayStateChange) opts.onPlayStateChange(false);
   }
