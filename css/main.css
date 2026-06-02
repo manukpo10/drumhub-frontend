@@ -558,11 +558,31 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .cell.active.conga { background: var(--conga); border-color: transparent; box-shadow: 0 0 8px rgba(180,83,9,0.4); }
 /* Hit glow — --rc is set per cell to its row color; void offsetWidth restarts on consecutive hits */
 @keyframes glow-cell {
-  0%  { transform: scale(1.07); box-shadow: 0 0 20px 4px var(--rc), 0 0 50px 8px var(--rc), inset 0 0 6px 2px rgba(255,255,255,.75); }
-  40% { transform: scale(1);    box-shadow: 0 0 14px 2px var(--rc), 0 0 30px 4px var(--rc); }
-  100%{ transform: scale(1);    box-shadow: 0 0 4px 1px var(--rc); }
+  0%  {
+    transform: scale(1.1);
+    filter: brightness(2.6);
+    box-shadow:
+      0 0 0 1px var(--rc),
+      0 0 14px 4px var(--rc),
+      0 0 40px 10px var(--rc),
+      0 0 80px 20px var(--rc),
+      inset 0 0 10px 3px rgba(255,255,255,.9);
+  }
+  30% {
+    transform: scale(1.03);
+    filter: brightness(1.5);
+    box-shadow:
+      0 0 10px 3px var(--rc),
+      0 0 28px 6px var(--rc),
+      0 0 55px 10px var(--rc);
+  }
+  100%{
+    transform: scale(1);
+    filter: brightness(1);
+    box-shadow: 0 0 5px 1px var(--rc);
+  }
 }
-.cell.hit { animation: glow-cell .8s cubic-bezier(.12,.7,.25,1); }
+.cell.hit { animation: glow-cell .85s cubic-bezier(.12,.7,.25,1); }
 /* Playhead container — starts after label col (72px) + gap (3px) */
 .ph-container { position: absolute; top: 0; bottom: 0; left: 75px; right: 0; pointer-events: none; }
 /* Playhead — acid-colored luminous line, driven by rAF draw loop */
