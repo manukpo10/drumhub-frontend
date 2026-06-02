@@ -91,6 +91,7 @@ DH.createPlayer = function (opts) {
         var cell = document.createElement('div');
         cell.className = 'cell ' + rowColor;
         cell.id = idPrefix + '-c-' + rowId + '-' + step;
+        cell.style.setProperty('--rc', 'var(--' + rowColor + ')');
         if (grid[rowId][step]) cell.classList.add('active');
         if (editable) {
           cell.addEventListener('click', function () {
@@ -104,10 +105,13 @@ DH.createPlayer = function (opts) {
     }
   });
 
-  // ── Playhead (moved each highlight() call) ──
-  var phEl = document.createElement('div');
-  phEl.className = 'playhead'; phEl.id = idPrefix + '-playhead';
-  dg.appendChild(phEl);
+  // ── Playhead + column glow (smooth rAF draw loop) ──
+  var vQueue = [], lastDrawStep = -1, lastStepTime = 0, rafID = null;
+  var phCont = document.createElement('div'); phCont.className = 'ph-container';
+  var cgEl = document.createElement('div'); cgEl.className = 'col-glow';
+  var phEl = document.createElement('div'); phEl.className = 'playhead';
+  phCont.appendChild(cgEl); phCont.appendChild(phEl);
+  dg.appendChild(phCont);
 
   // ── Volume sliders (only in full chrome) ──
   if (!minimal) {
@@ -156,6 +160,7 @@ DH.createPlayer = function (opts) {
         if (grid[r.id][curStep]) DH.Audio.trigger(r.id, nextTime, vols[r.id]);
       });
       var step = curStep, time = nextTime;
+      vQueue.push({ step: step, time: time });
       setTimeout(function () { if (isPlaying) highlight(step); }, Math.max(0, (time - ctx.currentTime) * 1000));
       nextTime += 60 / bpm / 4;
       curStep = (curStep + 1) % STEPS;
@@ -165,35 +170,38 @@ DH.createPlayer = function (opts) {
   function highlight(step) {
     var prev = (step - 1 + STEPS) % STEPS;
     var dp = document.getElementById(idPrefix + '-dot-' + prev); if (dp) dp.classList.remove('active');
-    ROWS.forEach(function (r) { var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + prev); if (c) c.classList.remove('playing'); });
     var dc = document.getElementById(idPrefix + '-dot-' + step); if (dc) dc.classList.add('active');
+    // Cell glow — void offsetWidth forces reflow so animation restarts on consecutive hits
     ROWS.forEach(function (r) {
       if (grid[r.id][step]) {
         var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + step);
-        if (c) {
-          c.classList.add('playing');
-          // Inject a new flash span — fresh element guarantees animation restarts on consecutive hits
-          var fl = document.createElement('span'); fl.className = 'cell-flash';
-          c.appendChild(fl);
-          setTimeout(function () { if (fl.parentNode) fl.parentNode.removeChild(fl); }, 550);
-        }
+        if (c) { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); }
       }
     });
-    // Move playhead to center of current step column
-    var ph = document.getElementById(idPrefix + '-playhead');
-    if (ph) {
-      var fc = document.getElementById(idPrefix + '-c-' + ROWS[0].id + '-' + step);
-      if (fc) {
-        var cr = fc.getBoundingClientRect(), dr = dg.getBoundingClientRect();
-        ph.style.left = Math.round(cr.left - dr.left + cr.width / 2 - 1) + 'px';
-        ph.style.display = 'block';
-      }
+  }
+  // rAF draw loop — sub-step smooth playhead interpolation via AudioContext time
+  function draw() {
+    if (!isPlaying) return;
+    var now = DH.Audio.getCtx().currentTime;
+    while (vQueue.length && vQueue[0].time <= now) {
+      lastDrawStep = vQueue[0].step; lastStepTime = vQueue[0].time; vQueue.shift();
     }
+    if (lastDrawStep >= 0) {
+      var stepDur = 60 / bpm / 4;
+      var frac = Math.min(1, Math.max(0, (now - lastStepTime) / stepDur));
+      var pos = (lastDrawStep + frac) / STEPS * 100;
+      phEl.style.left = pos + '%';
+      cgEl.style.left  = (lastDrawStep / STEPS * 100) + '%';
+      cgEl.style.width = (100 / STEPS) + '%';
+      phEl.classList.add('live'); cgEl.classList.add('live');
+    }
+    rafID = requestAnimationFrame(draw);
   }
   function start() {
     var ctx = DH.Audio.getCtx();
     isPlaying = true; curStep = 0; nextTime = ctx.currentTime + 0.05;
-    scheduler();
+    vQueue.length = 0; lastDrawStep = -1;
+    scheduler(); requestAnimationFrame(draw);
     if (!minimal) {
       $('btn-play').classList.add('on');
       $('ico-play').style.display = 'none';
@@ -212,11 +220,12 @@ DH.createPlayer = function (opts) {
       $('status').textContent = 'Detenido';
       $('status').className = 'status';
     }
+    vQueue.length = 0;
+    phEl.classList.remove('live'); cgEl.classList.remove('live');
     for (var s = 0; s < STEPS; s++) {
       var d = document.getElementById(idPrefix + '-dot-' + s); if (d) d.classList.remove('active');
-      ROWS.forEach(function (r) { var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + s); if (c) c.classList.remove('playing'); });
+      ROWS.forEach(function (r) { var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + s); if (c) c.classList.remove('hit'); });
     }
-    var ph = document.getElementById(idPrefix + '-playhead'); if (ph) ph.style.display = 'none';
     curStep = 0;
     if (opts.onPlayStateChange) opts.onPlayStateChange(false);
   }

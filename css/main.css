@@ -556,21 +556,30 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .cell.active.cabasa { background: var(--cabasa); border-color: transparent; box-shadow: 0 0 8px rgba(148,163,184,0.4); }
 .cell.active.tamb { background: var(--tamb); border-color: transparent; box-shadow: 0 0 8px rgba(225,29,72,0.4); }
 .cell.active.conga { background: var(--conga); border-color: transparent; box-shadow: 0 0 8px rgba(180,83,9,0.4); }
-.cell.playing { outline: none; }
-/* Hit flash — short-lived child span injected by player.js on each triggered step */
-.cell-flash {
-  position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  background: rgba(255,255,255,0.78); border-radius: inherit;
-  animation: cell-flash-anim 0.5s ease-out forwards;
+/* Hit glow — --rc is set per cell to its row color; void offsetWidth restarts on consecutive hits */
+@keyframes glow-cell {
+  0%  { transform: scale(1.07); box-shadow: 0 0 20px 4px var(--rc), 0 0 50px 8px var(--rc), inset 0 0 6px 2px rgba(255,255,255,.75); }
+  40% { transform: scale(1);    box-shadow: 0 0 14px 2px var(--rc), 0 0 30px 4px var(--rc); }
+  100%{ transform: scale(1);    box-shadow: 0 0 4px 1px var(--rc); }
 }
-@keyframes cell-flash-anim { 0% { opacity: 1; } 100% { opacity: 0; } }
-/* Playhead — vertical line swept by player.js highlight() */
+.cell.hit { animation: glow-cell .8s cubic-bezier(.12,.7,.25,1); }
+/* Playhead container — starts after label col (72px) + gap (3px) */
+.ph-container { position: absolute; top: 0; bottom: 0; left: 75px; right: 0; pointer-events: none; }
+/* Playhead — acid-colored luminous line, driven by rAF draw loop */
 .playhead {
-  position: absolute; top: 0; bottom: 0; width: 2px; display: none;
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 0 6px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.35);
-  pointer-events: none; z-index: 10; border-radius: 1px;
+  position: absolute; top: -2px; bottom: -2px; width: 2px;
+  background: #fff; opacity: 0;
+  box-shadow: 0 0 8px 2px var(--accent), 0 0 20px 5px var(--accent);
+  border-radius: 2px; z-index: 10;
 }
+.playhead.live { opacity: 1; }
+/* Column glow — step-width translucent band that moves with the playhead */
+.col-glow {
+  position: absolute; top: -2px; bottom: -2px; opacity: 0;
+  background: linear-gradient(to bottom, rgba(232,255,0,.1), rgba(232,255,0,.03));
+  border-radius: 3px; z-index: 5;
+}
+.col-glow.live { opacity: 1; }
 .step-wrap { padding: 0 20px 12px; overflow-x: auto; }
 .step-row { display: grid; grid-template-columns: 72px repeat(var(--grid-steps, 16), minmax(0, 1fr)); gap: 3px; min-width: 640px; }
 .sdot { height: 3px; background: var(--border); border-radius: 2px; }
