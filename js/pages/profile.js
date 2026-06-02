@@ -333,41 +333,15 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
         });
       }
 
-      if (isMe) {
-        DH.Notifications.refresh().then(function (notifs) {
-          var notifEvents = notifs.slice(0, 20).map(function (n) {
-            var who = '<strong>' + esc(n.user || '?') + '</strong>';
-            var gl = n.grooveSlug ? ' <a data-go="/groove/' + esc(n.grooveSlug) + '">' + esc(n.grooveTitle || 'groove') + '</a>' : '';
-            var color, text;
-            if (n.type === 'like') {
-              color = '#ff4d00'; text = who + ' le dio like a' + gl;
-            } else if (n.type === 'comment') {
-              color = '#00c9ff'; text = who + ' comentó en' + gl + (n.snippet ? '<div class="ndd-snippet">"' + esc(n.snippet) + '"</div>' : '');
-            } else if (n.type === 'follow') {
-              color = '#a855f7'; text = who + ' empezó a seguirte';
-            } else if (n.type === 'mention') {
-              color = '#22c55e'; text = who + ' te mencionó en' + gl;
-            } else {
-              color = '#6b6860'; text = who + ' interactuó con tu perfil';
-            }
-            return { color: color, text: text, time: relTime(n.time), _ts: n.time };
-          });
-          // Merge notifications + groove publications, sort newest first
-          var all = notifEvents.concat(grooveEvents).sort(function (a, b) { return (b._ts || 0) - (a._ts || 0); });
-          renderActivityItems(all.slice(0, 25));
-        }).catch(function () { renderActivityItems(grooveEvents); });
-      } else {
-        // Other profiles: fetch their activity (uploads, comments, likes, follows) from API
-        fetch('https://drumhub-backend.onrender.com/api/activity/feed?size=25&user=' + encodeURIComponent(d.user))
-          .then(function (r) { return r.json(); })
-          .then(function (json) {
-            var items = (json && json.data) || [];
-            if (!items.length) { renderActivityItems(grooveEvents); return; }
-            var mapped = items.map(function (e) { return _actEventToItem(e, esc, relTime); });
-            renderActivityItems(mapped);
-          })
-          .catch(function () { renderActivityItems(grooveEvents); });
-      }
+      // Both own profile and others: fetch activity from API (uploads, comments, likes, follows)
+      fetch('https://drumhub-backend.onrender.com/api/activity/feed?size=25&user=' + encodeURIComponent(d.user))
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          var items = (json && json.data) || [];
+          if (!items.length) { renderActivityItems(grooveEvents); return; }
+          renderActivityItems(items.map(function (e) { return _actEventToItem(e, esc, relTime); }));
+        })
+        .catch(function () { renderActivityItems(grooveEvents); });
     } else if (name === 'followers') {
       var wrap2 = document.createElement('div'); wrap2.className = 'sidebar-card-v2'; wrap2.style.padding = '24px';
       wrap2.innerHTML = '<div class="section-title-sm">Seguidores</div>'
