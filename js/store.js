@@ -45,6 +45,17 @@ DH.Store = (function () {
     });
   }
 
+  // Used by OAuth flows (Google Sign-In) that already have a JWT from the backend.
+  function loginWithAuth(authData) {
+    DH.Api.setToken(authData.token);
+    var sessionUser = DH.Adapter.sessionFromAuth(authData);
+    _saveUser(sessionUser);
+    return DH.Api.getFavorites().then(function (favPage) {
+      var favIds = ((favPage && favPage.content) || []).map(function (f) { return String(f.grooveId); });
+      localStorage.setItem(KEY_FAVS, JSON.stringify(favIds));
+    }).catch(function () {}).then(function () { return sessionUser; });
+  }
+
   function logout() {
     localStorage.removeItem(KEY_SESSION);
     DH.Api.clearToken();
@@ -237,6 +248,7 @@ DH.Store = (function () {
   return {
     getUser: getUser,
     login: login,
+    loginWithAuth: loginWithAuth,
     logout: logout,
     isLoggedIn: isLoggedIn,
     updateAvatar: updateAvatar,
