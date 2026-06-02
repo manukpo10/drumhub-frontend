@@ -536,7 +536,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .row-lbl { display: flex; align-items: center; gap: 6px; padding-right: 6px; overflow: hidden; min-width: 0; grid-column: 1; }
 .row-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .row-name { font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Mono', monospace; min-width: 0; display: block; flex: 1; }
-.cell { height: 32px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; transition: all 0.08s; position: relative; overflow: hidden; }
+.cell { height: 32px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; transition: all 0.08s; position: relative; }
 .cell:hover { border-color: var(--muted); }
 .cell.active.hihat { background: var(--hihat); border-color: transparent; box-shadow: 0 0 8px rgba(255,170,0,0.35); }
 .cell.active.hihat_open { background: var(--hihat_open); border-color: transparent; box-shadow: 0 0 8px rgba(253,224,71,0.35); }
@@ -600,6 +600,60 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
   border-radius: 3px; z-index: 5;
 }
 .col-glow.live { opacity: 1; }
+
+/* Micro-shake — applied to .player-card or root on kick hit */
+@keyframes card-shake {
+  0%   { transform: translate(0,0); }
+  20%  { transform: translate(-2px, 1px); }
+  40%  { transform: translate(2px, -1px); }
+  60%  { transform: translate(-1px, 1px); }
+  80%  { transform: translate(1px, 0); }
+  100% { transform: translate(0,0); }
+}
+.card-shake { animation: card-shake 0.13s ease-out; }
+
+/* Ripple ring that expands outward on hit */
+@keyframes cell-ripple {
+  0%   { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+.cell-ripple {
+  position: absolute; inset: 0; border-radius: 3px;
+  border: 1.5px solid var(--rc);
+  pointer-events: none; z-index: 20;
+  animation: cell-ripple 0.6s ease-out forwards;
+}
+
+/* Row label glows with its instrument color on hit */
+@keyframes lbl-glow {
+  0%   { color: var(--rc); }
+  100% { color: var(--muted); }
+}
+@keyframes dot-pop {
+  0%   { transform: scale(1.6); box-shadow: 0 0 8px 3px var(--rc); }
+  100% { transform: scale(1);   box-shadow: none; }
+}
+.row-lbl.lbl-hit .row-name { animation: lbl-glow 0.65s ease-out forwards; }
+.row-lbl.lbl-hit .row-dot  { animation: dot-pop  0.5s  ease-out forwards; }
+
+/* Beat number 1/2/3/4 pulses on main beats */
+@keyframes beat-pulse {
+  0%   { transform: scale(1.7) translateY(-2px); color: var(--accent); }
+  100% { transform: scale(1)   translateY(0);    }
+}
+.beat-num.dn.beat-pulse { animation: beat-pulse 0.28s ease-out forwards; }
+
+/* Instrument-driven spectrum bars */
+.spectrum-wrap {
+  height: 30px; display: flex; align-items: flex-end; gap: 2px;
+  padding: 0 20px 0; overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+.s-bar {
+  flex: 1; border-radius: 1px 1px 0 0; min-height: 2px; height: 2px;
+  background: var(--accent); opacity: 0.65;
+  transition: height 0.06s cubic-bezier(.22,.6,.25,1);
+}
 .step-wrap { padding: 0 20px 12px; overflow-x: auto; }
 .step-row { display: grid; grid-template-columns: 72px repeat(var(--grid-steps, 16), minmax(0, 1fr)); gap: 3px; min-width: 640px; }
 .sdot { height: 3px; background: var(--border); border-radius: 2px; }

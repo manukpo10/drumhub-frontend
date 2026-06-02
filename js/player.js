@@ -21,6 +21,7 @@ DH.createPlayer = function (opts) {
 
   var isPlaying = false, curStep = 0, nextTime = 0, timerID = null;
   var LOOKAHEAD = 0.1, SCHEDULE = 0.2;
+  var kickRowId = (function() { var id = null; (opts.rows || DH.ROWS).forEach(function(r) { if (r.id === 'kick') id = r.id; }); return id; })();
 
   var root = opts.container;
   root.innerHTML = '';
@@ -85,6 +86,8 @@ DH.createPlayer = function (opts) {
   ROWS.forEach(function (row) {
     var lbl = document.createElement('div'); lbl.className = 'row-lbl';
     lbl.innerHTML = '<div class="row-dot" style="background:var(--' + row.color + ')"></div><span class="row-name">' + row.name + '</span>';
+    lbl.id = idPrefix + '-lbl-' + row.id;
+    lbl.style.setProperty('--rc', 'var(--' + row.color + ')');
     dg.appendChild(lbl);
     for (var s = 0; s < STEPS; s++) {
       (function (rowId, rowColor, step) {
@@ -112,6 +115,38 @@ DH.createPlayer = function (opts) {
   var phEl = document.createElement('div'); phEl.className = 'playhead';
   phCont.appendChild(cgEl); phCont.appendChild(phEl);
   dg.appendChild(phCont);
+
+  // ── Spectrum bars (instrument → frequency zone mapping) ──
+  var S_BARS = 24;
+  var S_MAP = {
+    kick:       { center: 2,  spread: 5, height: 26 },
+    snare:      { center: 10, spread: 5, height: 20 },
+    clap:       { center: 11, spread: 4, height: 18 },
+    hihat:      { center: 20, spread: 3, height: 14 },
+    hihat_open: { center: 21, spread: 4, height: 17 },
+    tom1:       { center: 6,  spread: 4, height: 19 },
+    tom2:       { center: 8,  spread: 4, height: 17 },
+    tom3:       { center: 9,  spread: 3, height: 15 },
+    crash:      { center: 22, spread: 4, height: 22 },
+    ride:       { center: 19, spread: 4, height: 16 },
+    ride_bell:  { center: 20, spread: 2, height: 13 },
+    splash:     { center: 22, spread: 2, height: 12 },
+    cowbell:    { center: 14, spread: 2, height: 12 },
+    stick:      { center: 17, spread: 2, height: 10 },
+  };
+  var specWrap = document.createElement('div');
+  specWrap.className = 'spectrum-wrap'; specWrap.id = idPrefix + '-spectrum';
+  for (var sb = 0; sb < S_BARS; sb++) {
+    var sbar = document.createElement('div'); sbar.className = 's-bar';
+    specWrap.appendChild(sbar);
+  }
+  // Insert: in full chrome after .step-wrap, in minimal after drum-grid
+  if (!minimal) {
+    var stepWrapEl = root.querySelector('.step-wrap');
+    if (stepWrapEl) stepWrapEl.parentNode.insertBefore(specWrap, stepWrapEl.nextSibling);
+  } else {
+    dg.parentNode.insertBefore(specWrap, dg.nextSibling);
+  }
 
   // ── Volume sliders (only in full chrome) ──
   if (!minimal) {
@@ -171,13 +206,55 @@ DH.createPlayer = function (opts) {
     var prev = (step - 1 + STEPS) % STEPS;
     var dp = document.getElementById(idPrefix + '-dot-' + prev); if (dp) dp.classList.remove('active');
     var dc = document.getElementById(idPrefix + '-dot-' + step); if (dc) dc.classList.add('active');
+    // Beat number pulse on main beats (beat-nums children: [0]=spacer, [1..16]=steps)
+    if (step % stepsPerBeat === 0) {
+      var bnHost = document.getElementById(idPrefix + '-beat-nums');
+      if (bnHost && bnHost.children[step + 1]) {
+        var bnDiv = bnHost.children[step + 1];
+        bnDiv.classList.remove('beat-pulse'); void bnDiv.offsetWidth; bnDiv.classList.add('beat-pulse');
+      }
+    }
     // Cell glow — void offsetWidth forces reflow so animation restarts on consecutive hits
     ROWS.forEach(function (r) {
       if (grid[r.id][step]) {
         var c = document.getElementById(idPrefix + '-c-' + r.id + '-' + step);
-        if (c) { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); }
+        if (c) {
+          c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit');
+          var rip = document.createElement('div'); rip.className = 'cell-ripple';
+          c.appendChild(rip);
+          setTimeout(function() { if (rip.parentNode) rip.parentNode.removeChild(rip); }, 650);
+          var lblEl = document.getElementById(idPrefix + '-lbl-' + r.id);
+          if (lblEl) { lblEl.classList.remove('lbl-hit'); void lblEl.offsetWidth; lblEl.classList.add('lbl-hit'); }
+        }
       }
     });
+    // Micro-shake on kick
+    if (kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
+      var shakeTarget = root.querySelector('.player-card') || root;
+      shakeTarget.classList.remove('card-shake'); void shakeTarget.offsetWidth; shakeTarget.classList.add('card-shake');
+    }
+    // Spectrum spike
+    var specEl = document.getElementById(idPrefix + '-spectrum');
+    if (specEl) {
+      var barH = new Array(S_BARS).fill(2);
+      ROWS.forEach(function(r) {
+        if (!grid[r.id][step]) return;
+        var cfg = S_MAP[r.id] || { center: 12, spread: 3, height: 10 };
+        for (var bi = 0; bi < S_BARS; bi++) {
+          var dist = Math.abs(bi - cfg.center);
+          if (dist <= cfg.spread) {
+            var h = Math.round(cfg.height * (1 - dist / (cfg.spread + 1) * 0.65));
+            if (h > barH[bi]) barH[bi] = h;
+          }
+        }
+      });
+      var specBars = specEl.children;
+      for (var bi2 = 0; bi2 < S_BARS; bi2++) { specBars[bi2].style.height = barH[bi2] + 'px'; }
+      setTimeout(function() {
+        var sb2 = specEl.children;
+        for (var bi3 = 0; bi3 < S_BARS; bi3++) sb2[bi3].style.height = '2px';
+      }, 130);
+    }
   }
   // rAF draw loop — sub-step smooth playhead interpolation via AudioContext time
   function draw() {
