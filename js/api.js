@@ -50,6 +50,9 @@ DH.Api = (function () {
     register: function (username, name, email, password, avatarSeed) {
       return request('POST', '/api/auth/register', { username: username, name: name, email: email, password: password, avatarSeed: avatarSeed });
     },
+    googleSignIn: function (credential) {
+      return request('POST', '/api/auth/google', { credential: credential });
+    },
 
     // Grooves
     getGrooves: function (params) {

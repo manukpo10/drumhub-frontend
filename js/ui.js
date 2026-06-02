@@ -261,6 +261,8 @@ DH.UI = (function () {
       +     '<div style="text-align:right;margin-bottom:8px;"><a data-action="forgot" style="font-size:0.62rem;color:var(--muted);font-family:DM Mono,monospace;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;">¿Olvidaste tu contraseña?</a></div>'
       +     '<button class="btn-modal-submit" type="submit">Ingresar</button>'
       +   '</form>'
+      +   '<div class="modal-or"><span>o</span></div>'
+      +   '<button type="button" class="btn-google-signin" id="btn-google-login"><svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg> Continuar con Google</button>'
       +   '<div class="modal-divider">¿No tenés cuenta? <a data-tab="register">Registrate gratis</a></div>'
       + '</div>'
       + '<div id="modal-pane-register" style="display:none;">'
@@ -276,6 +278,8 @@ DH.UI = (function () {
       +     '<div class="modal-field"><label>Contraseña</label><input type="password" name="password" placeholder="••••••••" required></div>'
       +     '<button class="btn-modal-submit" type="submit">Crear cuenta</button>'
       +   '</form>'
+      +   '<div class="modal-or"><span>o</span></div>'
+      +   '<button type="button" class="btn-google-signin" id="btn-google-register"><svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg> Continuar con Google</button>'
       +   '<div class="modal-divider">¿Ya tenés cuenta? <a data-tab="login">Ingresá</a></div>'
       + '</div>'
       + '<div id="modal-pane-forgot" style="display:none;">'
@@ -310,6 +314,31 @@ DH.UI = (function () {
       forgotForm.style.display = 'none';
       box.querySelector('#modal-forgot-success').style.display = '';
     });
+    // Google Sign-In buttons
+    var gLogin = box.querySelector('#btn-google-login');
+    var gRegister = box.querySelector('#btn-google-register');
+    function triggerGoogle() {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.prompt(function(notification) {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            // One-tap not available; open Google picker via button renderization fallback
+            // Render a hidden Google button and click it
+            var tmpDiv = document.createElement('div');
+            tmpDiv.style.position = 'fixed'; tmpDiv.style.top = '-9999px';
+            document.body.appendChild(tmpDiv);
+            google.accounts.id.renderButton(tmpDiv, { theme: 'outline', size: 'large' });
+            var gBtn = tmpDiv.querySelector('[role="button"]') || tmpDiv.querySelector('div[tabindex="0"]');
+            if (gBtn) gBtn.click();
+            setTimeout(function() { if (tmpDiv.parentNode) document.body.removeChild(tmpDiv); }, 3000);
+          }
+        });
+      } else {
+        if (DH.UI && DH.UI.toast) DH.UI.toast('Google Sign-In no disponible. Recargá la página.', 'error');
+      }
+    }
+    if (gLogin) gLogin.addEventListener('click', triggerGoogle);
+    if (gRegister) gRegister.addEventListener('click', triggerGoogle);
+
     box.querySelector('#form-login').addEventListener('submit', function (e) {
       e.preventDefault();
       var fd = new FormData(e.target);

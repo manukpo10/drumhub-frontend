@@ -1,4 +1,40 @@
 // App bootstrap: prefetch data from backend, render shell, wire routes.
+window.DH = window.DH || {};
+
+DH.GOOGLE_CLIENT_ID = '431278406816-9iq60ns1ro7pmbo6ji2j0j849n93avcs.apps.googleusercontent.com';
+
+// Called by Google Identity Services when the library loads
+window.onGoogleLibraryLoad = function() {
+  if (typeof google === 'undefined' || !google.accounts) return;
+  google.accounts.id.initialize({
+    client_id: DH.GOOGLE_CLIENT_ID,
+    callback: function(response) {
+      DH.Auth.handleGoogleCredential(response.credential);
+    }
+  });
+};
+
+DH.Auth = DH.Auth || {};
+DH.Auth.handleGoogleCredential = function(credential) {
+  DH.Api.googleSignIn(credential).then(function(data) {
+    DH.Store.setUser({
+      user: data.user.username,
+      name: data.user.name,
+      email: data.user.email,
+      plan: (data.user.plan || 'free').toLowerCase(),
+      avatar: data.user.avatarSeed,
+      init: data.user.init,
+      color: data.user.color,
+      token: data.token
+    });
+    if (DH.UI && DH.UI.closeModal) DH.UI.closeModal();
+    if (DH.UI && DH.UI.renderNav) DH.UI.renderNav();
+    DH.Router.go('/');
+  }).catch(function(err) {
+    if (DH.UI && DH.UI.toast) DH.UI.toast((err && err.message) || 'Error al iniciar sesión con Google', 'error');
+  });
+};
+
 (function () {
   // Restore last selected kit before any audio fires.
   try {
