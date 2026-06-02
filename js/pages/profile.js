@@ -42,6 +42,37 @@ DH.pages.profile = function (params) {
   });
 };
 
+/**
+ * Maps an ActivityEventDto from the API to a local display item { color, text, time }.
+ * @param {object} e - ActivityEventDto from API
+ * @param {function} esc - DH.UI.escape
+ * @param {function} relTime - relTime(ms) helper
+ */
+function _actEventToItem(e, esc, relTime) {
+  var ACT_META = {
+    upload:  { color: '#e8ff00' },
+    comment: { color: '#00c9ff' },
+    like:    { color: '#ff4d00' },
+    follow:  { color: '#a855f7' }
+  };
+  var meta = ACT_META[e.type] || { color: '#6b6860' };
+  var actor = '<strong>' + esc(e.actorName || e.actor || '?') + '</strong>';
+  var grooveLink = e.grooveSlug
+    ? ' <a data-go="/groove/' + esc(e.grooveSlug) + '">' + esc(e.grooveTitle || 'groove') + '</a>'
+    : '';
+  var text;
+  if (e.type === 'upload')       text = actor + ' subió' + grooveLink;
+  else if (e.type === 'comment') text = actor + ' comentó en' + grooveLink;
+  else if (e.type === 'like')    text = actor + ' marcó como favorito' + grooveLink;
+  else if (e.type === 'follow')  text = actor + ' empezó a seguir a <strong>' + esc(e.targetUserName || e.targetUser || '?') + '</strong>';
+  else                           text = actor + ' interactuó';
+  return {
+    color: meta.color,
+    text: text,
+    time: relTime(new Date(e.createdAt).getTime())
+  };
+}
+
 function _renderProfile(app, d, apiGrooves, followersCount, followingCount, followersUsers, followingUsers, params) {
   var esc = DH.UI.escape;
   var session = DH.Store.getUser();
@@ -210,18 +241,38 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
     });
   }
 
-  // ── Activity sidebar (groove publications only — sync, no fetch needed) ──
+  // ── Activity sidebar — fetch from API (uploads, comments, likes, follows) ──
   var actHost = document.getElementById('activity-side');
+  // Seed immediately with local groove events so there is no blank flash
   var sideEvents = grooveEvents.slice(0, 5);
-  if (!sideEvents.length) {
-    actHost.innerHTML = '<div style="font-size:0.72rem;color:var(--muted);font-weight:300;">Sin actividad reciente.</div>';
-  } else {
+  if (sideEvents.length) {
     sideEvents.forEach(function (a) {
       var el = document.createElement('div'); el.className = 'act-item-v2';
       el.innerHTML = '<div class="act-dot" style="background:' + a.color + '"></div><div><div class="act-text-v2">' + a.text + '</div><div class="act-time-v2">' + esc(a.time) + '</div></div>';
       actHost.appendChild(el);
     });
   }
+  // Then replace with real mixed feed from API
+  fetch('https://drumhub-backend.onrender.com/api/activity/feed?size=5&user=' + encodeURIComponent(d.user))
+    .then(function (r) { return r.json(); })
+    .then(function (json) {
+      var items = (json && json.data) || [];
+      if (!items.length) {
+        if (!sideEvents.length) actHost.innerHTML = '<div style="font-size:0.72rem;color:var(--muted);font-weight:300;">Sin actividad reciente.</div>';
+        return;
+      }
+      actHost.innerHTML = '';
+      items.forEach(function (e) {
+        var item = _actEventToItem(e, esc, relTime);
+        var el = document.createElement('div'); el.className = 'act-item-v2';
+        el.innerHTML = '<div class="act-dot" style="background:' + item.color + '"></div><div><div class="act-text-v2">' + item.text + '</div><div class="act-time-v2">' + item.time + '</div></div>';
+        actHost.appendChild(el);
+      });
+      actHost.querySelectorAll('[data-go]').forEach(function (lnk) {
+        lnk.addEventListener('click', function () { DH.Router.go(lnk.getAttribute('data-go')); });
+      });
+    })
+    .catch(function () { /* keep seeded local events */ });
 
   // ── Following (4 avatars) ──
   var followGrid = document.getElementById('following-grid');
@@ -306,8 +357,16 @@ function _renderProfile(app, d, apiGrooves, followersCount, followingCount, foll
           renderActivityItems(all.slice(0, 25));
         }).catch(function () { renderActivityItems(grooveEvents); });
       } else {
-        // Other profiles: only their groove publications (no access to their notifications)
-        renderActivityItems(grooveEvents);
+        // Other profiles: fetch their activity (uploads, comments, likes, follows) from API
+        fetch('https://drumhub-backend.onrender.com/api/activity/feed?size=25&user=' + encodeURIComponent(d.user))
+          .then(function (r) { return r.json(); })
+          .then(function (json) {
+            var items = (json && json.data) || [];
+            if (!items.length) { renderActivityItems(grooveEvents); return; }
+            var mapped = items.map(function (e) { return _actEventToItem(e, esc, relTime); });
+            renderActivityItems(mapped);
+          })
+          .catch(function () { renderActivityItems(grooveEvents); });
       }
     } else if (name === 'followers') {
       var wrap2 = document.createElement('div'); wrap2.className = 'sidebar-card-v2'; wrap2.style.padding = '24px';
