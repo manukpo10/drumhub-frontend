@@ -116,38 +116,6 @@ DH.createPlayer = function (opts) {
   phCont.appendChild(cgEl); phCont.appendChild(phEl);
   dg.appendChild(phCont);
 
-  // ── Spectrum bars (instrument → frequency zone mapping) ──
-  var S_BARS = 24;
-  var S_MAP = {
-    kick:       { center: 2,  spread: 5, height: 38 },
-    snare:      { center: 10, spread: 5, height: 30 },
-    clap:       { center: 11, spread: 4, height: 26 },
-    hihat:      { center: 20, spread: 3, height: 20 },
-    hihat_open: { center: 21, spread: 4, height: 24 },
-    tom1:       { center: 6,  spread: 4, height: 28 },
-    tom2:       { center: 8,  spread: 4, height: 25 },
-    tom3:       { center: 9,  spread: 3, height: 22 },
-    crash:      { center: 22, spread: 4, height: 32 },
-    ride:       { center: 19, spread: 4, height: 22 },
-    ride_bell:  { center: 20, spread: 2, height: 18 },
-    splash:     { center: 22, spread: 2, height: 17 },
-    cowbell:    { center: 14, spread: 2, height: 16 },
-    stick:      { center: 17, spread: 2, height: 14 },
-  };
-  var specWrap = document.createElement('div');
-  specWrap.className = 'spectrum-wrap'; specWrap.id = idPrefix + '-spectrum';
-  for (var sb = 0; sb < S_BARS; sb++) {
-    var sbar = document.createElement('div'); sbar.className = 's-bar';
-    specWrap.appendChild(sbar);
-  }
-  // Insert: in full chrome after .step-wrap, in minimal after drum-grid
-  if (!minimal) {
-    var stepWrapEl = root.querySelector('.step-wrap');
-    if (stepWrapEl) stepWrapEl.parentNode.insertBefore(specWrap, stepWrapEl.nextSibling);
-  } else {
-    dg.parentNode.insertBefore(specWrap, dg.nextSibling);
-  }
-
   // ── Volume sliders (only in full chrome) ──
   if (!minimal) {
     var vr = $('vol-row');
@@ -232,28 +200,6 @@ DH.createPlayer = function (opts) {
     if (kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
       var shakeTarget = root.querySelector('.player-card') || root;
       shakeTarget.classList.remove('card-shake'); void shakeTarget.offsetWidth; shakeTarget.classList.add('card-shake');
-    }
-    // Spectrum spike
-    var specEl = document.getElementById(idPrefix + '-spectrum');
-    if (specEl) {
-      var barH = new Array(S_BARS).fill(2);
-      ROWS.forEach(function(r) {
-        if (!grid[r.id][step]) return;
-        var cfg = S_MAP[r.id] || { center: 12, spread: 3, height: 10 };
-        for (var bi = 0; bi < S_BARS; bi++) {
-          var dist = Math.abs(bi - cfg.center);
-          if (dist <= cfg.spread) {
-            var h = Math.round(cfg.height * (1 - dist / (cfg.spread + 1) * 0.65));
-            if (h > barH[bi]) barH[bi] = h;
-          }
-        }
-      });
-      var specBars = specEl.children;
-      for (var bi2 = 0; bi2 < S_BARS; bi2++) { specBars[bi2].style.height = barH[bi2] + 'px'; }
-      setTimeout(function() {
-        var sb2 = specEl.children;
-        for (var bi3 = 0; bi3 < S_BARS; bi3++) sb2[bi3].style.height = '2px';
-      }, 130);
     }
   }
   // rAF draw loop — sub-step smooth playhead interpolation via AudioContext time
