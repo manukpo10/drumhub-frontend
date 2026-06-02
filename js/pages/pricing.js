@@ -1,4 +1,6 @@
-// Pricing page — checkout flow and trial activation
+// Pricing page — checkout flow and trial activation.
+// Uses the same plan-card / plans-grid design as the home "Planes" section
+// (defined in main.css) for visual consistency, with the real checkout + trial logic.
 window.DH = window.DH || {};
 DH.pages = DH.pages || {};
 
@@ -11,8 +13,61 @@ DH.pages.pricing = function () {
   var u = isLoggedIn ? DH.Store.getUser() : null;
   var currentPlan = (u && u.plan) ? u.plan.toLowerCase() : 'free';
 
+  // Feature lists mirror the home "Planes" section for consistency.
+  var FEATURES = {
+    free: [
+      { text: 'Explorar y escuchar grooves ilimitado' },
+      { text: 'Guardar hasta 20 favoritos' },
+      { text: 'Subir hasta 5 grooves' },
+      { text: 'Exportar JSON' },
+      { text: 'Badge de perfil', excluded: true },
+      { text: 'Exportar MIDI, PDF y MP3', excluded: true },
+      { text: 'Estadísticas de grooves', excluded: true },
+      { text: 'API pública', excluded: true }
+    ],
+    pro: [
+      { text: 'Todo lo del plan Gratis' },
+      { text: 'Grooves ilimitados' },
+      { text: 'Favoritos ilimitados' },
+      { text: 'Exportar MIDI, PDF y MP3' },
+      { text: 'Estadísticas de tus grooves' },
+      { text: 'Badge PRO en el perfil' },
+      { text: 'API pública', excluded: true },
+      { text: 'Grooves privados', excluded: true }
+    ],
+    studio: [
+      { text: 'Todo lo del plan Pro' },
+      { text: 'Acceso a API pública' },
+      { text: 'Grooves privados' },
+      { text: 'Soporte prioritario' },
+      { text: 'Badge ESTUDIO en el perfil' },
+      { text: 'Hasta 5 cuentas colaboradoras' }
+    ]
+  };
+
+  function featuresHtml(list) {
+    return list.map(function (f) {
+      return '<li class="plan-feature' + (f.excluded ? ' excluded' : '') + '">' + esc(f.text) + '</li>';
+    }).join('');
+  }
+
+  // Builds the action button(s) for a paid plan card, honoring the current plan state.
+  function paidActions(plan, period, btnClass) {
+    if (currentPlan === plan) {
+      return '<button class="plan-btn" disabled style="opacity:0.5;cursor:not-allowed">Plan actual</button>';
+    }
+    var html = '<button class="plan-btn ' + btnClass + '" id="checkout-' + plan + '" '
+      + 'data-plan="' + plan + '" data-period="' + period + '">Suscribirse</button>';
+    // Trial only offered to free users, on the Pro card.
+    if (plan === 'pro' && currentPlan === 'free') {
+      html += '<button class="plan-btn" id="trial-pro" style="margin-top:8px">Probar 7 días gratis</button>';
+    }
+    return html;
+  }
+
   function renderPage(period) {
     period = period || 'monthly';
+    var annual = period === 'annual';
     var proCard = DH.Pricing.getCard('pro', period);
     var studioCard = DH.Pricing.getCard('studio', period);
 
@@ -23,104 +78,88 @@ DH.pages.pricing = function () {
       +   '<div class="page-sub-v2">Elegí el plan que mejor se adapta a tu forma de crear.</div>'
       + '</div>'
 
-      // Period toggle
-      + '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:28px">'
-      +   '<button class="btn-draft' + (period === 'monthly' ? ' active' : '') + '" id="period-monthly">Mensual</button>'
-      +   '<button class="btn-draft' + (period === 'annual' ? ' active' : '') + '" id="period-annual">Anual <span style="font-size:0.68rem;color:var(--accent);margin-left:4px">-20%</span></button>'
+      // Period toggle (same switch as home)
+      + '<div class="plans-toggle-wrap">'
+      +   '<span class="plans-period-label' + (!annual ? ' active' : '') + '">Mensual</span>'
+      +   '<button class="plans-toggle' + (annual ? ' on' : '') + '" id="pricing-toggle" aria-pressed="' + annual + '">'
+      +     '<span class="plans-toggle-thumb"></span>'
+      +   '</button>'
+      +   '<span class="plans-period-label' + (annual ? ' active' : '') + '">Anual</span>'
+      +   '<span class="plans-save-badge visible">' + (annual ? 'Ahorrando 19%' : 'Ahorrás 19% pagando anual') + '</span>'
       + '</div>'
 
-      // Plan cards
-      + '<div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-bottom:40px">'
+      + '<div class="plans-grid">'
 
-      // FREE card
-      + '<div class="card-v2" style="min-width:240px;max-width:300px;flex:1">'
-      +   '<div class="card-title-v2">Free</div>'
-      +   '<div style="font-size:1.8rem;font-family:\'Bebas Neue\',sans-serif;margin:12px 0">$ 0</div>'
-      +   '<ul style="font-size:0.75rem;color:var(--muted);list-style:none;padding:0;margin:0 0 16px;line-height:2">'
-      +     '<li>20 grooves</li>'
-      +     '<li>5 favoritos</li>'
-      +     '<li>Reproducción ilimitada</li>'
-      +   '</ul>'
-      +   (currentPlan === 'free'
-          ? '<button class="btn-draft" disabled style="width:100%;opacity:0.5;cursor:not-allowed">Plan actual</button>'
-          : '<button class="btn-draft" style="width:100%" data-go="/settings">Tu plan actual: ' + currentPlan.toUpperCase() + '</button>'
-        )
-      + '</div>'
-
-      // PRO card
-      + '<div class="card-v2" style="min-width:240px;max-width:300px;flex:1;border-color:var(--accent)">'
-      +   '<div class="card-title-v2">Pro <span style="font-size:0.65rem;background:var(--accent);color:#000;padding:2px 8px;border-radius:2px;margin-left:8px">POPULAR</span></div>'
-      +   '<div style="font-size:1.8rem;font-family:\'Bebas Neue\',sans-serif;margin:12px 0" id="price-pro">' + proCard.main + '</div>'
-      +   '<div style="font-size:0.65rem;color:var(--muted);margin-bottom:12px">'
-      +     proCard.period
-      +     (proCard.ref ? ' &nbsp;·&nbsp; <span>' + proCard.ref + '</span>' : '')
-      +   '</div>'
-      +   '<ul style="font-size:0.75rem;color:var(--muted);list-style:none;padding:0;margin:0 0 16px;line-height:2">'
-      +     '<li>Grooves ilimitados</li>'
-      +     '<li>Favoritos ilimitados</li>'
-      +     '<li>Exportación MIDI / PDF</li>'
-      +     '<li>Badge PRO</li>'
-      +   '</ul>'
-      +   '<div style="display:flex;flex-direction:column;gap:8px">'
-      +     (currentPlan === 'pro'
-            ? '<button class="btn-draft" disabled style="width:100%;opacity:0.5;cursor:not-allowed">Plan actual</button>'
-            : '<button class="btn-primary" id="checkout-pro" data-plan="pro" data-period="' + period + '" style="width:100%">Suscribirse</button>'
-          )
+      // FREE
+      +   '<div class="plan-card free">'
+      +     '<div class="plan-name">Gratis</div>'
+      +     '<div class="plan-price-wrap">'
+      +       '<div class="plan-price">$0</div>'
+      +       '<div class="plan-period">para siempre</div>'
+      +     '</div>'
+      +     '<div class="plan-price-ref"></div>'
+      +     '<div class="plan-desc">Para empezar a explorar y practicar.</div>'
+      +     '<ul class="plan-features">' + featuresHtml(FEATURES.free) + '</ul>'
       +     (currentPlan === 'free'
-            ? '<button class="btn-draft" id="trial-pro" style="width:100%;font-size:0.72rem">Probar 7 días gratis</button>'
-            : ''
+            ? '<button class="plan-btn" disabled style="opacity:0.5;cursor:not-allowed">Plan actual</button>'
+            : '<button class="plan-btn" data-go="/settings">Ver mi cuenta</button>'
           )
       +   '</div>'
-      + '</div>'
 
-      // STUDIO card
-      + '<div class="card-v2" style="min-width:240px;max-width:300px;flex:1">'
-      +   '<div class="card-title-v2">Studio</div>'
-      +   '<div style="font-size:1.8rem;font-family:\'Bebas Neue\',sans-serif;margin:12px 0" id="price-studio">' + studioCard.main + '</div>'
-      +   '<div style="font-size:0.65rem;color:var(--muted);margin-bottom:12px">'
-      +     studioCard.period
-      +     (studioCard.ref ? ' &nbsp;·&nbsp; <span>' + studioCard.ref + '</span>' : '')
+      // PRO
+      +   '<div class="plan-card pro">'
+      +     '<div class="plan-popular">Más popular</div>'
+      +     '<div class="plan-name">Pro</div>'
+      +     '<div class="plan-price-wrap">'
+      +       '<div class="plan-price-old">' + (proCard.old || '') + '</div>'
+      +       '<div class="plan-price">' + proCard.main + '</div>'
+      +       '<div class="plan-period">' + proCard.period + '</div>'
+      +     '</div>'
+      +     '<div class="plan-price-ref">' + (proCard.ref || '') + '</div>'
+      +     '<div class="plan-desc">Para bateristas que practican en serio.</div>'
+      +     '<ul class="plan-features">' + featuresHtml(FEATURES.pro) + '</ul>'
+      +     paidActions('pro', period, 'pro')
       +   '</div>'
-      +   '<ul style="font-size:0.75rem;color:var(--muted);list-style:none;padding:0;margin:0 0 16px;line-height:2">'
-      +     '<li>Todo lo de Pro</li>'
-      +     '<li>Exportación MP3</li>'
-      +     '<li>Exportación PDF con partitura</li>'
-      +     '<li>Hasta 5 colaboradores</li>'
-      +     '<li>Badge STUDIO</li>'
-      +   '</ul>'
-      +   (currentPlan === 'studio'
-          ? '<button class="btn-draft" disabled style="width:100%;opacity:0.5;cursor:not-allowed">Plan actual</button>'
-          : '<button class="btn-draft" id="checkout-studio" data-plan="studio" data-period="' + period + '" style="width:100%">Suscribirse</button>'
-        )
-      + '</div>'
 
-      + '</div>' // end cards
+      // STUDIO
+      +   '<div class="plan-card studio">'
+      +     '<div class="plan-name">Estudio</div>'
+      +     '<div class="plan-price-wrap">'
+      +       '<div class="plan-price-old">' + (studioCard.old || '') + '</div>'
+      +       '<div class="plan-price">' + studioCard.main + '</div>'
+      +       '<div class="plan-period">' + studioCard.period + '</div>'
+      +     '</div>'
+      +     '<div class="plan-price-ref">' + (studioCard.ref || '') + '</div>'
+      +     '<div class="plan-desc">Para estudios, docentes y profesionales.</div>'
+      +     '<ul class="plan-features">' + featuresHtml(FEATURES.studio) + '</ul>'
+      +     paidActions('studio', period, 'studio')
+      +   '</div>'
 
-      + '<div id="pricing-msg" style="text-align:center;min-height:24px;font-size:0.8rem;color:var(--accent2)"></div>'
+      + '</div>' // end plans-grid
 
+      + '<div id="pricing-msg" style="text-align:center;min-height:24px;font-size:0.8rem;color:var(--accent2);margin-top:24px"></div>'
       + '</div>'; // end page
 
-    // Period toggle
-    var btnMonthly = document.getElementById('period-monthly');
-    var btnAnnual  = document.getElementById('period-annual');
-    if (btnMonthly) {
-      btnMonthly.addEventListener('click', function () { renderPage('monthly'); });
-    }
-    if (btnAnnual) {
-      btnAnnual.addEventListener('click', function () { renderPage('annual'); });
+    wireEvents(period);
+  }
+
+  function wireEvents(period) {
+    // Period toggle — re-render with the opposite period
+    var toggle = document.getElementById('pricing-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        renderPage(period === 'annual' ? 'monthly' : 'annual');
+      });
     }
 
     // Checkout buttons
-    var checkoutPro    = document.getElementById('checkout-pro');
-    var checkoutStudio = document.getElementById('checkout-studio');
-
     function handleCheckout(btn) {
       if (!btn) return;
       btn.addEventListener('click', function () {
         if (!isLoggedIn) { DH.UI.openModal('login'); return; }
-        var plan   = btn.getAttribute('data-plan');
-        var p      = btn.getAttribute('data-period');
-        var msg    = document.getElementById('pricing-msg');
+        var plan = btn.getAttribute('data-plan');
+        var p = btn.getAttribute('data-period');
+        var msg = document.getElementById('pricing-msg');
         if (msg) msg.textContent = 'Redirigiendo a Mercado Pago...';
         btn.disabled = true;
 
@@ -138,9 +177,8 @@ DH.pages.pricing = function () {
         });
       });
     }
-
-    handleCheckout(checkoutPro);
-    handleCheckout(checkoutStudio);
+    handleCheckout(document.getElementById('checkout-pro'));
+    handleCheckout(document.getElementById('checkout-studio'));
 
     // Trial button
     var trialBtn = document.getElementById('trial-pro');
@@ -150,16 +188,14 @@ DH.pages.pricing = function () {
         var msg = document.getElementById('pricing-msg');
         trialBtn.disabled = true;
 
-        DH.Api.activateTrial().then(function (data) {
-          // Update local session plan
+        DH.Api.activateTrial().then(function () {
           if (u) {
             u.plan = 'pro';
             try { localStorage.setItem('dh.session', JSON.stringify(u)); } catch (e) {}
           }
           if (DH.UI.renderNav) DH.UI.renderNav();
           if (msg) msg.textContent = '';
-          DH.UI.toast('Trial activado. Tenés 7 dias de Pro gratis!', 'success');
-          // Re-render page to reflect new plan
+          DH.UI.toast('Trial activado. Tenés 7 días de Pro gratis!', 'success');
           currentPlan = 'pro';
           renderPage(period);
         }).catch(function (err) {
@@ -183,11 +219,11 @@ DH.pages.pricing = function () {
     });
   }
 
-  // Load pricing data then render
-  DH.Pricing.onReady(function () { renderPage('monthly'); });
+  // Loading state while waiting for rates
+  app.innerHTML = '<div class="page"><div class="empty"><p style="color:var(--muted)">Cargando precios...</p></div></div>';
 
-  // Show a loading state while waiting
-  if (!app.innerHTML || app.innerHTML === '') {
-    app.innerHTML = '<div class="page"><div class="empty"><p style="color:var(--muted)">Cargando precios...</p></div></div>';
-  }
+  // Render once pricing data is ready, and kick off the load in case we landed
+  // here directly (e.g. deep link or post-payment redirect) without visiting home first.
+  DH.Pricing.onReady(function () { renderPage('monthly'); });
+  DH.Pricing.load();
 };
