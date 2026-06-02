@@ -119,20 +119,20 @@ DH.createPlayer = function (opts) {
   // ── Spectrum bars (instrument → frequency zone mapping) ──
   var S_BARS = 24;
   var S_MAP = {
-    kick:       { center: 2,  spread: 5, height: 26 },
-    snare:      { center: 10, spread: 5, height: 20 },
-    clap:       { center: 11, spread: 4, height: 18 },
-    hihat:      { center: 20, spread: 3, height: 14 },
-    hihat_open: { center: 21, spread: 4, height: 17 },
-    tom1:       { center: 6,  spread: 4, height: 19 },
-    tom2:       { center: 8,  spread: 4, height: 17 },
-    tom3:       { center: 9,  spread: 3, height: 15 },
-    crash:      { center: 22, spread: 4, height: 22 },
-    ride:       { center: 19, spread: 4, height: 16 },
-    ride_bell:  { center: 20, spread: 2, height: 13 },
-    splash:     { center: 22, spread: 2, height: 12 },
-    cowbell:    { center: 14, spread: 2, height: 12 },
-    stick:      { center: 17, spread: 2, height: 10 },
+    kick:       { center: 2,  spread: 5, height: 38 },
+    snare:      { center: 10, spread: 5, height: 30 },
+    clap:       { center: 11, spread: 4, height: 26 },
+    hihat:      { center: 20, spread: 3, height: 20 },
+    hihat_open: { center: 21, spread: 4, height: 24 },
+    tom1:       { center: 6,  spread: 4, height: 28 },
+    tom2:       { center: 8,  spread: 4, height: 25 },
+    tom3:       { center: 9,  spread: 3, height: 22 },
+    crash:      { center: 22, spread: 4, height: 32 },
+    ride:       { center: 19, spread: 4, height: 22 },
+    ride_bell:  { center: 20, spread: 2, height: 18 },
+    splash:     { center: 22, spread: 2, height: 17 },
+    cowbell:    { center: 14, spread: 2, height: 16 },
+    stick:      { center: 17, spread: 2, height: 14 },
   };
   var specWrap = document.createElement('div');
   specWrap.className = 'spectrum-wrap'; specWrap.id = idPrefix + '-spectrum';
