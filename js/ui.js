@@ -319,19 +319,8 @@ DH.UI = (function () {
     var gRegister = box.querySelector('#btn-google-register');
     function triggerGoogle() {
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        google.accounts.id.prompt(function(notification) {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // One-tap not available; open Google picker via button renderization fallback
-            // Render a hidden Google button and click it
-            var tmpDiv = document.createElement('div');
-            tmpDiv.style.position = 'fixed'; tmpDiv.style.top = '-9999px';
-            document.body.appendChild(tmpDiv);
-            google.accounts.id.renderButton(tmpDiv, { theme: 'outline', size: 'large' });
-            var gBtn = tmpDiv.querySelector('[role="button"]') || tmpDiv.querySelector('div[tabindex="0"]');
-            if (gBtn) gBtn.click();
-            setTimeout(function() { if (tmpDiv.parentNode) document.body.removeChild(tmpDiv); }, 3000);
-          }
-        });
+        // Use FedCM-compatible prompt — no deprecated notification callbacks
+        google.accounts.id.prompt();
       } else {
         if (DH.UI && DH.UI.toast) DH.UI.toast('Google Sign-In no disponible. Recargá la página.', 'error');
       }

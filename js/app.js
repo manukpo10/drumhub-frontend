@@ -8,6 +8,7 @@ window.onGoogleLibraryLoad = function() {
   if (typeof google === 'undefined' || !google.accounts) return;
   google.accounts.id.initialize({
     client_id: DH.GOOGLE_CLIENT_ID,
+    use_fedcm_for_prompt: true,
     callback: function(response) {
       DH.Auth.handleGoogleCredential(response.credential);
     }
