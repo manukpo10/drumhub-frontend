@@ -302,26 +302,6 @@ DH.pages.drummers = function (_params, query) {
           +   '</div>'
           + '</div>';
 
-        // Hover preview: arranca después de 250ms para evitar disparar en pase rápido del mouse
-        if (topGroove) {
-          var hoverTimer = null, previewToken = null;
-          el.addEventListener('mouseenter', function () {
-            hoverTimer = setTimeout(function () {
-              el.classList.add('previewing');
-              previewToken = DH.PreviewPlayer.play(topGroove.pattern, topGroove.bpm, function () {
-                el.classList.remove('previewing'); previewToken = null;
-              }, topGroove.kit, topGroove.timeSig);
-            }, 250);
-          });
-          el.addEventListener('mouseleave', function () {
-            if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-            if (previewToken && DH.PreviewPlayer.isPlaying(previewToken)) {
-              DH.PreviewPlayer.stop();
-            }
-            el.classList.remove('previewing');
-          });
-        }
-
         el.addEventListener('click', function (e) {
           if (e.target.closest('[data-follow]')) return;
           if (e.target.closest('.dx-top-groove')) return; // su propio handler
