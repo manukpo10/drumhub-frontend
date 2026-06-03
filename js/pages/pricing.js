@@ -13,6 +13,10 @@ DH.pages.pricing = function () {
   var u = isLoggedIn ? DH.Store.getUser() : null;
   var currentPlan = (u && u.plan) ? u.plan.toLowerCase() : 'free';
 
+  // Plans shown in the grid but not yet purchasable ("Próximamente").
+  // TOGGLE: set studio to false (or remove) to re-enable its checkout.
+  var COMING_SOON = { studio: true };
+
   // Feature lists mirror the home "Planes" section for consistency.
   var FEATURES = {
     free: [
@@ -53,6 +57,9 @@ DH.pages.pricing = function () {
 
   // Builds the action button(s) for a paid plan card, honoring the current plan state.
   function paidActions(plan, period, btnClass) {
+    if (COMING_SOON[plan]) {
+      return '<button class="plan-btn" disabled style="opacity:0.5;cursor:not-allowed">Próximamente</button>';
+    }
     if (currentPlan === plan) {
       return '<button class="plan-btn" disabled style="opacity:0.5;cursor:not-allowed">Plan actual</button>';
     }
@@ -122,7 +129,8 @@ DH.pages.pricing = function () {
       +   '</div>'
 
       // STUDIO
-      +   '<div class="plan-card studio">'
+      +   '<div class="plan-card studio' + (COMING_SOON.studio ? ' coming-soon' : '') + '">'
+      +     (COMING_SOON.studio ? '<div class="plan-popular">Próximamente</div>' : '')
       +     '<div class="plan-name">Estudio</div>'
       +     '<div class="plan-price-wrap">'
       +       '<div class="plan-price-old">' + (studioCard.old || '') + '</div>'
