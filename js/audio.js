@@ -37,7 +37,9 @@ DH.Audio = (function () {
       basePath: '/audio/tr909/',
       samples: {
         kick:       ['kick.ogg', 'kick-short.ogg'],
-        snare:      ['snare.ogg'],
+        snare:       ['snare.ogg'],
+        snare_ghost: ['snare.ogg'],
+        snare_flam:  ['snare.ogg'],
         hihat:      ['hihat-closed.ogg'],
         hihat_open: ['hihat-open-1.ogg', 'hihat-open-2.ogg'],
         ride:       ['ride.ogg'],
@@ -53,7 +55,9 @@ DH.Audio = (function () {
       basePath: '/audio/lm2/',
       samples: {
         kick:       ['kick.ogg', 'kick-alt.ogg'],
-        snare:      ['snare-m.ogg', 'snare-h.ogg', 'snare-l.ogg'],
+        snare:       ['snare-m.ogg', 'snare-h.ogg', 'snare-l.ogg'],
+        snare_ghost: ['snare-m.ogg', 'snare-h.ogg', 'snare-l.ogg'],
+        snare_flam:  ['snare-m.ogg', 'snare-h.ogg', 'snare-l.ogg'],
         hihat:      ['hihat-closed.ogg', 'hihat-closed-long.ogg', 'hihat-closed-short.ogg'],
         hihat_open: ['hihat-open.ogg'],
         ride:       ['ride.ogg'],
@@ -75,7 +79,9 @@ DH.Audio = (function () {
       basePath: '/audio/cr78/',
       samples: {
         kick:       ['kick.ogg', 'kick-accent.ogg'],
-        snare:      ['snare.ogg', 'snare-accent.ogg'],
+        snare:       ['snare.ogg', 'snare-accent.ogg'],
+        snare_ghost: ['snare.ogg', 'snare-accent.ogg'],
+        snare_flam:  ['snare.ogg', 'snare-accent.ogg'],
         hihat:      ['hihat.ogg'],
         hihat_open: ['hihat-metal.ogg'],
         stick:      ['rim.ogg']
