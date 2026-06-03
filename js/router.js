@@ -1,4 +1,4 @@
-// Hash-based router. Routes: "/", "/groove/:slug", "/profile/:user", "/upload", "/search"
+// History API router. Routes: "/", "/groove/:slug", "/profile/:user", "/upload", "/search", etc.
 window.DH = window.DH || {};
 
 DH.Router = (function () {
@@ -11,13 +11,12 @@ DH.Router = (function () {
     routes.push({ rx: rx, keys: keys, handler: handler });
   }
 
-  function parseHash() {
-    var h = location.hash.replace(/^#/, '') || '/';
-    var qIdx = h.indexOf('?');
-    var path = qIdx === -1 ? h : h.slice(0, qIdx);
+  function parsePath() {
+    var path = location.pathname || '/';
     var query = {};
-    if (qIdx !== -1) {
-      h.slice(qIdx + 1).split('&').forEach(function (kv) {
+    var qs = location.search.slice(1);
+    if (qs) {
+      qs.split('&').forEach(function (kv) {
         var p = kv.split('='); if (p[0]) query[decodeURIComponent(p[0])] = decodeURIComponent(p[1] || '');
       });
     }
@@ -25,18 +24,15 @@ DH.Router = (function () {
   }
 
   function resolve() {
-    var parsed = parseHash();
+    var parsed = parsePath();
     for (var i = 0; i < routes.length; i++) {
       var m = parsed.path.match(routes[i].rx);
       if (m) {
         var params = {};
         routes[i].keys.forEach(function (k, idx) { params[k] = decodeURIComponent(m[idx + 1]); });
         if (currentPlayer && currentPlayer.destroy) { try { currentPlayer.destroy(); } catch (e) {} currentPlayer = null; }
-        // Cualquier preview de audio (hover sobre baterista, click en ▶ de card) se corta en cada navegación.
         if (DH.PreviewPlayer && DH.PreviewPlayer.isPlaying()) { try { DH.PreviewPlayer.stop(); } catch (e) {} }
-        // Apagar todos los intervals de hero animations (cada página los recrea si los necesita)
         if (DH.UI && DH.UI.stopAllHeroIntervals) DH.UI.stopAllHeroIntervals();
-        // Title default; cada página puede sobreescribirlo via DH.Router.setTitle()
         setTitle('');
         window.scrollTo(0, 0);
         routes[i].handler(params, parsed.query);
@@ -58,13 +54,35 @@ DH.Router = (function () {
       + '</div>';
   }
 
-  function go(path) { location.hash = path; }
+  function go(path) {
+    history.pushState(null, '', path);
+    resolve();
+  }
+
   function setPlayer(p) { currentPlayer = p; }
-  // Helper para que cada página actualice el title del browser
   function setTitle(t) { document.title = t ? (t + ' — DrumHub') : 'DrumHub'; }
 
   function start() {
-    window.addEventListener('hashchange', resolve);
+    // Backwards compatibility: silently redirect old hash-based links (#/path → /path).
+    // Handles bookmarks, shared links, and the MP back_url window during deploy.
+    if (location.hash && location.hash.slice(0, 2) === '#/') {
+      history.replaceState(null, '', location.hash.slice(1) + location.search);
+    }
+
+    window.addEventListener('popstate', resolve);
+
+    // Global click intercept: SPA-navigate all internal <a href="/..."> links
+    // without requiring each link to call DH.Router.go() explicitly.
+    // External links (http/https/mailto/tel) and assets are left untouched.
+    document.body.addEventListener('click', function (e) {
+      var a = e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href');
+      if (!href || href.charAt(0) !== '/' || href.slice(0, 2) === '//') return;
+      e.preventDefault();
+      go(href);
+    });
+
     resolve();
   }
 

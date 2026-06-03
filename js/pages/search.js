@@ -46,9 +46,9 @@ DH.pages.search = function (_params, query) {
     if (state.bpmMax !== 200) params.push('bpmMax=' + state.bpmMax);
     if (state.page > 1) params.push('page=' + state.page);
     var qs = params.length ? '?' + params.join('&') : '';
-    var newHash = '#/search' + qs;
-    if (location.hash !== newHash) {
-      history.replaceState(null, '', newHash);
+    var newPath = '/search' + qs;
+    if (location.pathname + location.search !== newPath) {
+      history.replaceState(null, '', newPath);
     }
   }
 

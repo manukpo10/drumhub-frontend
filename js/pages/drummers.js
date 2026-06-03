@@ -51,8 +51,8 @@ DH.pages.drummers = function (_params, query) {
     if (state.genre) params.push('genre=' + encodeURIComponent(state.genre));
     if (state.sort && state.sort !== 'grooves') params.push('sort=' + encodeURIComponent(state.sort));
     var qs = params.length ? '?' + params.join('&') : '';
-    var newHash = '#/drummers' + qs;
-    if (location.hash !== newHash) history.replaceState(null, '', newHash);
+    var newPath = '/drummers' + qs;
+    if (location.pathname + location.search !== newPath) history.replaceState(null, '', newPath);
   }
 
   var totalGrooves = drummersList.reduce(function (a, d) { return a + (d.grooves || 0); }, 0);
