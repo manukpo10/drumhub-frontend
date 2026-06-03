@@ -236,6 +236,15 @@ DH.createPlayer = function (opts) {
       cgEl.style.left  = (lastDrawStep / STEPS * 100) + '%';
       cgEl.style.width = (100 / STEPS) + '%';
       phEl.classList.add('live'); cgEl.classList.add('live');
+      // Auto-scroll: keep playhead in view when grid overflows
+      var sc = dg.parentElement;
+      if (sc && sc.scrollWidth > sc.clientWidth + 4) {
+        var phPx = 75 + (sc.scrollWidth - 75) * pos / 100;
+        var visR = sc.scrollLeft + sc.clientWidth;
+        if (phPx > visR - sc.clientWidth * 0.08 || phPx < sc.scrollLeft + 75) {
+          sc.scrollLeft = Math.max(0, phPx - sc.clientWidth * 0.25);
+        }
+      }
     }
     rafID = requestAnimationFrame(draw);
   }
@@ -255,6 +264,8 @@ DH.createPlayer = function (opts) {
   }
   function stop() {
     isPlaying = false; clearTimeout(timerID);
+    // Reset scroll to start
+    if (dg && dg.parentElement) dg.parentElement.scrollLeft = 0;
     if (!minimal) {
       $('btn-play').classList.remove('on');
       $('ico-play').style.display = '';
