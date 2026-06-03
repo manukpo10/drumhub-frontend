@@ -26,7 +26,7 @@ DH.TIME_SIGS = [
   { id: '7/8', label: '7/8', stepsPerBeat: 2, stepsPerBar: 14 },
 ];
 DH.MAX_STEPS = 64;
-DH.DEFAULT_VOLS = { china: 0.5, crash: 0.55, splash: 0.5, ride: 0.5, ride_bell: 0.55, hihat: 0.45, hihat_open: 0.5, snare: 0.85, snare_ghost: 0.7, tom1: 0.75, tom2: 0.8, tom3: 0.85, kick: 1.0, clap: 0.7, stick: 0.6, cowbell: 0.55, cabasa: 0.45, tamb: 0.5, conga: 0.7 };
+DH.DEFAULT_VOLS = { china: 0.5, crash: 0.55, splash: 0.5, ride: 0.5, ride_bell: 0.55, hihat: 0.45, hihat_open: 0.5, snare: 0.85, snare_ghost: 0.7, snare_flam: 0.85, tom1: 0.75, tom2: 0.8, tom3: 0.85, kick: 1.0, clap: 0.7, stick: 0.6, cowbell: 0.55, cabasa: 0.45, tamb: 0.5, conga: 0.7 };
 
 DH.LEVELS = ['Básico', 'Intermedio', 'Avanzado'];
 DH.GENRES_LIST = ['Rock', 'Funk', 'Jazz', 'Metal', 'Latin', 'Reggae', 'Blues', 'Pop', 'Soul', 'R&B', 'Hip-Hop', 'Bossa'];

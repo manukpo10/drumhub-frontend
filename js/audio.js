@@ -19,6 +19,7 @@ DH.Audio = (function () {
         kick:       ['kick-01.ogg'],
         snare:      ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
         snare_ghost: ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
+        snare_flam:  ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
         hihat:      ['hihat-closed.ogg'],
         hihat_open: ['hihat-open.ogg'],
         ride:       ['ride-01.ogg'],
@@ -95,6 +96,7 @@ DH.Audio = (function () {
     hihat_open: { name: 'Hi-Hat open',  color: 'hihat_open' },
     snare:      { name: 'Redob.',       color: 'snare'      },
     snare_ghost:{ name: 'Ghost',        color: 'snare_ghost'},
+    snare_flam: { name: 'Flam',         color: 'snare_flam' },
     clap:       { name: 'Clap',         color: 'clap'       },
     stick:      { name: 'Stick',        color: 'stick'      },
     cowbell:    { name: 'Cowbell',      color: 'cowbell'    },
@@ -110,7 +112,7 @@ DH.Audio = (function () {
   var PIECE_ORDER = [
     'china', 'crash', 'splash', 'ride', 'ride_bell',
     'hihat', 'hihat_open',
-    'snare', 'snare_ghost', 'clap', 'stick',
+    'snare', 'snare_ghost', 'snare_flam', 'clap', 'stick',
     'cowbell', 'cabasa', 'tamb', 'conga',
     'tom1', 'tom2', 'tom3', 'kick'
   ];
@@ -443,10 +445,47 @@ DH.Audio = (function () {
     sn.start(t); sn.stop(t + 0.09);
   }
 
+  // Flam: grace note (quiet, slightly higher pitch) + main stroke 25ms later
+  function playFlamNote(t, vol, kit) {
+    var k = kit || currentKit;
+    var pool = buffers[k] && buffers[k]['snare_flam'];
+    if (!pool || !pool.length) return false;
+    var n = pool.length;
+    if (!rrIdx[k]) rrIdx[k] = {};
+    // Grace note: buffer A
+    var iA = (rrIdx[k]['snare_flam'] || 0) % n;
+    var bufA = pool[iA]; rrIdx[k]['snare_flam'] = (iA + 1) % n;
+    // Main stroke: next buffer in pool
+    var iB = (rrIdx[k]['snare_flam'] || 0) % n;
+    var bufB = pool[iB]; rrIdx[k]['snare_flam'] = (iB + 1) % n;
+    if (!bufA && !bufB) return false;
+    // Grace note
+    if (bufA) {
+      var srcA = actx.createBufferSource(); srcA.buffer = bufA;
+      srcA.playbackRate.value = 1.04; // tiny bit higher pitch
+      var gA = actx.createGain(); gA.gain.value = vol * 0.28;
+      srcA.connect(gA); gA.connect(masterGain);
+      srcA.start(t);
+    }
+    // Main stroke
+    if (bufB) {
+      var srcB = actx.createBufferSource(); srcB.buffer = bufB;
+      srcB.playbackRate.value = 1 + (Math.random() * 0.02 - 0.01);
+      var gB = actx.createGain(); gB.gain.value = vol * (0.95 + Math.random() * 0.1);
+      srcB.connect(gB); gB.connect(masterGain);
+      srcB.start(t + 0.025); // 25ms after grace note
+    }
+    return true;
+  }
+
   function trigger(id, t, vol, kit) {
     if (vol == null) vol = 0.8;
     if (id === 'snare_ghost') {
       if (!playGhostNote(t, vol, kit)) synthGhost(t, vol);
+      return;
+    }
+    if (id === 'snare_flam') {
+      if (!playFlamNote(t, vol, kit)) { synthSnare(t, vol * 0.3); synthSnare(t + 0.025, vol); }
       return;
     }
     if (!playSample(id, t, vol, kit)) synthFallback(id, t, vol);

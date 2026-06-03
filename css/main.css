@@ -6,7 +6,7 @@
   --accent: #e8ff00; --accent2: #ff4d00; --accent3: #00c9ff;
   --text: #f2efe8; --muted: #6b6860; --muted2: #3a3835;
   --hihat: #ffaa00; --hihat_open: #fde047;
-  --snare: #ff4d00; --snare_ghost: rgba(255,77,0,0.38); --kick: #00c9ff;
+  --snare: #ff4d00; --snare_ghost: rgba(255,77,0,0.38); --snare_flam: #ff9500; --kick: #00c9ff;
   --tom1: #a855f7; --tom2: #22c55e; --tom3: #ec4899;
   --crash: #f43f5e; --ride: #38bdf8; --ride_bell: #facc15; --splash: #fb923c; --china: #84cc16;
   --clap: #d946ef; --stick: #a3a3a3; --cowbell: #fbbf24; --cabasa: #94a3b8; --tamb: #e11d48; --conga: #b45309;
@@ -556,6 +556,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .cell.active.hihat_open { background: var(--hihat_open); border-color: transparent; box-shadow: 0 0 8px rgba(253,224,71,0.35); }
 .cell.active.snare { background: var(--snare); border-color: transparent; box-shadow: 0 0 8px rgba(255,77,0,0.35); }
 .cell.active.snare_ghost { background: var(--snare_ghost); border: 1px dashed rgba(255,77,0,0.5); box-shadow: none; }
+.cell.active.snare_flam  { background: var(--snare_flam); border-color: transparent; box-shadow: 0 0 8px rgba(255,149,0,0.4); }
 .cell.active.kick  { background: var(--kick);  border-color: transparent; box-shadow: 0 0 8px rgba(0,201,255,0.35); }
 .cell.active.tom1  { background: var(--tom1);  border-color: transparent; box-shadow: 0 0 8px rgba(168,85,247,0.35); }
 .cell.active.tom2  { background: var(--tom2);  border-color: transparent; box-shadow: 0 0 8px rgba(34,197,94,0.35); }
