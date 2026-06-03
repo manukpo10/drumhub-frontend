@@ -68,11 +68,12 @@ DH.pages.home = function () {
     +         '<span class="ftag">4/4</span>'
     +       '</div>'
     +       '<p class="featured-desc">' + esc(featured.desc) + '</p>'
-    +       '<div class="featured-groove" id="featured-groove"></div>'
+    +       '<div id="feat-player-host"></div>'
     +       '<div class="featured-actions">'
     +         '<button class="btn-sm btn-play-feat" id="feat-play">▶ Escuchar</button>'
     +         '<button class="btn-sm btn-save-feat" id="feat-save">♥ Guardar</button>'
     +         '<button class="btn-sm btn-share-feat" id="feat-share">↗ Compartir</button>'
+    +         '<a class="btn-sm" data-go="/groove/' + esc(featured.slug) + '" style="text-decoration:none;cursor:pointer">Ver más →</a>'
     +       '</div>'
     +     '</div>'
     +     '<div class="featured-side" id="featured-side"></div>'
@@ -307,21 +308,24 @@ DH.pages.home = function () {
     DH.Router.go('/search' + (qs.length ? '?' + qs.join('&') : ''));
   });
 
-  // ── Featured groove visual rows ──
-  var fg = document.getElementById('featured-groove');
-  ['crash', 'hihat', 'snare', 'kick'].forEach(function (key) {
-    var labels = { crash: 'Crash', hihat: 'Hi-Hat', snare: 'Redob.', kick: 'Bombo' };
-    var arr = (featured.pattern && featured.pattern[key]) || new Array(16).fill(0);
-    var row = document.createElement('div'); row.className = 'frow';
-    var lbl = document.createElement('div'); lbl.className = 'frow-label'; lbl.textContent = labels[key];
-    row.appendChild(lbl);
-    arr.forEach(function (s) {
-      var c = document.createElement('div');
-      c.className = 'fcell' + (s ? ' on ' + key : '');
-      row.appendChild(c);
+  // ── Featured groove player ──
+  var featPlayer = null;
+  var featPlayBtn = document.getElementById('feat-play');
+  if (DH.createPlayer && featured.pattern) {
+    featPlayer = DH.createPlayer({
+      container: document.getElementById('feat-player-host'),
+      pattern: featured.pattern,
+      bpm: featured.bpm,
+      editable: false,
+      chrome: 'minimal',
+      idPrefix: 'feat',
+      onPlayStateChange: function (playing) {
+        featPlayBtn.textContent = playing ? '■ Detener' : '▶ Escuchar';
+        featPlayBtn.classList.toggle('on', playing);
+      }
     });
-    fg.appendChild(row);
-  });
+    DH.Router.setPlayer(featPlayer);
+  }
 
   // ── Featured side ──
   var fs = document.getElementById('featured-side');
@@ -340,7 +344,10 @@ DH.pages.home = function () {
 
   // ── Featured actions ──
   document.getElementById('feat-title').addEventListener('click', function () { DH.Router.go('/groove/' + featured.slug); });
-  document.getElementById('feat-play').addEventListener('click', function () { DH.Router.go('/groove/' + featured.slug); });
+  featPlayBtn.addEventListener('click', function () {
+    if (featPlayer) { featPlayer.toggle(); }
+    else { DH.Router.go('/groove/' + featured.slug); }
+  });
   var saveBtn = document.getElementById('feat-save');
   function refreshSave() { saveBtn.classList.toggle('saved', DH.Store.isFavorite(featured.id)); saveBtn.textContent = DH.Store.isFavorite(featured.id) ? '♥ Guardado' : '♥ Guardar'; }
   refreshSave();
