@@ -162,6 +162,9 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .ftag { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); border-radius: 2px; color: var(--muted); font-family: 'DM Mono', monospace; }
 .featured-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; font-weight: 300; margin-bottom: 24px; max-width: 400px; }
 .featured-groove { margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
+#feat-player-host { margin-bottom: 24px; }
+#feat-player-host .grid-scroll { scrollbar-width: none; }
+#feat-player-host .grid-scroll::-webkit-scrollbar { display: none; }
 .frow { display: grid; grid-template-columns: 60px repeat(16, 1fr); gap: 2px; margin-bottom: 4px; align-items: center; min-width: 480px; }
 .frow-label { font-family: 'DM Mono', monospace; font-size: 0.52rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .fcell { height: 18px; border-radius: 2px; background: var(--surface2); border: 1px solid var(--border); }
