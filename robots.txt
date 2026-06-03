@@ -1,0 +1,5 @@
+# robots.txt for DrumHub — https://drumhub.io
+User-agent: *
+Allow: /
+
+Sitemap: https://drumhub.io/sitemap.xml

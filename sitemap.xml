@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NOTE: While the app uses hash-based routing (#/path), search engines only
+  see a single URL (the homepage). Once routing migrates to real paths
+  (History API), add one <url> entry per groove/genre/static page here.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://drumhub.io/</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
