@@ -65,6 +65,7 @@ DH.createPlayer = function (opts) {
       +     '<span class="status" id="' + idPrefix + '-status">Tocá Play</span>'
       +     (editable ? '<button class="btn-clear" id="' + idPrefix + '-btn-clear">Limpiar</button>' : '')
       +     (presets.length ? '<div class="presets" id="' + idPrefix + '-presets"></div>' : '')
+      +     '<button class="btn-shake" id="' + idPrefix + '-btn-shake" title="Vibración del bombo"></button>'
       +   '</div>'
       + '</div>';
   }
@@ -72,6 +73,26 @@ DH.createPlayer = function (opts) {
   root.style.setProperty('--grid-steps', STEPS);
 
   var $ = function (s) { return document.getElementById(idPrefix + '-' + s); };
+
+  // ── Shake toggle ──
+  var shakeEnabled = localStorage.getItem('dh-shake') !== '0';
+  function updateShakeBtn() {
+    var btn = $('btn-shake');
+    if (!btn) return;
+    btn.classList.toggle('shake-off', !shakeEnabled);
+    btn.title = shakeEnabled ? 'Vibración activada' : 'Vibración desactivada';
+  }
+  setTimeout(function () {
+    var shakeBtn = $('btn-shake');
+    if (shakeBtn) {
+      updateShakeBtn();
+      shakeBtn.addEventListener('click', function () {
+        shakeEnabled = !shakeEnabled;
+        localStorage.setItem('dh-shake', shakeEnabled ? '1' : '0');
+        updateShakeBtn();
+      });
+    }
+  }, 0);
 
   // ── Build cells ──
   var bn = $('beat-nums'), sr = $('step-row'), dg = $('drum-grid');
@@ -194,7 +215,7 @@ DH.createPlayer = function (opts) {
       }
     });
     // Micro-shake on kick
-    if (kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
+    if (shakeEnabled && kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
       var shakeTarget = root.querySelector('.player-card') || root;
       shakeTarget.classList.remove('card-shake'); void shakeTarget.offsetWidth; shakeTarget.classList.add('card-shake');
     }
