@@ -14,7 +14,7 @@ DH.Audio = (function () {
     pearl: {
       label: 'Pearl Master Studio',
       tag: 'acoustic',
-      basePath: 'audio/pearl/',
+      basePath: '/audio/pearl/',
       samples: {
         kick:       ['kick-01.ogg'],
         snare:      ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
@@ -32,7 +32,7 @@ DH.Audio = (function () {
     tr909: {
       label: 'TR-909 Detroit',
       tag: 'electronic',
-      basePath: 'audio/tr909/',
+      basePath: '/audio/tr909/',
       samples: {
         kick:       ['kick.ogg', 'kick-short.ogg'],
         snare:      ['snare.ogg'],
@@ -48,7 +48,7 @@ DH.Audio = (function () {
     lm2: {
       label: 'LinnDrum LM-2',
       tag: '80s',
-      basePath: 'audio/lm2/',
+      basePath: '/audio/lm2/',
       samples: {
         kick:       ['kick.ogg', 'kick-alt.ogg'],
         snare:      ['snare-m.ogg', 'snare-h.ogg', 'snare-l.ogg'],
@@ -70,7 +70,7 @@ DH.Audio = (function () {
     cr78: {
       label: 'CR-78',
       tag: 'vintage',
-      basePath: 'audio/cr78/',
+      basePath: '/audio/cr78/',
       samples: {
         kick:       ['kick.ogg', 'kick-accent.ogg'],
         snare:      ['snare.ogg', 'snare-accent.ogg'],

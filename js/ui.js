@@ -214,7 +214,7 @@ DH.UI = (function () {
     document.getElementById('footer').innerHTML = ''
       + '<div class="footer-top">'
       +   '<div class="footer-brand">'
-      +     '<div class="logo"><img src="imagenes/logo.png" alt="DrumHub" style="height:80px;width:auto;filter:brightness(1.5)"></div>'
+      +     '<div class="logo"><img src="/imagenes/logo.png" alt="DrumHub" style="height:80px;width:auto;filter:brightness(1.5)"></div>'
       +     '<p>La biblioteca de grooves para bateristas. Explorá, practicá y compartí patrones con la comunidad.</p>'
       +   '</div>'
       +   '<div class="footer-col"><h4>Explorar</h4>'
