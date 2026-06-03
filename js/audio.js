@@ -197,8 +197,10 @@ DH.Audio = (function () {
     if (!buf) return false;
     var src = actx.createBufferSource();
     src.buffer = buf;
+    // Micro humanization: subtle pitch + volume variation per hit
+    src.playbackRate.value = 1 + (Math.random() * 0.04 - 0.02); // ±2% (~35 cents)
     var g = actx.createGain();
-    g.gain.value = vol;
+    g.gain.value = vol * (0.93 + Math.random() * 0.14); // ±7% volume
     src.connect(g); g.connect(masterGain);
     src.start(t);
     return true;
