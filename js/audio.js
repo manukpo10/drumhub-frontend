@@ -459,21 +459,21 @@ DH.Audio = (function () {
     var iB = (rrIdx[k]['snare_flam'] || 0) % n;
     var bufB = pool[iB]; rrIdx[k]['snare_flam'] = (iB + 1) % n;
     if (!bufA && !bufB) return false;
-    // Grace note
+    // Grace note: 25ms BEFORE the beat
     if (bufA) {
       var srcA = actx.createBufferSource(); srcA.buffer = bufA;
       srcA.playbackRate.value = 1.04; // tiny bit higher pitch
       var gA = actx.createGain(); gA.gain.value = vol * 0.28;
       srcA.connect(gA); gA.connect(masterGain);
-      srcA.start(t);
+      srcA.start(Math.max(0, t - 0.025));
     }
-    // Main stroke
+    // Main stroke: ON the beat
     if (bufB) {
       var srcB = actx.createBufferSource(); srcB.buffer = bufB;
       srcB.playbackRate.value = 1 + (Math.random() * 0.02 - 0.01);
       var gB = actx.createGain(); gB.gain.value = vol * (0.95 + Math.random() * 0.1);
       srcB.connect(gB); gB.connect(masterGain);
-      srcB.start(t + 0.025); // 25ms after grace note
+      srcB.start(t);
     }
     return true;
   }
@@ -485,7 +485,7 @@ DH.Audio = (function () {
       return;
     }
     if (id === 'snare_flam') {
-      if (!playFlamNote(t, vol, kit)) { synthSnare(t, vol * 0.3); synthSnare(t + 0.025, vol); }
+      if (!playFlamNote(t, vol, kit)) { synthSnare(Math.max(0, t - 0.025), vol * 0.3); synthSnare(t, vol); }
       return;
     }
     if (!playSample(id, t, vol, kit)) synthFallback(id, t, vol);
