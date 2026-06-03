@@ -154,6 +154,7 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .featured-main, .featured-side { min-width: 0; }
 .featured-main { background: var(--surface); border: 1px solid var(--border); padding: 36px; }
 .featured-badge { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(232,255,0,0.3); padding: 3px 8px; border-radius: 2px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+.side-badge { font-family: 'DM Mono', monospace; font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 2px 7px; border-radius: 2px; display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; }
 .featured-title { font-family: 'Bebas Neue', sans-serif; font-size: 3.2rem; line-height: 1; letter-spacing: 0.03em; margin-bottom: 6px; cursor: pointer; }
 .featured-title:hover { color: var(--accent); }
 .featured-author { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; font-family: 'DM Mono', monospace; }

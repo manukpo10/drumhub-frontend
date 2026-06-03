@@ -329,9 +329,11 @@ DH.pages.home = function () {
 
   // ── Featured side ──
   var fs = document.getElementById('featured-side');
-  sideGrooves.forEach(function (g) {
+  var sideLabels = ['🥈 2do lugar', '🥉 3er lugar', '4° lugar'];
+  sideGrooves.forEach(function (g, i) {
     var el = document.createElement('div'); el.className = 'side-card';
     el.innerHTML = ''
+      + '<div class="side-badge">' + sideLabels[i] + '</div>'
       + '<div class="side-genre">' + esc(g.genre) + '</div>'
       + '<div class="side-title">' + esc(g.title) + '</div>'
       + '<div class="side-meta">por ' + esc(g.author) + ' · ' + g.bpm + ' BPM</div>'
