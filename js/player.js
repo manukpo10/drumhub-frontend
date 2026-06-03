@@ -74,25 +74,26 @@ DH.createPlayer = function (opts) {
 
   var $ = function (s) { return document.getElementById(idPrefix + '-' + s); };
 
-  // ── Shake toggle ──
-  var shakeEnabled = localStorage.getItem('dh-shake') !== '0';
-  function updateShakeBtn() {
-    var btn = $('btn-shake');
-    if (!btn) return;
-    btn.classList.toggle('shake-off', !shakeEnabled);
-    btn.title = shakeEnabled ? 'Vibración activada' : 'Vibración desactivada';
+  // ── Shake toggle (shared global so external buttons can control it) ──
+  if (DH.shakeEnabled === undefined) {
+    DH.shakeEnabled = localStorage.getItem('dh-shake') !== '0';
   }
-  setTimeout(function () {
-    var shakeBtn = $('btn-shake');
-    if (shakeBtn) {
+  if (!minimal) {
+    setTimeout(function () {
+      var shakeBtn = $('btn-shake');
+      if (!shakeBtn) return;
+      function updateShakeBtn() {
+        shakeBtn.classList.toggle('shake-off', !DH.shakeEnabled);
+        shakeBtn.title = DH.shakeEnabled ? 'Vibración activada' : 'Vibración desactivada';
+      }
       updateShakeBtn();
       shakeBtn.addEventListener('click', function () {
-        shakeEnabled = !shakeEnabled;
-        localStorage.setItem('dh-shake', shakeEnabled ? '1' : '0');
+        DH.shakeEnabled = !DH.shakeEnabled;
+        localStorage.setItem('dh-shake', DH.shakeEnabled ? '1' : '0');
         updateShakeBtn();
       });
-    }
-  }, 0);
+    }, 0);
+  }
 
   // ── Build cells ──
   var bn = $('beat-nums'), sr = $('step-row'), dg = $('drum-grid');
@@ -215,7 +216,7 @@ DH.createPlayer = function (opts) {
       }
     });
     // Micro-shake on kick
-    if (shakeEnabled && kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
+    if (DH.shakeEnabled && kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
       var shakeTarget = root.querySelector('.player-card') || root;
       shakeTarget.classList.remove('card-shake'); void shakeTarget.offsetWidth; shakeTarget.classList.add('card-shake');
     }

@@ -2,6 +2,10 @@
 window.DH = window.DH || {};
 DH.pages = DH.pages || {};
 
+if (DH.shakeEnabled === undefined) {
+  DH.shakeEnabled = localStorage.getItem('dh-shake') !== '0';
+}
+
 DH.pages.groove = function (params) {
   var app = document.getElementById('app');
   var g = DH.Store.findAnyGroove(params.slug);
@@ -110,6 +114,7 @@ DH.pages.groove = function (params) {
     +           '<button class="btn-action ' + (isFav ? 'liked' : '') + '" id="g-like">♥ ' + (g.likes || 0) + '</button>'
     +           '<button class="btn-action ' + (isFav ? 'saved' : '') + '" id="g-save">' + (isFav ? '✓ Guardado' : '⊕ Guardar') + '</button>'
     +           '<button class="btn-action" id="g-share">↗ Compartir</button>'
+    +           '<button class="btn-shake" id="g-shake" title="Vibración del bombo"></button>'
     +         '</div>'
     +       '</div>'
     +     '</div>'
@@ -575,6 +580,19 @@ DH.pages.groove = function (params) {
       DH.Router.go('/profile/' + g.author);
     });
   }
+  // ── Shake toggle ──
+  var shakeBtn = document.getElementById('g-shake');
+  function updateGrooveShakeBtn() {
+    shakeBtn.classList.toggle('shake-off', !DH.shakeEnabled);
+    shakeBtn.title = DH.shakeEnabled ? 'Vibración activada' : 'Vibración desactivada';
+  }
+  updateGrooveShakeBtn();
+  shakeBtn.addEventListener('click', function () {
+    DH.shakeEnabled = !DH.shakeEnabled;
+    localStorage.setItem('dh-shake', DH.shakeEnabled ? '1' : '0');
+    updateGrooveShakeBtn();
+  });
+
   document.getElementById('g-share').addEventListener('click', function () {
     var url = location.origin + location.pathname + '#/groove/' + g.slug;
     try { navigator.clipboard.writeText(url); alert('Link copiado al portapapeles'); }
