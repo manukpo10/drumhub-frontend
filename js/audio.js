@@ -18,6 +18,7 @@ DH.Audio = (function () {
       samples: {
         kick:       ['kick-01.ogg'],
         snare:      ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
+        snare_ghost: ['snare-01.ogg', 'snare-02.ogg', 'snare-03.ogg'],
         hihat:      ['hihat-closed.ogg'],
         hihat_open: ['hihat-open.ogg'],
         ride:       ['ride-01.ogg'],
@@ -93,6 +94,7 @@ DH.Audio = (function () {
     hihat:      { name: 'Hi-Hat',       color: 'hihat'      },
     hihat_open: { name: 'Hi-Hat open',  color: 'hihat_open' },
     snare:      { name: 'Redob.',       color: 'snare'      },
+    snare_ghost:{ name: 'Ghost',        color: 'snare_ghost'},
     clap:       { name: 'Clap',         color: 'clap'       },
     stick:      { name: 'Stick',        color: 'stick'      },
     cowbell:    { name: 'Cowbell',      color: 'cowbell'    },
@@ -108,7 +110,7 @@ DH.Audio = (function () {
   var PIECE_ORDER = [
     'china', 'crash', 'splash', 'ride', 'ride_bell',
     'hihat', 'hihat_open',
-    'snare', 'clap', 'stick',
+    'snare', 'snare_ghost', 'clap', 'stick',
     'cowbell', 'cabasa', 'tamb', 'conga',
     'tom1', 'tom2', 'tom3', 'kick'
   ];
@@ -395,8 +397,56 @@ DH.Audio = (function () {
     if (id === 'conga')       return synthConga(t, vol);
   }
 
+  // Ghost note: same buffer as snare but lowpass (removes crack) + very low gain + cut at 80ms
+  function playGhostNote(t, vol, kit) {
+    var k = kit || currentKit;
+    var pool = buffers[k] && (buffers[k]['snare_ghost'] || buffers[k]['snare']);
+    if (!pool || !pool.length) return false;
+    var n = pool.length;
+    if (!rrIdx[k]) rrIdx[k] = {};
+    var key = buffers[k]['snare_ghost'] ? 'snare_ghost' : 'snare';
+    var start = (rrIdx[k][key] || 0) % n;
+    var buf = null;
+    for (var i = 0; i < n; i++) {
+      var idx = (start + i) % n;
+      if (pool[idx]) { buf = pool[idx]; rrIdx[k][key] = (idx + 1) % n; break; }
+    }
+    if (!buf) return false;
+    var src = actx.createBufferSource();
+    src.buffer = buf;
+    var lp = actx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3500; // muffles the crack
+    var g = actx.createGain();
+    g.gain.value = vol * 0.22; // very quiet
+    src.connect(lp); lp.connect(g); g.connect(masterGain);
+    src.start(t);
+    src.stop(t + 0.08); // short tail = ghost feel
+    return true;
+  }
+  function synthGhost(t, vol) {
+    var ctx = actx; var out = ctx.createGain(); out.connect(masterGain);
+    var body = ctx.createOscillator(), bg = ctx.createGain();
+    body.connect(bg); bg.connect(out); body.type = 'triangle';
+    body.frequency.setValueAtTime(200, t);
+    body.frequency.exponentialRampToValueAtTime(90, t + 0.03);
+    bg.gain.setValueAtTime(vol * 0.07, t);
+    bg.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    body.start(t); body.stop(t + 0.08);
+    var sn = ctx.createBufferSource(); sn.buffer = noise(ctx, 0.07);
+    var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3000;
+    var sg = ctx.createGain();
+    sn.connect(lp); lp.connect(sg); sg.connect(out);
+    sg.gain.setValueAtTime(vol * 0.1, t);
+    sg.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    sn.start(t); sn.stop(t + 0.09);
+  }
+
   function trigger(id, t, vol, kit) {
     if (vol == null) vol = 0.8;
+    if (id === 'snare_ghost') {
+      if (!playGhostNote(t, vol, kit)) synthGhost(t, vol);
+      return;
+    }
     if (!playSample(id, t, vol, kit)) synthFallback(id, t, vol);
   }
 
