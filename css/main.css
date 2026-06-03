@@ -659,8 +659,7 @@ input.vol::-webkit-slider-thumb { width: 10px; height: 10px; }
 .btn-clear { padding: 8px 16px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.15s; }
 .btn-clear:hover { border-color: var(--muted); color: var(--text); }
 /* Shake toggle button */
-.btn-shake { width: 32px; height: 32px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; border-radius: 2px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; margin-left: auto; padding: 0; flex-shrink: 0; }
-.btn-shake::before { content: '〜'; font-size: 1rem; line-height: 1; }
+.btn-shake { border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; border-radius: 2px; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0; }
 .btn-shake:hover { border-color: var(--kick); color: var(--kick); }
 .btn-shake:not(.shake-off) { border-color: var(--kick); color: var(--kick); }
 .btn-shake.shake-off { opacity: 0.35; }

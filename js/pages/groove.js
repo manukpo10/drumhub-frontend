@@ -114,7 +114,7 @@ DH.pages.groove = function (params) {
     +           '<button class="btn-action ' + (isFav ? 'liked' : '') + '" id="g-like">♥ ' + (g.likes || 0) + '</button>'
     +           '<button class="btn-action ' + (isFav ? 'saved' : '') + '" id="g-save">' + (isFav ? '✓ Guardado' : '⊕ Guardar') + '</button>'
     +           '<button class="btn-action" id="g-share">↗ Compartir</button>'
-    +           '<button class="btn-shake" id="g-shake" title="Vibración del bombo"></button>'
+    +           '<button class="btn-shake" id="g-shake"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M2 12c1-3 2-5 2-5s1 2 2 5-1 5-2 5-2-2-2-5z"/><path d="M10 12c1-4 2-7 2-7s1 3 2 7-1 7-2 7-2-3-2-7z"/><path d="M18 12c1-3 2-5 2-5s1 2 2 5-1 5-2 5-2-2-2-5z"/></svg>Vibrar</button>'
     +         '</div>'
     +       '</div>'
     +     '</div>'

@@ -65,7 +65,7 @@ DH.createPlayer = function (opts) {
       +     '<span class="status" id="' + idPrefix + '-status">Tocá Play</span>'
       +     (editable ? '<button class="btn-clear" id="' + idPrefix + '-btn-clear">Limpiar</button>' : '')
       +     (presets.length ? '<div class="presets" id="' + idPrefix + '-presets"></div>' : '')
-      +     '<button class="btn-shake" id="' + idPrefix + '-btn-shake" title="Vibración del bombo"></button>'
+      +     '<button class="btn-shake" id="' + idPrefix + '-btn-shake"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M2 12c1-3 2-5 2-5s1 2 2 5-1 5-2 5-2-2-2-5z"/><path d="M10 12c1-4 2-7 2-7s1 3 2 7-1 7-2 7-2-3-2-7z"/><path d="M18 12c1-3 2-5 2-5s1 2 2 5-1 5-2 5-2-2-2-5z"/></svg>Vibrar</button>'
       +   '</div>'
       + '</div>';
   }
