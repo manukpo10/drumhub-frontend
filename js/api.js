@@ -30,6 +30,24 @@ DH.Api = (function () {
     });
   }
 
+  // Like request() but lets the browser set Content-Type (needed for multipart/form-data).
+  function requestFormData(method, path, formData) {
+    var headers = {};
+    var token = getToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return fetch(BASE + path, { method: method, headers: headers, body: formData }).then(function (res) {
+      if (res.status === 204) return null;
+      return res.json().then(function (json) {
+        if (!res.ok) {
+          var err = new Error(json.message || 'Error ' + res.status);
+          err.status = res.status;
+          throw err;
+        }
+        return json.data !== undefined ? json.data : json;
+      });
+    });
+  }
+
   function buildQuery(params) {
     var q = new URLSearchParams();
     Object.keys(params).forEach(function (k) {
@@ -81,6 +99,11 @@ DH.Api = (function () {
     updateEmail: function (data) { return request('PUT', '/api/users/me/email', data, true); },
     updatePassword: function (data) { return request('PUT', '/api/users/me/password', data, true); },
     updateAvatar: function (avatarSeed) { return request('PUT', '/api/users/me/avatar', { avatarSeed: avatarSeed }, true); },
+    uploadAvatarPhoto: function (blob) {
+      var form = new FormData();
+      form.append('file', blob, 'avatar.webp');
+      return requestFormData('POST', '/api/users/me/avatar-photo', form);
+    },
 
     // Subscription & Payments
     getPlans: function () {

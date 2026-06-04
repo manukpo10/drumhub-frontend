@@ -60,11 +60,24 @@ DH.pages.settings = function () {
     +           '<div class="char-count" id="s-bio-count">' + (u.bio || '').length + ' / 200</div>'
     +         '</div>'
     +         '<div class="field">'
-    +           '<label>Avatar</label>'
+    +           '<label>Foto de perfil</label>'
+    +           '<div class="avatar-upload-section">'
+    +             '<div class="avatar-upload-preview" id="avatar-upload-preview">' + DH.UI.drummerAvatar(u, { size: 72 }) + '</div>'
+    +             '<div class="avatar-upload-actions">'
+    +               '<button type="button" class="btn-ghost" id="avatar-upload-btn">📷 Subir foto</button>'
+    +               '<button type="button" class="btn-ghost" id="avatar-remove-btn" style="display:' + (u.avatarUrl ? 'inline-flex' : 'none') + '">✕ Quitar foto</button>'
+    +               '<input type="file" id="avatar-file-input" accept="image/*" style="display:none">'
+    +             '</div>'
+    +             '<div class="avatar-upload-hint" id="avatar-upload-hint">JPG, PNG o HEIC · Máx. 10MB · Se convierte a 400×400 automáticamente</div>'
+    +           '</div>'
+    +         '</div>'
+    +         '<div class="field">'
+    +           '<label>Avatar generado</label>'
     +           '<div style="display:flex;align-items:center;gap:14px">'
     +             '<div id="s-avatar-preview">' + DH.UI.drummerAvatar(u, { size: 48 }) + '</div>'
     +             '<button type="button" class="btn-draft" id="s-change-avatar">Cambiar avatar</button>'
     +           '</div>'
+    +           '<div class="field-hint">Elegí un avatar generado como fallback cuando no hay foto.</div>'
     +         '</div>'
     +         '<button class="btn-publish" type="submit" id="s-save-profile">Guardar perfil →</button>'
     +       '</form>'
@@ -201,6 +214,102 @@ DH.pages.settings = function () {
       setTimeout(function () { btn.textContent = orig; }, 1800);
     }).catch(function (err) {
       DH.UI.toast((err && err.message) || 'Error al guardar el email', 'error');
+    });
+  });
+
+  // ── Avatar photo upload ──
+  function compressToWebP(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var objectUrl = URL.createObjectURL(file);
+      img.onload = function () {
+        var SIZE = 400;
+        var canvas = document.createElement('canvas');
+        canvas.width = SIZE; canvas.height = SIZE;
+        var ctx = canvas.getContext('2d');
+        var side = Math.min(img.width, img.height);
+        var sx = (img.width - side) / 2;
+        var sy = (img.height - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
+        URL.revokeObjectURL(objectUrl);
+        canvas.toBlob(function (blob) {
+          if (!blob) { reject(new Error('compression failed')); return; }
+          resolve(blob);
+        }, 'image/webp', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(objectUrl); reject(new Error('image load failed')); };
+      img.src = objectUrl;
+    });
+  }
+
+  function setUploadHint(msg, isError) {
+    var el = document.getElementById('avatar-upload-hint');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--accent2)' : '';
+  }
+
+  function updateUploadPreview(src) {
+    var el = document.getElementById('avatar-upload-preview');
+    if (!el) return;
+    el.innerHTML = '<img src="' + src + '" alt="Avatar preview" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border)">';
+  }
+
+  document.getElementById('avatar-upload-btn').addEventListener('click', function () {
+    document.getElementById('avatar-file-input').click();
+  });
+
+  document.getElementById('avatar-file-input').addEventListener('change', function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    var MAX_MB = 10;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setUploadHint('El archivo supera los 10MB. Elegí una imagen más chica.', true);
+      this.value = '';
+      return;
+    }
+    setUploadHint('Procesando imagen…');
+    var fileInput = this;
+    compressToWebP(file).then(function (blob) {
+      var previewUrl = URL.createObjectURL(blob);
+      updateUploadPreview(previewUrl);
+      setUploadHint('Subiendo foto…');
+      return DH.Api.uploadAvatarPhoto(blob).then(function (data) {
+        URL.revokeObjectURL(previewUrl);
+        var avatarUrl = data && data.avatarUrl;
+        if (avatarUrl) {
+          u.avatarUrl = avatarUrl;
+          try { localStorage.setItem('dh.session', JSON.stringify(u)); } catch (e) {}
+          updateUploadPreview(avatarUrl);
+          var removeBtn = document.getElementById('avatar-remove-btn');
+          if (removeBtn) removeBtn.style.display = 'inline-flex';
+          setUploadHint('Foto guardada correctamente.');
+          if (DH.UI.renderNav) DH.UI.renderNav();
+        } else {
+          setUploadHint('Respuesta inesperada del servidor.', true);
+        }
+        fileInput.value = '';
+      });
+    }).catch(function (err) {
+      setUploadHint((err && err.message) || 'Error al subir la foto. Intentá de nuevo.', true);
+      fileInput.value = '';
+    });
+  });
+
+  document.getElementById('avatar-remove-btn').addEventListener('click', function () {
+    var currentSeed = u.avatar || u.user;
+    DH.Api.updateAvatar(currentSeed).then(function () {
+      u.avatarUrl = null;
+      try { localStorage.setItem('dh.session', JSON.stringify(u)); } catch (e) {}
+      var removeBtn = document.getElementById('avatar-remove-btn');
+      if (removeBtn) removeBtn.style.display = 'none';
+      // Restore seed-based avatar preview
+      var previewEl = document.getElementById('avatar-upload-preview');
+      if (previewEl) previewEl.innerHTML = DH.UI.drummerAvatar(u, { size: 72 });
+      setUploadHint('Foto eliminada. Se usa el avatar generado como fallback.');
+      if (DH.UI.renderNav) DH.UI.renderNav();
+    }).catch(function (err) {
+      setUploadHint((err && err.message) || 'Error al quitar la foto.', true);
     });
   });
 

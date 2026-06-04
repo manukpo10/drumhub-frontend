@@ -55,6 +55,7 @@ DH.Adapter = (function () {
       color: u.color || '#e8ff00',
       init: u.init || (u.name ? u.name[0].toUpperCase() : '?'),
       avatar: u.avatarSeed || 'bonham',
+      avatarUrl: u.avatarUrl || null,
       plan: u.plan || 'free'
     };
   }

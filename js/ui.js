@@ -8,8 +8,9 @@ DH.UI = (function () {
     return palette[n];
   }
 
-  // Drummer avatar: usa drummer.avatar (seed elegida o URL) si existe; si no, seed = user.
-  // Guardamos solo el seed en localStorage → al migrar a Supabase, una columna varchar(32) y listo.
+  // Drummer avatar: avatarUrl (real photo) > avatar (seed) > user (fallback seed).
+  // avatarUrl is a full https:// URL from the backend when the user has uploaded a photo.
+  // avatar is the short seed string used with DiceBear / local SVGs.
   // opts: { size, color, ring }
   function drummerAvatar(drummer, opts) {
     opts = opts || {};
@@ -17,7 +18,7 @@ DH.UI = (function () {
     var color = opts.color || drummer.color || avatarColor(drummer.user);
     var ringPx = opts.ring || 2;
     var bg = color + '20';
-    var url = DH.avatarUrl(drummer.avatar || drummer.user);
+    var url = drummer.avatarUrl || DH.avatarUrl(drummer.avatar || drummer.user);
     return '<span class="drummer-portrait" style="width:' + size + 'px;height:' + size + 'px;background:' + bg + ';border:' + ringPx + 'px solid ' + color + ';">'
       + '<img src="' + url + '" alt="' + escape(drummer.name || drummer.user) + '" loading="lazy">'
       + '</span>';
