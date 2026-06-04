@@ -453,14 +453,16 @@ DH.pages.drummers = function (_params, query) {
       var mock  = DH.findDrummer(au.username) || {};
       var stats = statsMap[au.username] || { grooves: 0, likes: 0 };
       return {
-        user:     au.username,
-        name:     au.name     || mock.name     || au.username,
-        bio:      au.bio      || mock.bio      || '',
-        grooves:  stats.grooves,
-        likes:    stats.likes,
-        color:    mock.color  || '#6b6860',
-        init:     mock.init   || (au.name ? au.name[0] : au.username[0]).toUpperCase(),
-        location: mock.location || ''
+        user:      au.username,
+        name:      au.name     || mock.name     || au.username,
+        bio:       au.bio      || mock.bio      || '',
+        grooves:   stats.grooves,
+        likes:     stats.likes,
+        color:     au.color   || mock.color  || '#6b6860',
+        init:      mock.init   || (au.name ? au.name[0] : au.username[0]).toUpperCase(),
+        location:  mock.location || '',
+        avatar:    au.avatarSeed || mock.avatar || 'bonham',
+        avatarUrl: au.avatarUrl  || null
       };
     });
 
