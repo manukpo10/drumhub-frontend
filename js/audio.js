@@ -373,14 +373,31 @@ DH.Audio = (function () {
     osc.start(t); osc.stop(t + 0.18);
   }
   function synthStick(t, vol) {
-    var ctx = actx;
-    var ns = ctx.createBufferSource(); ns.buffer = noise(ctx, 0.025);
-    var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000;
-    var g = ctx.createGain();
-    ns.connect(hp); hp.connect(g); g.connect(masterGain);
-    g.gain.setValueAtTime(vol * 0.8, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-    ns.start(t); ns.stop(t + 0.03);
+    var ctx = actx; var out = ctx.createGain(); out.connect(masterGain);
+    // Knock tonal del aro: oscilador triangle con pitch descendente corto
+    var osc = ctx.createOscillator(), og = ctx.createGain();
+    osc.connect(og); og.connect(out);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200, t);
+    osc.frequency.exponentialRampToValueAtTime(800, t + 0.008);
+    og.gain.setValueAtTime(vol * 1.2, t);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+    osc.start(t); osc.stop(t + 0.05);
+    // Click de ataque del palillo
+    var ns = ctx.createBufferSource(); ns.buffer = noise(ctx, 0.012);
+    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3000; bp.Q.value = 1.2;
+    var ng = ctx.createGain();
+    ns.connect(bp); bp.connect(ng); ng.connect(out);
+    ng.gain.setValueAtTime(vol * 1.0, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+    ns.start(t); ns.stop(t + 0.015);
+    // Ring metálico del aro
+    var ring = ctx.createOscillator(), rg = ctx.createGain();
+    ring.connect(rg); rg.connect(out);
+    ring.type = 'sine'; ring.frequency.value = 1800;
+    rg.gain.setValueAtTime(vol * 0.28, t);
+    rg.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    ring.start(t); ring.stop(t + 0.07);
   }
   function synthConga(t, vol) {
     // Conga: tono mid + click corto
