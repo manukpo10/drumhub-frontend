@@ -372,32 +372,35 @@ DH.Audio = (function () {
     og.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
     osc.start(t); osc.stop(t + 0.18);
   }
+  // Cross-stick: punta del palo apoyada en el parche (amortiguado), mango golpea el aro.
+  // Resultado: "tock" grave y seco. Sin sustain, sin ring libre.
   function synthStick(t, vol) {
     var ctx = actx; var out = ctx.createGain(); out.connect(masterGain);
-    // Knock tonal del aro: oscilador triangle con pitch descendente corto
-    var osc = ctx.createOscillator(), og = ctx.createGain();
-    osc.connect(og); og.connect(out);
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1200, t);
-    osc.frequency.exponentialRampToValueAtTime(800, t + 0.008);
-    og.gain.setValueAtTime(vol * 1.2, t);
-    og.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
-    osc.start(t); osc.stop(t + 0.05);
-    // Click de ataque del palillo
-    var ns = ctx.createBufferSource(); ns.buffer = noise(ctx, 0.012);
-    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3000; bp.Q.value = 1.2;
+    // Cuerpo del redo amortiguado: el palo en contacto con el parche lo mufflea
+    var body = ctx.createOscillator(), bg = ctx.createGain();
+    body.connect(bg); bg.connect(out);
+    body.type = 'triangle';
+    body.frequency.setValueAtTime(520, t);
+    body.frequency.exponentialRampToValueAtTime(320, t + 0.018);
+    bg.gain.setValueAtTime(vol * 1.1, t);
+    bg.gain.exponentialRampToValueAtTime(0.001, t + 0.032);
+    body.start(t); body.stop(t + 0.038);
+    // Crack del aro al recibir el mango del palo
+    var ns = ctx.createBufferSource(); ns.buffer = noise(ctx, 0.018);
+    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 2.5;
     var ng = ctx.createGain();
     ns.connect(bp); bp.connect(ng); ng.connect(out);
-    ng.gain.setValueAtTime(vol * 1.0, t);
-    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
-    ns.start(t); ns.stop(t + 0.015);
-    // Ring metálico del aro
-    var ring = ctx.createOscillator(), rg = ctx.createGain();
-    ring.connect(rg); rg.connect(out);
-    ring.type = 'sine'; ring.frequency.value = 1800;
-    rg.gain.setValueAtTime(vol * 0.28, t);
-    rg.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-    ring.start(t); ring.stop(t + 0.07);
+    ng.gain.setValueAtTime(vol * 1.3, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.018);
+    ns.start(t); ns.stop(t + 0.022);
+    // Snares levemente agitados por el golpe (muy sutil)
+    var sn = ctx.createBufferSource(); sn.buffer = noise(ctx, 0.025);
+    var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+    var sg = ctx.createGain();
+    sn.connect(hp); hp.connect(sg); sg.connect(out);
+    sg.gain.setValueAtTime(vol * 0.18, t);
+    sg.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+    sn.start(t); sn.stop(t + 0.028);
   }
   function synthConga(t, vol) {
     // Conga: tono mid + click corto
