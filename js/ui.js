@@ -617,7 +617,7 @@ DH.UI = (function () {
     if (action) {
       var btn = document.createElement('a');
       btn.textContent = action.label;
-      btn.href = '#' + action.href;
+      btn.href = action.href;
       btn.style.cssText = 'margin-left:8px;text-decoration:underline;cursor:pointer;white-space:nowrap;color:inherit;opacity:0.85';
       btn.addEventListener('click', function() { el.remove(); });
       el.appendChild(btn);
