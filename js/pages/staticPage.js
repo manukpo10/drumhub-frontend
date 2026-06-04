@@ -18,6 +18,8 @@ DH.STATIC_PAGES = {
       { type: 'p', text: 'Aprender batería es difícil porque el conocimiento está disperso: tutoriales en video, transcripciones en PDF, grabaciones en SoundCloud. Cada formato tiene su fricción. DrumHub junta todo en un solo lugar — el patrón se ve como grilla, se reproduce en el browser y se puede modificar.' },
       { type: 'h', text: 'Cómo se construye' },
       { type: 'p', text: 'La plataforma se nutre de la comunidad. Los bateristas suben sus grooves, los etiquetan por género, dificultad y BPM, y otros los descubren, escuchan, guardan y aprenden. Sin paywalls, sin algoritmos opacos.' },
+      { type: 'h', text: 'Más que on/off' },
+      { type: 'p', text: 'A diferencia de otros step sequencers web, DrumHub soporta notación real: ghost notes (notas fantasma, muy suaves y apagadas) y flams (gracia note + golpe principal) en todos los kits. Esos matices son los que separan un patrón mecánico de un groove que realmente suena a batería.' },
       { type: 'h', text: 'Quién está detrás' },
       { type: 'p', text: 'Un baterista que se cansó de no encontrar grooves en formato decente y decidió construir la herramienta que le hubiera gustado tener. Es un proyecto independiente, hecho con cuidado para la comunidad. ¿Querés sumarte? Escribinos desde la página de contacto.' }
     ]
@@ -28,7 +30,8 @@ DH.STATIC_PAGES = {
     blocks: [
       { type: 'q', q: '¿Es gratis?', a: 'Lo esencial sí: explorar, escuchar, guardar favoritos, comentar y subir tus propios grooves no cuesta nada. Las exportaciones avanzadas (MIDI, PDF y MP3) son parte del plan Pro; el plan Estudio agrega API y grooves privados.' },
       { type: 'q', q: '¿Necesito crear cuenta?', a: 'Solo si querés guardar favoritos, comentar o subir tus propios grooves. Para escuchar y explorar, no.' },
-      { type: 'q', q: '¿Qué kits de batería puedo usar?', a: 'Cuatro kits incluidos por default: Pearl Master Studio (acústico), TR-909 Detroit, LinnDrum LM-2 y CR-78. Se cambian desde el selector en el player.' },
+      { type: 'q', q: '¿Qué kits de batería puedo usar?', a: 'Cuatro kits incluidos: Pearl Master Studio (acústico), TR-909 Detroit, LinnDrum LM-2 y CR-78. Se cambian desde el selector en el player. Todos los kits incluyen ghost notes y flam.' },
+      { type: 'q', q: '¿Qué son las ghost notes y el flam?', a: 'Las ghost notes son golpes muy suaves y apagados en el redoblante — esas notas casi inaudibles que le dan swing y textura a un groove. El flam es un rudimento clásico: una gracia note muy suave justo antes del golpe principal, que le da un ataque más gordo y expresivo. Ambas técnicas están disponibles como filas independientes en todos los kits, para que puedas notarlas y escucharlas con precisión.' },
       { type: 'q', q: '¿Qué géneros hay?', a: 'Rock, funk, jazz, metal, latin, reggae, blues, pop, soul, R&B, hip-hop, bossa y los más nuevos: trap y rap, fuertes en la escena urbana argentina. La lista crece con la comunidad.' },
       { type: 'q', q: '¿Cómo subo mi primer groove?', a: 'Click en "+ Subir" en el nav. Vas al editor, armás el patrón en la grilla de 16 pasos, ponele título, género, BPM y dificultad, y publicás.' },
       { type: 'q', q: '¿Puedo editar un groove después de subirlo?', a: 'Sí. Entrá al groove y, si sos el autor, vas a ver "Editar groove" en el sidebar. Como tus grooves viven en tu cuenta, podés editarlos desde cualquier navegador o dispositivo.' },
