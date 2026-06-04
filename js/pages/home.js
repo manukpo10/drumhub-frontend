@@ -453,11 +453,11 @@ DH.pages.home = function () {
 
       var actionHtml;
       if (ev.type === 'follow') {
-        actionHtml = '<strong>' + esc(ev.actor) + '</strong> '
-          + meta.label + ' <a href="#/profile/' + esc(ev.targetUser) + '">@' + esc(ev.targetUser) + '</a>';
+        actionHtml = '<a class="act-actor" href="/profile/' + esc(ev.actor) + '">' + esc(ev.actor) + '</a> '
+          + meta.label + ' <a href="/profile/' + esc(ev.targetUser) + '">@' + esc(ev.targetUser) + '</a>';
       } else {
-        actionHtml = '<strong>' + esc(ev.actor) + '</strong> '
-          + meta.label + ' <a href="#/groove/' + esc(ev.grooveSlug) + '">' + esc(ev.grooveTitle) + '</a>';
+        actionHtml = '<a class="act-actor" href="/profile/' + esc(ev.actor) + '">' + esc(ev.actor) + '</a> '
+          + meta.label + ' <a href="/groove/' + esc(ev.grooveSlug) + '">' + esc(ev.grooveTitle) + '</a>';
       }
 
       var el = document.createElement('div'); el.className = 'activity-item';

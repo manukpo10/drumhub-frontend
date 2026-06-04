@@ -294,6 +294,8 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .act-text { flex: 1; font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
 .act-text strong { color: var(--text); font-weight: 500; }
 .act-text a { color: var(--accent); }
+.act-text a.act-actor { color: var(--text); font-weight: 500; }
+.act-text a.act-actor:hover { color: var(--accent); }
 .act-time { font-family: 'DM Mono', monospace; font-size: 0.55rem; color: var(--muted2); white-space: nowrap; letter-spacing: 0.08em; }
 
 /* ====== HOW IT WORKS ====== */
