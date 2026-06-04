@@ -809,7 +809,11 @@ input.vol::-webkit-slider-thumb { width: 10px; height: 10px; }
 .player-section-v2 { background: var(--surface); border: 1px solid var(--border); padding: 28px; animation: fadeUp 0.4s 0.08s ease both; }
 .player-header-v2 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 .player-label { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
-.bpm-ctrl-inline { display: flex; align-items: center; gap: 12px; }
+.bpm-ctrl-inline { display: flex; align-items: center; gap: 12px; flex-direction: column; }
+.bpm-stepper { display: flex; align-items: center; gap: 8px; }
+.bpm-step-btn { width: 26px; height: 26px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 1rem; line-height: 1; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, color 0.15s; flex-shrink: 0; padding: 0; }
+.bpm-step-btn:hover { border-color: var(--accent); color: var(--accent); }
+.bpm-stepper-sm .bpm-step-btn { width: 20px; height: 20px; font-size: 0.85rem; }
 
 /* Kit selector — banda prominente arriba del player */
 .kit-bar {

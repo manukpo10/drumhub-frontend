@@ -190,7 +190,11 @@ DH.pages.editor = function (params) {
     +         '</div>'
     +         '<div class="bpm-wrap-toolbar">'
     +           '<span class="bpm-label">BPM</span>'
-    +           '<div class="bpm-val" id="bpm-val">' + state.bpm + '</div>'
+    +           '<div class="bpm-stepper bpm-stepper-sm">'
+    +             '<button class="bpm-step-btn" id="bpm-down">−</button>'
+    +             '<div class="bpm-val" id="bpm-val">' + state.bpm + '</div>'
+    +             '<button class="bpm-step-btn" id="bpm-up">+</button>'
+    +           '</div>'
     +           '<input type="range" class="bpm-range-sm" id="bpm-range" min="40" max="220" value="' + state.bpm + '">'
     +         '</div>'
     +       '</div>'
@@ -351,6 +355,8 @@ DH.pages.editor = function (params) {
   }
   document.getElementById('bpm-range').addEventListener('input', function () { setBpmAll(this.value); });
   document.getElementById('form-bpm').addEventListener('input', function () { setBpmAll(this.value); });
+  document.getElementById('bpm-down').addEventListener('click', function () { setBpmAll(state.bpm - 1); });
+  document.getElementById('bpm-up').addEventListener('click', function () { setBpmAll(state.bpm + 1); });
 
   // ── Templates / clear ──
   function patternHasHits(p) {

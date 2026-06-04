@@ -99,7 +99,11 @@ DH.pages.groove = function (params) {
     +       '<div class="player-header-v2">'
     +         '<div class="player-label">▸ Reproducir groove</div>'
     +         '<div class="bpm-ctrl-inline">'
-    +           '<div class="bpm-num-inline" id="g-bpm-display">' + g.bpm + '<span>BPM</span></div>'
+    +           '<div class="bpm-stepper">'
+    +             '<button class="bpm-step-btn" id="g-bpm-down">−</button>'
+    +             '<div class="bpm-num-inline" id="g-bpm-display">' + g.bpm + '<span>BPM</span></div>'
+    +             '<button class="bpm-step-btn" id="g-bpm-up">+</button>'
+    +           '</div>'
     +           '<input type="range" id="g-bpm-range" min="40" max="220" value="' + g.bpm + '">'
     +         '</div>'
     +       '</div>'
@@ -285,10 +289,20 @@ DH.pages.groove = function (params) {
   buildPlayer();
 
   document.getElementById('g-btn-play').addEventListener('click', function () { player.toggle(); });
-  document.getElementById('g-bpm-range').addEventListener('input', function () {
-    var b = parseInt(this.value, 10);
+  function setGrooveBpm(b) {
+    b = Math.max(40, Math.min(220, b));
     player.setBpm(b);
     document.getElementById('g-bpm-display').innerHTML = b + '<span>BPM</span>';
+    document.getElementById('g-bpm-range').value = b;
+  }
+  document.getElementById('g-bpm-range').addEventListener('input', function () {
+    setGrooveBpm(parseInt(this.value, 10));
+  });
+  document.getElementById('g-bpm-down').addEventListener('click', function () {
+    setGrooveBpm(parseInt(document.getElementById('g-bpm-range').value, 10) - 1);
+  });
+  document.getElementById('g-bpm-up').addEventListener('click', function () {
+    setGrooveBpm(parseInt(document.getElementById('g-bpm-range').value, 10) + 1);
   });
 
   // ── Kit selector: start with the groove's saved kit; user can still override ──
