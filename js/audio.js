@@ -26,6 +26,7 @@ DH.Audio = (function () {
         ride_bell:  ['ride-02.ogg'],
         crash:      ['crash-01.ogg', 'crash-02.ogg'],
         splash:     ['splash-01.ogg', 'splash-02.ogg'],
+        stick:      [],
         tom1:       ['tom-01.ogg'],
         tom2:       ['tom-02.ogg'],
         tom3:       ['tom-03.ogg']
