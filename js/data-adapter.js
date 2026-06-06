@@ -12,6 +12,8 @@ DH.Adapter = (function () {
       title: g.title,
       author: g.authorUsername,
       authorName: g.authorName,
+      authorAvatarSeed: g.authorAvatarSeed || null,
+      authorAvatarUrl: g.authorAvatarUrl || null,
       genre: g.genre,
       genreSlug: g.genreSlug,
       bpm: g.bpm,

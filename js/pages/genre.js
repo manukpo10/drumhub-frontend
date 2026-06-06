@@ -94,7 +94,7 @@ DH.pages.genre = function (params, query) {
 
     +     '<div class="section-block">'
     +       '<div class="section-head"><div><div class="section-eyebrow"><em>[ 01 ]</em> ' + esc(genre.name) + ' grooves</div><div class="section-title">Todos los <em>grooves</em></div></div></div>'
-    +       '<div class="groove-grid groove-grid-6" id="genre-grid"></div>'
+    +       '<div class="groove-feed" id="genre-grid"></div>'
     +       '<div class="pagination" id="genre-pagination"></div>'
     +     '</div>'
 

@@ -496,47 +496,204 @@ DH.UI = (function () {
   function grooveCard(g) {
     var el = document.createElement('div');
     el.className = 'gcard';
+    el.setAttribute('data-title', g.title);
+
+    // Initials: 2 words → first char each; 1 word → first 2 chars (used as img fallback)
+    var nameSrc = g.authorName || g.author || '?';
+    var nameWords = nameSrc.trim().split(/\s+/);
+    var authorInit = nameWords.length >= 2
+      ? (nameWords[0][0] + nameWords[1][0]).toUpperCase()
+      : nameSrc.substring(0, 2).toUpperCase();
+
+    // Author profile picture: uploaded photo (authorAvatarUrl) > chosen avatar (authorAvatarSeed)
+    // > drummer catalog > generated from username. Prefer the groove's own author fields
+    // (sent by the backend) and fall back to the catalog for mock/legacy data.
+    var authorDrummer = drummerOrFallback(g.author);
+    var avatarSrc = g.authorAvatarUrl || authorDrummer.avatarUrl
+      || DH.avatarUrl(g.authorAvatarSeed || authorDrummer.avatar || authorDrummer.user);
+    // Ring color, matching the drummer cards (deterministic per author).
+    var avatarRingColor = (authorDrummer && authorDrummer.color) || avatarColor(g.author || '?');
+
+    // Relative timestamp
+    var timeStr = '';
+    if (g.createdAt) {
+      var diffMin = Math.floor((Date.now() - new Date(g.createdAt).getTime()) / 60000);
+      if (diffMin < 1) timeStr = 'ahora';
+      else if (diffMin < 60) timeStr = 'hace ' + diffMin + 'm';
+      else if (diffMin < 1440) timeStr = 'hace ' + Math.floor(diffMin / 60) + 'h';
+      else timeStr = 'hace ' + Math.floor(diffMin / 1440) + 'd';
+    }
+
+    // Genre color from global catalog (loaded at boot)
+    var genreObj = DH.GENRES && DH.GENRES.find(function (gen) { return gen.name === g.genre; });
+    var genreColor = genreObj ? genreObj.color : '#6b6860';
+
+    // Grid dimensions from timeSig + bars
+    var spbMap = { '3/4': 12, '5/4': 20, '6/8': 12, '7/8': 14 };
+    var totalSteps = (spbMap[g.timeSig] || 16) * (g.bars || 1);
+    var beatIntMap = { '6/8': 6, '7/8': 4 };
+    var beatInt = beatIntMap[g.timeSig] || 4;
+
+    // Beat markers
+    var beatMarkers = '';
+    for (var bi = 0; bi < totalSteps; bi++) {
+      var isStrong = (bi % beatInt === 0);
+      beatMarkers += '<div class="gc-beat-mark' + (isStrong ? ' strong' : '') + '">'
+        + (isStrong ? (Math.floor(bi / beatInt) + 1) : '') + '</div>';
+    }
+
+    // HH / SN / KK rows
+    var tracks = [
+      { id: 'hihat', label: 'HH', cls: 'hh' },
+      { id: 'snare', label: 'SN', cls: 'sn' },
+      { id: 'kick',  label: 'KK', cls: 'kk' }
+    ];
+    var gridRows = tracks.map(function (t) {
+      var arr = (g.pattern && g.pattern[t.id]) || [];
+      var cells = '';
+      for (var ci = 0; ci < totalSteps; ci++) {
+        cells += '<div class="gc-cell' + (arr[ci] ? ' ' + t.cls : '') + '"></div>';
+      }
+      return '<div class="gc-track-row">'
+        + '<div class="gc-track-label">' + t.label + '</div>'
+        + '<div class="gc-track-cells" style="grid-template-columns:repeat(' + totalSteps + ',1fr)">' + cells + '</div>'
+        + '</div>';
+    }).join('');
+
+    var tagsHtml = (g.tags || []).slice(0, 6).map(function (t) {
+      return '<span class="gc-hashtag">#' + escape(t) + '</span>';
+    }).join('');
+
+    var barsNum  = g.bars || 1;
+    var barsLabel = barsNum === 1 ? '1 COMPÁS' : barsNum + ' COMPASES';
+
     el.innerHTML = ''
-      + '<button class="gc-compare" title="Comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></button>'
-      + '<div class="gc-genre">' + escape(g.genre) + '</div>'
-      + '<div class="gc-title">' + escape(g.title) + '</div>'
-      + '<div class="gc-author">por <span>' + escape(g.author) + '</span></div>'
-      + miniGrid(g.pattern, 'gc-mini')
-      + '<div class="gc-footer">'
-      +   '<div class="gc-tags"><span class="gc-tag">' + g.bpm + ' BPM</span><span class="gc-tag">' + escape(g.level) + '</span></div>'
-      +   '<div class="gc-right">'
-      +     '<div class="gc-likes"><em>♥</em> ' + g.likes + '</div>'
-      +     '<button class="btn-play-sm" data-play="1" title="Preview"><svg class="ico-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg><svg class="ico-stop" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="5" width="14" height="14" rx="1"/></svg></button>'
+      // Header: avatar + author + genre badge + timestamp
+      + '<div class="gc-header">'
+      +   '<div class="gc-avatar" style="border-color:' + avatarRingColor + ';background:' + avatarRingColor + '20;color:' + avatarRingColor + '"><img src="' + avatarSrc + '" alt="' + escape(g.author) + '" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + authorInit + '\'"></div>'
+      +   '<div class="gc-header-info">'
+      +     '<div class="gc-username">' + escape(g.author)
+      +       ' <span class="gc-handle">· @' + escape(g.author) + '</span></div>'
+      +     '<div class="gc-meta-row">'
+      +       '<span class="gc-genre-badge" style="color:' + genreColor
+      +         ';border-color:' + genreColor + '55;background:' + genreColor + '18">'
+      +         escape(g.genre) + '</span>'
+      +       (timeStr ? '<span class="gc-timestamp">' + timeStr + '</span>' : '')
+      +     '</div>'
       +   '</div>'
+      +   '<div class="gc-menu" title="Ver groove">···</div>'
+      + '</div>'
+      // Title + description
+      + '<div class="gc-title-block">'
+      +   '<div class="gc-groove-name">' + escape(g.title) + '</div>'
+      +   (g.desc ? '<div class="gc-desc">' + escape(g.desc) + '</div>' : '')
+      + '</div>'
+      // Inline player: transport bar + pattern grid + playhead
+      + '<div class="gc-player">'
+      +   '<div class="gc-transport">'
+      +     '<button class="gc-play-btn" type="button" title="Preview">'
+      +       '<svg class="ico-play" width="9" height="11" viewBox="0 0 9 11" fill="#080807"><path d="M0 0L9 5.5L0 11Z"/></svg>'
+      +       '<svg class="ico-stop" width="9" height="11" viewBox="0 0 9 11" fill="#080807" style="display:none"><rect x="0" y="0" width="3" height="11"/><rect x="5" y="0" width="3" height="11"/></svg>'
+      +     '</button>'
+      +     '<div><div class="gc-bpm">' + g.bpm + '</div><div class="gc-bpm-label">BPM</div></div>'
+      +     '<div class="gc-transport-divider"></div>'
+      +     '<span class="gc-diff-badge">' + escape(g.level) + '</span>'
+      +     '<span class="gc-bars-label">' + barsLabel + '</span>'
+      +   '</div>'
+      +   '<div class="gc-grid">'
+      +     '<div class="gc-beat-markers" style="grid-template-columns:repeat(' + totalSteps + ',1fr)">' + beatMarkers + '</div>'
+      +     gridRows
+      +     '<div class="gc-playhead-wrap"><div class="gc-playhead"></div></div>'
+      +   '</div>'
+      + '</div>'
+      // Hashtag tags
+      + (tagsHtml ? '<div class="gc-tags">' + tagsHtml + '</div>' : '')
+      // Social actions: like / comment / share
+      + '<div class="gc-actions">'
+      +   '<button class="gc-action-btn gc-like-btn" type="button">'
+      +     '<svg width="15" height="14" viewBox="0 0 15 14">'
+      +       '<path d="M7.5 12.5C7.5 12.5 1 8.8 1 4.5C1 2.57 2.57 1 4.5 1C5.61 1 6.6 1.54 7.5 2.5C8.4 1.54 9.39 1 10.5 1C12.43 1 14 2.57 14 4.5C14 8.8 7.5 12.5 7.5 12.5Z" stroke="currentColor" stroke-width="1.5" fill="none"/>'
+      +     '</svg>'
+      +     '<span class="gc-like-count">' + (g.likes || 0) + '</span>'
+      +   '</button>'
+      +   '<button class="gc-action-btn gc-comment-btn" type="button" title="Ver comentarios">'
+      +     '<svg width="15" height="14" viewBox="0 0 15 14" fill="none"><path d="M1 1H14V10H8L4.5 13V10H1V1Z" stroke="currentColor" stroke-width="1.5"/></svg>'
+      +   '</button>'
+      +   '<button class="gc-action-btn gc-share-btn" type="button">'
+      +     '<svg width="15" height="14" viewBox="0 0 15 14" fill="none">'
+      +       '<circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/>'
+      +       '<circle cx="12.5" cy="2.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>'
+      +       '<circle cx="12.5" cy="11.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>'
+      +       '<line x1="4" y1="6.3" x2="11" y2="3.2" stroke="currentColor" stroke-width="1.2"/>'
+      +       '<line x1="4" y1="7.7" x2="11" y2="10.8" stroke="currentColor" stroke-width="1.2"/>'
+      +     '</svg>'
+      +     '<span>Compartir</span>'
+      +   '</button>'
       + '</div>';
 
-    var cmpBtn = el.querySelector('.gc-compare');
-    function refreshCmpVisual() { cmpBtn.classList.toggle('selected', DH.Compare && DH.Compare.isSelected(g.id)); }
-    refreshCmpVisual();
-    cmpBtn.addEventListener('click', function (e) { e.stopPropagation(); if (DH.Compare) { DH.Compare.toggle(g); refreshCmpVisual(); } });
-    if (DH.Compare) DH.Compare.subscribe(refreshCmpVisual, el);
+    // ── Play preview ──
+    var playBtn  = el.querySelector('.gc-play-btn');
+    var icoPlay  = playBtn.querySelector('.ico-play');
+    var icoStop  = playBtn.querySelector('.ico-stop');
+    var playhead = el.querySelector('.gc-playhead');
+    var token    = null;
 
-    var playBtn = el.querySelector('.btn-play-sm');
-    var icoPlay = playBtn.querySelector('.ico-play');
-    var icoStop = playBtn.querySelector('.ico-stop');
-    var token = null;
     function setPlaying(on) {
-      playBtn.classList.toggle('playing', on);
       el.classList.toggle('previewing', on);
       icoPlay.style.display = on ? 'none' : '';
       icoStop.style.display = on ? '' : 'none';
+      if (on) {
+        playhead.style.animationDuration = ((60 / g.bpm) * 4 * (g.bars || 1)) + 's';
+        playhead.classList.add('animating');
+      } else {
+        playhead.classList.remove('animating');
+      }
     }
+
     playBtn.addEventListener('click', function (e) {
-      e.stopPropagation();  // no navegar al groove
+      e.stopPropagation();
       if (token && DH.PreviewPlayer.isPlaying(token)) {
-        DH.PreviewPlayer.stop();
-        setPlaying(false);
-        token = null;
-        return;
+        DH.PreviewPlayer.stop(); setPlaying(false); token = null; return;
       }
       setPlaying(true);
       token = DH.PreviewPlayer.play(g.pattern, g.bpm, function () { setPlaying(false); token = null; }, g.kit, g.timeSig);
     });
+
+    // ── Like / favorite toggle ──
+    var likeBtn   = el.querySelector('.gc-like-btn');
+    var likePath  = likeBtn.querySelector('path');
+    var likeCount = el.querySelector('.gc-like-count');
+
+    function refreshLike() {
+      var liked = DH.Store.isFavorite(g.id);
+      likeBtn.classList.toggle('liked', liked);
+      if (liked) { likePath.setAttribute('fill', 'currentColor'); likePath.removeAttribute('stroke-width'); }
+      else        { likePath.setAttribute('fill', 'none');         likePath.setAttribute('stroke-width', '1.5'); }
+    }
+    refreshLike();
+
+    likeBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!DH.Store.isLoggedIn()) { openModal('login'); return; }
+      var added = DH.Store.toggleFavorite(g.id);
+      g.likes = Math.max(0, (g.likes || 0) + (added ? 1 : -1));
+      likeCount.textContent = g.likes;
+      refreshLike();
+    });
+
+    // ── Comment → groove detail ──
+    el.querySelector('.gc-comment-btn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      DH.Router.go('/groove/' + g.slug);
+    });
+
+    // ── Share → clipboard ──
+    el.querySelector('.gc-share-btn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var url = location.origin + location.pathname + '#/groove/' + g.slug;
+      if (navigator.clipboard) navigator.clipboard.writeText(url);
+    });
+
     el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
     return el;
   }
