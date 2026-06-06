@@ -49,6 +49,20 @@ DH.pages.genres = function () {
 
   DH.UI.heroBg(document.getElementById('genres-hero-bg'));
 
+  var likesByGenre = {};
+  var playsByGenre = {};
+  (DH.GROOVES || []).forEach(function (g) {
+    likesByGenre[g.genre] = (likesByGenre[g.genre] || 0) + (g.likes || 0);
+    playsByGenre[g.genre] = (playsByGenre[g.genre] || 0) + (g.plays || 0);
+  });
+  function fmtNum(n) {
+    n = n || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'k';
+    return String(n);
+  }
+  var GX_BADGES = ['#1 Popular', 'Trending'];
+
   var grid = document.getElementById('genres-index-grid');
   genres.forEach(function (g, i) {
     var info = (DH.GENRE_INFO && DH.GENRE_INFO[g.name]) || DH.DEFAULT_GENRE_INFO;
@@ -58,15 +72,20 @@ DH.pages.genres = function () {
     var topDrummer = (info.drummers && info.drummers[0]) || null;
 
     var el = document.createElement('div');
-    el.className = 'genre-index-card';
+    el.className = 'genre-index-card' + (i === 0 ? ' gx-featured-card' : '');
     el.style.setProperty('--gx-color', color);
     el.innerHTML = ''
+      + (i < 2 ? '<div class="gx-badge">' + GX_BADGES[i] + '</div>' : '')
       + '<div class="gx-watermark">' + DH.genreIconSvg(g.name, { size: 200, color: color, strokeWidth: 1 }) + '</div>'
-      + '<div class="gx-rank">' + String(i + 1).padStart(2, '0') + '</div>'
       + '<div class="gx-body">'
-      +   '<div class="gx-genre-tag" style="color:' + color + '">' + esc(g.name) + '</div>'
       +   '<div class="gx-name">' + esc(g.name.toUpperCase()) + '</div>'
-      +   '<div class="gx-count"><em>' + (g.count || 0).toLocaleString('es-AR') + '</em> grooves</div>'
+      +   '<div class="gx-stats">'
+      +     '<span><em>' + (g.count || 0) + '</em> grooves</span>'
+      +     '<span class="gx-sep">·</span>'
+      +     '<span>♥ ' + fmtNum(likesByGenre[g.name]) + '</span>'
+      +     '<span class="gx-sep">·</span>'
+      +     '<span>▶ ' + fmtNum(playsByGenre[g.name]) + '</span>'
+      +   '</div>'
       +   '<p class="gx-desc">' + esc((info.description || '').slice(0, 130) + ((info.description || '').length > 130 ? '…' : '')) + '</p>'
       +   '<div class="gx-meta">'
       +     '<span class="gx-meta-pill">' + info.bpmMin + '–' + info.bpmMax + ' BPM</span>'
