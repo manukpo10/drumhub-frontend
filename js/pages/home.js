@@ -68,7 +68,7 @@ DH.pages.home = function () {
     + '<section class="section">'
     +   '<div class="section-head"><div><div class="section-eyebrow"><em>[ 01 ]</em> Pick of the week</div><div class="section-title">Groove <em>destacado</em></div></div></div>'
     +   '<div class="featured-main">'
-    +     '<div class="featured-badge">⭐ Groove de la semana</div>'
+    +     '<div class="featured-badge"><span class="feat-rank">01</span><span class="feat-rank-sep">·</span>Groove de la semana</div>'
     +     '<div class="featured-author-row" data-go="/profile/' + esc(featured.author) + '">'
     +       '<div class="featured-avatar" style="border-color:' + featAvatarColor + ';background:' + featAvatarColor + '20;color:' + featAvatarColor + '"><img src="' + featAvatarSrc + '" alt="' + esc(featured.author) + '" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + featInit + '\'"></div>'
     +       '<div class="featured-author-info">'
@@ -371,22 +371,27 @@ DH.pages.home = function () {
     DH.Router.setPlayer(featPlayer);
   }
 
-  // ── Runners-up (2nd–4th) — compact cards with medal strip ──
+  // ── Runners-up (2nd–4th) — compact cards with typographic rank strip ──
   var fr = document.getElementById('featured-runners');
-  var MEDALS = ['🥈', '🥉', '🎖️'];
+  var RANK_NUMS   = ['02', '03', '04'];
+  var RANK_CLS    = ['rank-2', 'rank-3', 'rank-4'];
   var RANK_LABELS = ['2° lugar', '3° lugar', '4° lugar'];
   sideGrooves.forEach(function (g, i) {
     var card = DH.UI.grooveCard(g);
     card.classList.add('runner-card');
     var strip = document.createElement('div');
-    strip.className = 'runner-medal-strip';
-    var emo = document.createElement('span');
-    emo.className = 'runner-medal-emoji';
-    emo.textContent = MEDALS[i];
+    strip.className = 'runner-medal-strip ' + RANK_CLS[i];
+    var num = document.createElement('span');
+    num.className = 'runner-rank-num';
+    num.textContent = RANK_NUMS[i];
+    var dot = document.createElement('span');
+    dot.className = 'runner-rank-dot';
+    dot.textContent = '·';
     var lbl = document.createElement('span');
     lbl.className = 'runner-rank-label';
     lbl.textContent = RANK_LABELS[i];
-    strip.appendChild(emo);
+    strip.appendChild(num);
+    strip.appendChild(dot);
     strip.appendChild(lbl);
     card.insertBefore(strip, card.firstChild);
     fr.appendChild(card);
