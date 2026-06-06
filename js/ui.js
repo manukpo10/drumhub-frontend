@@ -84,7 +84,13 @@ DH.UI = (function () {
     drawer.innerHTML = '<div class="nav-drawer-inner">'
       + '<div class="nav-drawer-logo">Drum<em>Hub</em></div>'
       + drawerLinks.map(function(l) { return '<a class="nav-drawer-link" href="' + l.href + '"><span class="nd-icon">' + l.icon + '</span>' + l.label + '</a>'; }).join('')
-      + (userNow ? '<button class="nav-drawer-logout" id="nav-drawer-logout"><span class="nd-icon">←</span>Cerrar sesión</button>' : '<button class="nav-drawer-cta" id="nav-drawer-register">✦ Crear cuenta gratis</button>')
+      + (userNow
+          ? '<button class="nav-drawer-logout" id="nav-drawer-logout"><span class="nd-icon">←</span>Cerrar sesión</button>'
+          : '<div class="nav-drawer-auth">'
+            + '<button class="nav-drawer-login" id="nav-drawer-login">Ingresar</button>'
+            + '<button class="nav-drawer-cta" id="nav-drawer-register">✦ Crear cuenta</button>'
+            + '</div>'
+        )
       + '</div>';
 
     var overlay = document.createElement('div');
@@ -103,6 +109,8 @@ DH.UI = (function () {
     drawer.querySelectorAll('.nav-drawer-link').forEach(function(a) { a.addEventListener('click', closeDrawer); });
     var drawerLogout = document.getElementById('nav-drawer-logout');
     if (drawerLogout) drawerLogout.addEventListener('click', function() { DH.Store.logout(); closeDrawer(); renderNav(); DH.Router.go('/'); });
+    var drawerLogin = document.getElementById('nav-drawer-login');
+    if (drawerLogin) drawerLogin.addEventListener('click', function() { closeDrawer(); openModal('login'); });
     var drawerRegister = document.getElementById('nav-drawer-register');
     if (drawerRegister) drawerRegister.addEventListener('click', function() { closeDrawer(); openModal('register'); });
 

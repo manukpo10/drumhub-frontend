@@ -1939,7 +1939,10 @@ input.bpm-range-sm::-webkit-slider-thumb { -webkit-appearance: none; width: 12px
 .nd-icon { font-size: 0.9rem; color: var(--accent); width: 18px; text-align: center; flex-shrink: 0; font-style: normal; transition: color 0.15s; }
 .nav-drawer-logout { margin-top: auto; padding-top: 24px; background: none; border: none; font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted2); cursor: pointer; text-align: left; display: flex; align-items: center; gap: 14px; }
 .nav-drawer-logout .nd-icon { color: var(--muted2); font-size: 0.9rem; }
-.nav-drawer-cta { margin-top: auto; padding: 12px 0; background: var(--accent); border: none; font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: #000; font-weight: 700; cursor: pointer; }
+.nav-drawer-auth { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.nav-drawer-login { padding: 12px 0; background: none; border: 1px solid var(--border2); font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); font-weight: 600; cursor: pointer; transition: border-color 0.15s; }
+.nav-drawer-login:hover { border-color: var(--text); }
+.nav-drawer-cta { padding: 12px 0; background: var(--accent); border: none; font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: #000; font-weight: 700; cursor: pointer; }
 
 /* ====== WELCOME ONBOARDING ====== */
 .welcome-box { background: var(--surface); border: 1px solid var(--border2); padding: 40px 36px; max-width: 460px; width: 100%; text-align: center; }
