@@ -262,7 +262,7 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .gc-bars-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted2); margin-left: auto; letter-spacing: 0.5px; }
 
 /* Pattern grid */
-.gc-grid { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+.gc-grid { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; min-height: 100px; overflow: hidden; }
 .gc-beat-markers { display: grid; gap: 2px; margin-left: 30px; margin-bottom: 2px; }
 .gc-beat-mark { font-family: 'DM Mono', monospace; font-size: 7px; color: var(--muted2); display: flex; align-items: center; justify-content: center; height: 4px; }
 .gc-beat-mark.strong { color: var(--muted); }

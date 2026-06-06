@@ -556,11 +556,21 @@ DH.UI = (function () {
     // so ghost notes, flams and aux percussion show up — not just the 3 main voices.
     var pieceOrder = (DH.Audio && DH.Audio.pieceOrder)
       || ['hihat', 'snare', 'snare_ghost', 'snare_flam', 'kick'];
-    var usedRows = pieceOrder.filter(function (id) {
+    // Cap display to 4 rows max: kick always last, fill rest from kit-order top.
+    // Audio still plays every voice — only the visual snapshot is limited.
+    var MAX_CARD_ROWS = 4;
+    var allUsed = pieceOrder.filter(function (id) {
       var arr = g.pattern && g.pattern[id];
       return arr && arr.some(function (v) { return v; });
     });
-    var gridRows = usedRows.map(function (id) {
+    var displayRows = allUsed;
+    if (allUsed.length > MAX_CARD_ROWS) {
+      var kickUsed = allUsed.indexOf('kick') > -1;
+      var nonKick  = allUsed.filter(function (id) { return id !== 'kick'; });
+      displayRows  = nonKick.slice(0, kickUsed ? MAX_CARD_ROWS - 1 : MAX_CARD_ROWS);
+      if (kickUsed) displayRows.push('kick');
+    }
+    var gridRows = displayRows.map(function (id) {
       var arr = (g.pattern && g.pattern[id]) || [];
       var cells = '';
       for (var ci = 0; ci < totalSteps; ci++) {
