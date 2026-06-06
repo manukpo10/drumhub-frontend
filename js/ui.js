@@ -70,16 +70,16 @@ DH.UI = (function () {
     drawer.id = 'nav-drawer';
     drawer.className = 'nav-drawer';
     var drawerLinks = [
-      { icon: '▶', label: 'Explorar', href: '#/search' },
-      { icon: '♩', label: 'Géneros', href: '#/genres' },
-      { icon: '🥁', label: 'Bateristas', href: '#/drummers' },
-      { icon: '◉', label: 'Sobre', href: '#/page/about' }
+      { icon: '▶', label: 'Explorar', href: '/search' },
+      { icon: '♩', label: 'Géneros', href: '/genres' },
+      { icon: '🥁', label: 'Bateristas', href: '/drummers' },
+      { icon: '◉', label: 'Sobre', href: '/page/about' }
     ];
     var userNow = DH.Store.getUser();
     if (userNow) {
-      drawerLinks.push({ icon: '◎', label: 'Mi perfil', href: '#/profile/' + userNow.user });
-      drawerLinks.push({ icon: '⚙', label: 'Configuración', href: '#/settings' });
-      drawerLinks.push({ icon: '▲', label: 'Subir groove', href: '#/upload' });
+      drawerLinks.push({ icon: '◎', label: 'Mi perfil', href: '/profile/' + userNow.user });
+      drawerLinks.push({ icon: '⚙', label: 'Configuración', href: '/settings' });
+      drawerLinks.push({ icon: '▲', label: 'Subir groove', href: '/upload' });
     }
     drawer.innerHTML = '<div class="nav-drawer-inner">'
       + '<div class="nav-drawer-logo">Drum<em>Hub</em></div>'
