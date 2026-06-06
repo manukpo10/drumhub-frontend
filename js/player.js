@@ -27,8 +27,10 @@ DH.createPlayer = function (opts) {
   root.innerHTML = '';
 
   var html;
-  if (minimal) {
-    html = ''
+  // Subdivision selector — only when editing/creating a groove (editable),
+  // never in listen-only mode (resampling would destroy the saved pattern).
+  var subBarHtml = editable
+    ? ''
       + '<div class="sub-bar" id="' + idPrefix + '-sub-bar">'
       +   '<button class="sdv' + (STEPS <= 8 ? ' active' : '') + '" data-steps="8">'
       +     '<span class="sdv-num">8</span>'
@@ -49,6 +51,11 @@ DH.createPlayer = function (opts) {
       +     '<span class="sdv-per">8 por tiempo</span>'
       +   '</button>'
       + '</div>'
+    : '';
+
+  if (minimal) {
+    html = ''
+      + subBarHtml
       + '<div class="grid-scroll">'
       +   '<div class="beat-nums" id="' + idPrefix + '-beat-nums"><div></div></div>'
       +   '<div class="drum-grid" id="' + idPrefix + '-drum-grid"></div>'
@@ -71,26 +78,7 @@ DH.createPlayer = function (opts) {
       +       '<input type="range" id="' + idPrefix + '-bpm-range" min="40" max="220" value="' + bpm + '">'
       +     '</div>'
       +   '</div>'
-      +   '<div class="sub-bar" id="' + idPrefix + '-sub-bar">'
-      +     '<button class="sdv' + (STEPS <= 8 ? ' active' : '') + '" data-steps="8">'
-      +       '<span class="sdv-num">8</span>'
-      +       '<span class="sdv-sym">♩</span>'
-      +       '<span class="sdv-name">Corcheas</span>'
-      +       '<span class="sdv-per">2 por tiempo</span>'
-      +     '</button>'
-      +     '<button class="sdv' + (STEPS > 8 && STEPS < 24 ? ' active' : '') + '" data-steps="16">'
-      +       '<span class="sdv-num">16</span>'
-      +       '<span class="sdv-sym">♬</span>'
-      +       '<span class="sdv-name">Semicorcheas</span>'
-      +       '<span class="sdv-per">4 por tiempo</span>'
-      +     '</button>'
-      +     '<button class="sdv' + (STEPS >= 24 ? ' active' : '') + '" data-steps="32">'
-      +       '<span class="sdv-num">32</span>'
-      +       '<span class="sdv-sym">♫</span>'
-      +       '<span class="sdv-name">Fusas</span>'
-      +       '<span class="sdv-per">8 por tiempo</span>'
-      +     '</button>'
-      +   '</div>'
+      +   subBarHtml
       +   '<div class="grid-wrap">'
       +     '<div class="beat-nums" id="' + idPrefix + '-beat-nums"><div></div></div>'
       +     '<div class="drum-grid" id="' + idPrefix + '-drum-grid"></div>'
