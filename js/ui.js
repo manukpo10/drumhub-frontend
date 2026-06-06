@@ -328,8 +328,11 @@ DH.UI = (function () {
     var gRegister = box.querySelector('#btn-google-register');
     function triggerGoogle() {
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-        // Use FedCM-compatible prompt — no deprecated notification callbacks
-        google.accounts.id.prompt();
+        google.accounts.id.prompt(function(notification) {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            if (DH.UI && DH.UI.toast) DH.UI.toast('Google Sign-In no pudo mostrarse. Intentá con email o recargá la página.', 'warn');
+          }
+        });
       } else {
         if (DH.UI && DH.UI.toast) DH.UI.toast('Google Sign-In no disponible. Recargá la página.', 'error');
       }
