@@ -29,6 +29,26 @@ DH.createPlayer = function (opts) {
   var html;
   if (minimal) {
     html = ''
+      + '<div class="sub-bar" id="' + idPrefix + '-sub-bar">'
+      +   '<button class="sdv' + (STEPS <= 8 ? ' active' : '') + '" data-steps="8">'
+      +     '<span class="sdv-num">8</span>'
+      +     '<span class="sdv-sym">♩</span>'
+      +     '<span class="sdv-name">Corcheas</span>'
+      +     '<span class="sdv-per">2 por tiempo</span>'
+      +   '</button>'
+      +   '<button class="sdv' + (STEPS > 8 && STEPS < 24 ? ' active' : '') + '" data-steps="16">'
+      +     '<span class="sdv-num">16</span>'
+      +     '<span class="sdv-sym">♬</span>'
+      +     '<span class="sdv-name">Semicorcheas</span>'
+      +     '<span class="sdv-per">4 por tiempo</span>'
+      +   '</button>'
+      +   '<button class="sdv' + (STEPS >= 24 ? ' active' : '') + '" data-steps="32">'
+      +     '<span class="sdv-num">32</span>'
+      +     '<span class="sdv-sym">♫</span>'
+      +     '<span class="sdv-name">Fusas</span>'
+      +     '<span class="sdv-per">8 por tiempo</span>'
+      +   '</button>'
+      + '</div>'
       + '<div class="grid-scroll">'
       +   '<div class="beat-nums" id="' + idPrefix + '-beat-nums"><div></div></div>'
       +   '<div class="drum-grid" id="' + idPrefix + '-drum-grid"></div>'
@@ -50,6 +70,26 @@ DH.createPlayer = function (opts) {
       +       '<div class="bpm-num" id="' + idPrefix + '-bpm-display">' + bpm + '<span>BPM</span></div>'
       +       '<input type="range" id="' + idPrefix + '-bpm-range" min="40" max="220" value="' + bpm + '">'
       +     '</div>'
+      +   '</div>'
+      +   '<div class="sub-bar" id="' + idPrefix + '-sub-bar">'
+      +     '<button class="sdv' + (STEPS <= 8 ? ' active' : '') + '" data-steps="8">'
+      +       '<span class="sdv-num">8</span>'
+      +       '<span class="sdv-sym">♩</span>'
+      +       '<span class="sdv-name">Corcheas</span>'
+      +       '<span class="sdv-per">2 por tiempo</span>'
+      +     '</button>'
+      +     '<button class="sdv' + (STEPS > 8 && STEPS < 24 ? ' active' : '') + '" data-steps="16">'
+      +       '<span class="sdv-num">16</span>'
+      +       '<span class="sdv-sym">♬</span>'
+      +       '<span class="sdv-name">Semicorcheas</span>'
+      +       '<span class="sdv-per">4 por tiempo</span>'
+      +     '</button>'
+      +     '<button class="sdv' + (STEPS >= 24 ? ' active' : '') + '" data-steps="32">'
+      +       '<span class="sdv-num">32</span>'
+      +       '<span class="sdv-sym">♫</span>'
+      +       '<span class="sdv-name">Fusas</span>'
+      +       '<span class="sdv-per">8 por tiempo</span>'
+      +     '</button>'
       +   '</div>'
       +   '<div class="grid-wrap">'
       +     '<div class="beat-nums" id="' + idPrefix + '-beat-nums"><div></div></div>'
@@ -178,6 +218,76 @@ DH.createPlayer = function (opts) {
     if (editable) $('btn-clear').addEventListener('click', clearGrid);
   }
 
+  var subBar = document.getElementById(idPrefix + '-sub-bar');
+  if (subBar) {
+    var sdvBtns = subBar.querySelectorAll('.sdv');
+    Array.prototype.forEach.call(sdvBtns, function (btn) {
+      btn.addEventListener('click', function () {
+        var newSteps = parseInt(btn.getAttribute('data-steps'), 10);
+        if (newSteps === STEPS) return;
+        if (isPlaying) stop();
+        var oldSteps = STEPS;
+        ROWS.forEach(function (r) {
+          var oldRow = grid[r.id].slice();
+          grid[r.id] = new Array(newSteps).fill(false);
+          for (var i = 0; i < oldSteps; i++) {
+            if (oldRow[i]) {
+              var pos = Math.round(i * newSteps / oldSteps);
+              if (pos < newSteps) grid[r.id][pos] = true;
+            }
+          }
+        });
+        STEPS = newSteps;
+        stepsPerBeat = STEPS / 4;
+        bn.innerHTML = '<div></div>';
+        for (var s = 0; s < STEPS; s++) {
+          var bnEl = document.createElement('div');
+          bnEl.className = 'beat-num' + (s % stepsPerBeat === 0 ? ' dn' : '');
+          bnEl.textContent = s % stepsPerBeat === 0 ? (Math.floor(s / stepsPerBeat) + 1) : '·';
+          bn.appendChild(bnEl);
+        }
+        sr.innerHTML = '<div></div>';
+        for (var s = 0; s < STEPS; s++) {
+          var dotEl = document.createElement('div');
+          dotEl.className = 'sdot';
+          dotEl.id = idPrefix + '-dot-' + s;
+          sr.appendChild(dotEl);
+        }
+        dg.removeChild(phCont);
+        dg.innerHTML = '';
+        ROWS.forEach(function (row) {
+          var rowLbl = document.createElement('div'); rowLbl.className = 'row-lbl';
+          rowLbl.innerHTML = '<div class="row-dot" style="background:var(--' + row.color + ')"></div><span class="row-name">' + row.name + '</span>';
+          rowLbl.id = idPrefix + '-lbl-' + row.id;
+          rowLbl.style.setProperty('--rc', 'var(--' + row.color + ')');
+          dg.appendChild(rowLbl);
+          for (var s = 0; s < STEPS; s++) {
+            (function (rowId, rowColor, step) {
+              var cell2 = document.createElement('div');
+              cell2.className = 'cell ' + rowColor;
+              cell2.id = idPrefix + '-c-' + rowId + '-' + step;
+              cell2.style.setProperty('--rc', 'var(--' + rowColor + ')');
+              if (grid[rowId][step]) cell2.classList.add('active');
+              if (editable) {
+                cell2.addEventListener('click', function () {
+                  grid[rowId][step] = !grid[rowId][step];
+                  cell2.classList.toggle('active', grid[rowId][step]);
+                  if (opts.onPatternChange) opts.onPatternChange(getPattern());
+                });
+              }
+              dg.appendChild(cell2);
+            })(row.id, row.color, s);
+          }
+        });
+        dg.appendChild(phCont);
+        root.style.setProperty('--grid-steps', STEPS);
+        Array.prototype.forEach.call(sdvBtns, function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        if (opts.onPatternChange) opts.onPatternChange(getPattern());
+      });
+    });
+  }
+
   function scheduler() {
     var ctx = DH.Audio.getCtx();
     while (nextTime < ctx.currentTime + SCHEDULE) {
@@ -187,7 +297,7 @@ DH.createPlayer = function (opts) {
       var step = curStep, time = nextTime;
       vQueue.push({ step: step, time: time });
       setTimeout(function () { if (isPlaying) highlight(step); }, Math.max(0, (time - ctx.currentTime) * 1000));
-      nextTime += 60 / bpm / 4;
+      nextTime += 60 / bpm / stepsPerBeat;
       curStep = (curStep + 1) % STEPS;
     }
     timerID = setTimeout(scheduler, LOOKAHEAD * 1000);
@@ -234,7 +344,7 @@ DH.createPlayer = function (opts) {
       lastDrawStep = vQueue[0].step; lastStepTime = vQueue[0].time; vQueue.shift();
     }
     if (lastDrawStep >= 0) {
-      var stepDur = 60 / bpm / 4;
+      var stepDur = 60 / bpm / stepsPerBeat;
       var frac = Math.min(1, Math.max(0, (now - lastStepTime) / stepDur));
       var pos = (lastDrawStep + frac) / STEPS * 100;
       phEl.style.left = pos + '%';
