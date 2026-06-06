@@ -29,22 +29,25 @@ DH.createPlayer = function (opts) {
   var html;
   // Subdivision selector — only when editing/creating a groove (editable),
   // never in listen-only mode (resampling would destroy the saved pattern).
+  // The active button reflects the SUBDIVISION (steps per beat), not the total
+  // step count — otherwise lengthening the groove (more bars) would inflate the
+  // total and wrongly flip the indicator (e.g. semicorcheas → fusas).
   var subBarHtml = editable
     ? ''
       + '<div class="sub-bar" id="' + idPrefix + '-sub-bar">'
-      +   '<button class="sdv' + (STEPS <= 8 ? ' active' : '') + '" data-steps="8">'
+      +   '<button class="sdv' + (stepsPerBeat <= 2 ? ' active' : '') + '" data-spb="2">'
       +     '<span class="sdv-num">8</span>'
       +     '<span class="sdv-sym">♩</span>'
       +     '<span class="sdv-name">Corcheas</span>'
       +     '<span class="sdv-per">2 por tiempo</span>'
       +   '</button>'
-      +   '<button class="sdv' + (STEPS > 8 && STEPS < 24 ? ' active' : '') + '" data-steps="16">'
+      +   '<button class="sdv' + (stepsPerBeat === 4 ? ' active' : '') + '" data-spb="4">'
       +     '<span class="sdv-num">16</span>'
       +     '<span class="sdv-sym">♬</span>'
       +     '<span class="sdv-name">Semicorcheas</span>'
       +     '<span class="sdv-per">4 por tiempo</span>'
       +   '</button>'
-      +   '<button class="sdv' + (STEPS >= 24 ? ' active' : '') + '" data-steps="32">'
+      +   '<button class="sdv' + (stepsPerBeat >= 8 ? ' active' : '') + '" data-spb="8">'
       +     '<span class="sdv-num">32</span>'
       +     '<span class="sdv-sym">♫</span>'
       +     '<span class="sdv-name">Fusas</span>'
@@ -211,10 +214,16 @@ DH.createPlayer = function (opts) {
     var sdvBtns = subBar.querySelectorAll('.sdv');
     Array.prototype.forEach.call(sdvBtns, function (btn) {
       btn.addEventListener('click', function () {
-        var newSteps = parseInt(btn.getAttribute('data-steps'), 10);
-        if (newSteps === STEPS) return;
+        var newSpb = parseInt(btn.getAttribute('data-spb'), 10); // 2 / 4 / 8 per beat
+        if (newSpb === stepsPerBeat) return;
         if (isPlaying) stop();
         var oldSteps = STEPS;
+        // Preserve the number of beats (length) when changing subdivision.
+        var beats = Math.max(1, Math.round(STEPS / stepsPerBeat));
+        // Respect MAX_STEPS: a finer subdivision may not fit the current length.
+        var cap = opts.maxSteps || Infinity;
+        while (beats * newSpb > cap && beats > 1) beats--;
+        var newSteps = newSpb * beats;
         ROWS.forEach(function (r) {
           var oldRow = grid[r.id].slice();
           grid[r.id] = new Array(newSteps).fill(false);
@@ -226,7 +235,7 @@ DH.createPlayer = function (opts) {
           }
         });
         STEPS = newSteps;
-        stepsPerBeat = STEPS / 4;
+        stepsPerBeat = newSpb;
         bn.innerHTML = '<div></div>';
         for (var s = 0; s < STEPS; s++) {
           var bnEl = document.createElement('div');
@@ -271,6 +280,7 @@ DH.createPlayer = function (opts) {
         root.style.setProperty('--grid-steps', STEPS);
         Array.prototype.forEach.call(sdvBtns, function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
+        if (opts.onStepsChange) opts.onStepsChange(STEPS, stepsPerBeat);
         if (opts.onPatternChange) opts.onPatternChange(getPattern());
       });
     });

@@ -69,10 +69,15 @@ DH.pages.editor = function (params) {
   function getTimeSigConf(id) {
     return DH.TIME_SIGS.find(function (t) { return t.id === id; }) || DH.TIME_SIGS[0];
   }
+  // Subdivision (stepsPerBeat) and length (bars) are independent axes.
+  // beatsPerBar comes from the time signature; total steps = subdivision × beats × bars.
+  // stepsPerBeat is initialized from the time sig but can be overridden by the
+  // subdivision selector, so changing the LENGTH never alters the subdivision.
   function computeSteps() {
     var conf = getTimeSigConf(state.timeSig);
-    state.stepsPerBeat = conf.stepsPerBeat;
-    state.steps = conf.stepsPerBar * state.bars;
+    var beatsPerBar = conf.stepsPerBar / conf.stepsPerBeat;
+    if (state.stepsPerBeat == null) state.stepsPerBeat = conf.stepsPerBeat;
+    state.steps = state.stepsPerBeat * beatsPerBar * state.bars;
   }
   computeSteps();
 
@@ -291,7 +296,23 @@ DH.pages.editor = function (params) {
       steps: state.steps,
       stepsPerBeat: state.stepsPerBeat,
       timeSig: state.timeSig,
+      maxSteps: DH.MAX_STEPS,
       onPatternChange: function (p) { state.pattern = p; updatePreview(); updatePatternProgress(); },
+      onStepsChange: function (steps, spb) {
+        // Subdivision changed from the player's sub-bar — sync editor state so it
+        // persists across rebuilds and saves. A finer grid may clamp the length to
+        // fit MAX_STEPS, so recompute bars from the resulting beat count.
+        state.steps = steps;
+        state.stepsPerBeat = spb;
+        var conf = getTimeSigConf(state.timeSig);
+        var beatsPerBar = conf.stepsPerBar / conf.stepsPerBeat;
+        state.bars = Math.max(1, Math.round(steps / spb / beatsPerBar));
+        app.querySelectorAll('[data-bars]').forEach(function (x) {
+          x.classList.toggle('active', parseInt(x.getAttribute('data-bars'), 10) === state.bars);
+        });
+        updateBarsButtonState();
+        updatePreview();
+      },
       onPlayStateChange: function (playing) {
         var b = document.getElementById('ed-play');
         var st = document.getElementById('ed-status');
@@ -397,10 +418,12 @@ DH.pages.editor = function (params) {
   // ── Time signature selector ──
   function updateBarsButtonState() {
     var conf = getTimeSigConf(state.timeSig);
+    var beatsPerBar = conf.stepsPerBar / conf.stepsPerBeat;
+    var perBar = (state.stepsPerBeat || conf.stepsPerBeat) * beatsPerBar;
     var maxBars = 1;
     app.querySelectorAll('[data-bars]').forEach(function (btn) {
       var n = parseInt(btn.getAttribute('data-bars'), 10);
-      var exceeds = conf.stepsPerBar * n > DH.MAX_STEPS;
+      var exceeds = perBar * n > DH.MAX_STEPS;
       btn.disabled = exceeds;
       if (!exceeds) maxBars = Math.max(maxBars, n);
     });
@@ -416,6 +439,8 @@ DH.pages.editor = function (params) {
       app.querySelectorAll('[data-timesig]').forEach(function (x) { x.classList.remove('active'); });
       b.classList.add('active');
       state.timeSig = b.getAttribute('data-timesig');
+      // Changing meter resets the subdivision to that meter's natural grid.
+      state.stepsPerBeat = getTimeSigConf(state.timeSig).stepsPerBeat;
       updateBarsButtonState();
       computeSteps();
       state.pattern = resizePattern(state.steps);
