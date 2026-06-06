@@ -178,14 +178,18 @@ DH.pages.search = function (_params, query) {
   });
 
   // ── BPM max slider ──
+  // Update the label/gradient instantly on every input, but debounce the actual
+  // render() so dragging the slider fires ONE request when it settles — not dozens
+  // (which saturated the backend and caused "broken pipe" + page flicker).
+  var bpmTimer = null;
   document.getElementById('bpm-max').addEventListener('input', function (e) {
     state.bpmMax = parseInt(e.target.value, 10);
     document.getElementById('bpm-label').textContent = '≤ ' + state.bpmMax;
-    // Update slider gradient
     var pct = Math.round((state.bpmMax - 40) / (240 - 40) * 100);
     e.target.style.background = 'linear-gradient(to right, var(--accent) ' + pct + '%, var(--border2) ' + pct + '%)';
     state.page = 1;
-    render();
+    if (bpmTimer) clearTimeout(bpmTimer);
+    bpmTimer = setTimeout(function () { bpmTimer = null; render(); }, 350);
   });
 
   // ── Search form ──
