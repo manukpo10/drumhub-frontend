@@ -371,29 +371,20 @@ DH.pages.home = function () {
     DH.Router.setPlayer(featPlayer);
   }
 
-  // ── Runners-up (2nd–4th) — compact cards with typographic rank strip ──
+  // ── Runners-up (2nd–4th) — compact cards with inline rank in header ──
   var fr = document.getElementById('featured-runners');
-  var RANK_NUMS   = ['02', '03', '04'];
-  var RANK_CLS    = ['rank-2', 'rank-3', 'rank-4'];
-  var RANK_LABELS = ['2° lugar', '3° lugar', '4° lugar'];
+  var RANK_NUMS = ['02', '03', '04'];
+  var RANK_CLS  = ['rank-2', 'rank-3', 'rank-4'];
   sideGrooves.forEach(function (g, i) {
     var card = DH.UI.grooveCard(g);
     card.classList.add('runner-card');
-    var strip = document.createElement('div');
-    strip.className = 'runner-medal-strip ' + RANK_CLS[i];
-    var num = document.createElement('span');
-    num.className = 'runner-rank-num';
-    num.textContent = RANK_NUMS[i];
-    var dot = document.createElement('span');
-    dot.className = 'runner-rank-dot';
-    dot.textContent = '·';
-    var lbl = document.createElement('span');
-    lbl.className = 'runner-rank-label';
-    lbl.textContent = RANK_LABELS[i];
-    strip.appendChild(num);
-    strip.appendChild(dot);
-    strip.appendChild(lbl);
-    card.insertBefore(strip, card.firstChild);
+    var header = card.querySelector('.gc-header');
+    if (header) {
+      var rankEl = document.createElement('div');
+      rankEl.className = 'runner-rank-inline ' + RANK_CLS[i];
+      rankEl.textContent = RANK_NUMS[i];
+      header.insertBefore(rankEl, header.firstChild);
+    }
     fr.appendChild(card);
   });
 

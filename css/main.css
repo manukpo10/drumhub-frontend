@@ -297,17 +297,11 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 /* Rank strip — featured (#01) and runner cards (#02–#04) */
 .featured-badge .feat-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--accent); letter-spacing: 0.05em; line-height: 1; vertical-align: middle; }
 .featured-badge .feat-rank-sep { color: var(--muted2); margin: 0 6px; }
-/* Runner cards (2nd–4th) — compact with rank strip */
-.runner-medal-strip { display: flex; align-items: center; gap: 10px; padding: 7px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.runner-rank-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; line-height: 1; letter-spacing: 0.05em; }
-.runner-rank-dot { color: var(--muted2); font-size: 0.85rem; }
-.runner-rank-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.runner-medal-strip.rank-2 { background: var(--surface2); }
-.runner-medal-strip.rank-2 .runner-rank-num { color: #c8c5be; }
-.runner-medal-strip.rank-3 { background: rgba(255,77,0,0.06); border-bottom-color: rgba(255,77,0,0.15); }
-.runner-medal-strip.rank-3 .runner-rank-num { color: var(--accent2); }
-.runner-medal-strip.rank-4 { background: rgba(0,201,255,0.04); border-bottom-color: rgba(0,201,255,0.12); }
-.runner-medal-strip.rank-4 .runner-rank-num { color: var(--accent3); }
+/* Runner cards (2nd–4th) — inline rank before avatar */
+.runner-rank-inline { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; line-height: 1; letter-spacing: 0.05em; flex-shrink: 0; }
+.runner-rank-inline.rank-2 { color: #c8c5be; }
+.runner-rank-inline.rank-3 { color: var(--accent2); }
+.runner-rank-inline.rank-4 { color: var(--accent3); }
 .runner-card .gc-groove-name { font-size: 18px; }
 .runner-card .gc-desc { display: none; }
 .runner-card .gc-cell { height: 9px; }
