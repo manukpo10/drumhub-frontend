@@ -56,28 +56,26 @@ DH.pages.home = function () {
 
     + '<section class="section">'
     +   '<div class="section-head"><div><div class="section-eyebrow"><em>[ 01 ]</em> Pick of the week</div><div class="section-title">Groove <em>destacado</em></div></div></div>'
-    +   '<div class="featured-wrap">'
-    +     '<div class="featured-main">'
-    +       '<div class="featured-badge">⭐ Groove de la semana</div>'
-    +       '<div class="featured-title" id="feat-title">' + esc(featured.title) + '</div>'
-    +       '<div class="featured-author">por <a href="#/profile/' + esc(featured.author) + '">' + esc(featured.author) + '</a></div>'
-    +       '<div class="featured-tags">'
-    +         '<span class="ftag">' + esc(featured.genre) + '</span>'
-    +         '<span class="ftag">' + featured.bpm + ' BPM</span>'
-    +         '<span class="ftag">' + esc(featured.level) + '</span>'
-    +         '<span class="ftag">4/4</span>'
-    +       '</div>'
-    +       '<p class="featured-desc">' + esc(featured.desc) + '</p>'
-    +       '<div id="feat-player-host"></div>'
-    +       '<div class="featured-actions">'
-    +         '<button class="btn-sm btn-play-feat" id="feat-play">▶ Escuchar</button>'
-    +         '<button class="btn-sm btn-save-feat" id="feat-save">♥ Guardar</button>'
-    +         '<button class="btn-sm btn-share-feat" id="feat-share">↗ Compartir</button>'
-    +         '<a class="btn-sm" data-go="/groove/' + esc(featured.slug) + '" style="text-decoration:none;cursor:pointer">Ver más →</a>'
-    +       '</div>'
+    +   '<div class="featured-main">'
+    +     '<div class="featured-badge">⭐ Groove de la semana</div>'
+    +     '<div class="featured-title" id="feat-title">' + esc(featured.title) + '</div>'
+    +     '<div class="featured-author">por <a href="#/profile/' + esc(featured.author) + '">' + esc(featured.author) + '</a></div>'
+    +     '<div class="featured-tags">'
+    +       '<span class="ftag">' + esc(featured.genre) + '</span>'
+    +       '<span class="ftag">' + featured.bpm + ' BPM</span>'
+    +       '<span class="ftag">' + esc(featured.level) + '</span>'
+    +       '<span class="ftag">4/4</span>'
     +     '</div>'
-    +     '<div class="featured-side" id="featured-side"></div>'
+    +     '<p class="featured-desc">' + esc(featured.desc) + '</p>'
+    +     '<div id="feat-player-host"></div>'
+    +     '<div class="featured-actions">'
+    +       '<button class="btn-sm btn-play-feat" id="feat-play">▶ Escuchar</button>'
+    +       '<button class="btn-sm btn-save-feat" id="feat-save">♥ Guardar</button>'
+    +       '<button class="btn-sm btn-share-feat" id="feat-share">↗ Compartir</button>'
+    +       '<a class="btn-sm" data-go="/groove/' + esc(featured.slug) + '" style="text-decoration:none;cursor:pointer">Ver más →</a>'
+    +     '</div>'
     +   '</div>'
+    +   '<div class="featured-runners" id="featured-runners"></div>'
     + '</section>'
 
     + '<section class="section" style="padding-top:0;">'
@@ -327,22 +325,9 @@ DH.pages.home = function () {
     DH.Router.setPlayer(featPlayer);
   }
 
-  // ── Featured side ──
-  var fs = document.getElementById('featured-side');
-  var sideLabels = ['🥈 2do lugar', '🥉 3er lugar', '4° lugar'];
-  sideGrooves.forEach(function (g, i) {
-    var el = document.createElement('div'); el.className = 'side-card';
-    el.innerHTML = ''
-      + '<div class="side-badge">' + sideLabels[i] + '</div>'
-      + '<div class="side-genre">' + esc(g.genre) + '</div>'
-      + '<div class="side-title">' + esc(g.title) + '</div>'
-      + '<div class="side-meta">por ' + esc(g.author) + ' · ' + g.bpm + ' BPM</div>'
-      + DH.UI.miniGrid(g.pattern)
-      + '<div class="side-bottom"><div class="side-likes"><em>♥</em> ' + g.likes + '</div>'
-      + '<button class="btn-play-sm"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></button></div>';
-    el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });
-    fs.appendChild(el);
-  });
+  // ── Runners-up (2nd–4th) as full social cards, same as the trending grid ──
+  var fr = document.getElementById('featured-runners');
+  sideGrooves.forEach(function (g) { fr.appendChild(DH.UI.grooveCard(g)); });
 
   // ── Featured actions ──
   document.getElementById('feat-title').addEventListener('click', function () { DH.Router.go('/groove/' + featured.slug); });

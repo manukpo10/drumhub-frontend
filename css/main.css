@@ -153,6 +153,11 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 @media(max-width:800px){.featured-wrap{grid-template-columns:1fr;}}
 .featured-main, .featured-side { min-width: 0; }
 .featured-main { background: var(--surface); border: 1px solid var(--border); padding: 36px; }
+/* Runners-up (2nd–4th): full social cards in a row of 3 below the featured groove. */
+.featured-runners { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 2px; }
+.featured-runners > .gcard { min-width: 0; }
+@media (max-width: 900px) { .featured-runners { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .featured-runners { grid-template-columns: 1fr; } }
 .featured-badge { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(232,255,0,0.3); padding: 3px 8px; border-radius: 2px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
 .side-badge { font-family: 'DM Mono', monospace; font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 2px 7px; border-radius: 2px; display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; }
 .featured-title { font-family: 'Bebas Neue', sans-serif; font-size: 3.2rem; line-height: 1; letter-spacing: 0.03em; margin-bottom: 6px; cursor: pointer; }
