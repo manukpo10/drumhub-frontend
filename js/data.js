@@ -379,6 +379,54 @@ DH.GENRE_INFO = {
       { name: 'Airto Moreira',   role: 'Brasileño · Fusion',   init: 'A', color: '#e8ff00', grooves: 54 },
       { name: 'Edu Ribeiro',     role: 'Samba contemporáneo',  init: 'E', color: '#a855f7', grooves: 38 }
     ]
+  },
+  Blues: {
+    slug: 'blues', color: '#38bdf8',
+    bpmMin: 60, bpmMax: 120, level: 'Intermedio', timeSig: '4/4 · 12/8',
+    description: 'El blues es el ADN de la música popular moderna. El shuffle de triplets y el feel swing son su firma. El 12/8 y el 4/4 conviven; la dinámica lo es todo.',
+    subgenres: ['Delta Blues', 'Chicago Blues', 'Electric Blues', 'Jump Blues'],
+    related: ['Rock', 'Jazz', 'Soul'],
+    drummers: []
+  },
+  'Hip-Hop': {
+    slug: 'hip-hop', color: '#fb923c',
+    bpmMin: 75, bpmMax: 100, level: 'Básico', timeSig: '4/4',
+    description: 'El hip-hop construye su groove sobre el boom bap: bombo grave en el 1 y el 3, snare seco en el 2 y el 4, hi-hat con swing. El sampleo y la programación redefinieron la batería.',
+    subgenres: ['Boom Bap', 'Trap', 'Lo-Fi', 'Afrobeat'],
+    related: ['Soul', 'Funk', 'R&B'],
+    drummers: []
+  },
+  Pop: {
+    slug: 'pop', color: '#f472b6',
+    bpmMin: 90, bpmMax: 140, level: 'Básico', timeSig: '4/4',
+    description: 'El pop prioriza el groove limpio y el bolsillo firme. Bombo en cuartos o medias, redoblante en el backbeat, hi-hat en corcheas o dieciseisavos. Claridad por encima de todo.',
+    subgenres: ['Synth-Pop', 'Dance Pop', 'Indie Pop', 'Power Pop'],
+    related: ['Rock', 'R&B', 'Soul'],
+    drummers: []
+  },
+  Soul: {
+    slug: 'soul', color: '#fbbf24',
+    bpmMin: 70, bpmMax: 110, level: 'Intermedio', timeSig: '4/4',
+    description: 'El soul toma el blues y le suma gospel. El groove respira: dinámica suave en los tiempos 1 y 3, acento en el backbeat, ghost notes que dan el pocket. Al Jackson Jr. y Roger Hawkins son los referentes.',
+    subgenres: ['Southern Soul', 'Northern Soul', 'Neo-Soul', 'Deep Soul'],
+    related: ['Funk', 'R&B', 'Blues'],
+    drummers: []
+  },
+  'R&B': {
+    slug: 'rnb', color: '#c084fc',
+    bpmMin: 70, bpmMax: 100, level: 'Intermedio', timeSig: '4/4',
+    description: 'El R&B contemporáneo mezcla groove aceitado, programación electrónica y matices de soul y hip-hop. El hi-hat en dieciseisavos y el bombo sincopado son su sello.',
+    subgenres: ['Contemporary R&B', 'New Jack Swing', 'Quiet Storm', 'G-Funk'],
+    related: ['Soul', 'Hip-Hop', 'Funk'],
+    drummers: []
+  },
+  Bossa: {
+    slug: 'bossa', color: '#34d399',
+    bpmMin: 90, bpmMax: 130, level: 'Intermedio', timeSig: '4/4',
+    description: 'La bossa nova nació en Río de Janeiro a fines de los 50s. La batería imita el surdo y el pandeiro: bombo con patrón de samba suavizado, hi-hat en contratiempos, redoblante con escobillas.',
+    subgenres: ['Bossa Clásica', 'Bossa Moderna', 'Samba-Jazz'],
+    related: ['Latin', 'Jazz'],
+    drummers: []
   }
 };
 
