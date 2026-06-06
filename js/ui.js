@@ -542,20 +542,31 @@ DH.UI = (function () {
         + (isStrong ? (Math.floor(bi / beatInt) + 1) : '') + '</div>';
     }
 
-    // HH / SN / KK rows
-    var tracks = [
-      { id: 'hihat', label: 'HH', cls: 'hh' },
-      { id: 'snare', label: 'SN', cls: 'sn' },
-      { id: 'kick',  label: 'KK', cls: 'kk' }
-    ];
-    var gridRows = tracks.map(function (t) {
-      var arr = (g.pattern && g.pattern[t.id]) || [];
+    // Show EVERY drum voice that the groove actually uses (not just HH/SN/KK), top→bottom
+    // in kit order, each in its own color. Empty voices are hidden so the card stays compact;
+    // the preview player already sounds every voice. (Falls back to a default 3-voice order
+    // if DH.ROWS isn't available.)
+    var ROW_ABBR = {
+      china: 'CH', crash: 'CR', splash: 'SP', ride: 'RD', ride_bell: 'RB',
+      hihat: 'HH', hihat_open: 'OH', snare: 'SN', tom1: 'T1', tom2: 'T2', tom3: 'T3', kick: 'KK'
+    };
+    var rowOrder = (DH.ROWS && DH.ROWS.length)
+      ? DH.ROWS
+      : [{ id: 'hihat' }, { id: 'snare' }, { id: 'kick' }];
+    var usedRows = rowOrder.filter(function (r) {
+      var arr = g.pattern && g.pattern[r.id];
+      return arr && arr.some(function (v) { return v; });
+    });
+    var gridRows = usedRows.map(function (r) {
+      var arr = (g.pattern && g.pattern[r.id]) || [];
       var cells = '';
       for (var ci = 0; ci < totalSteps; ci++) {
-        cells += '<div class="gc-cell' + (arr[ci] ? ' ' + t.cls : '') + '"></div>';
+        cells += arr[ci]
+          ? '<div class="gc-cell on" style="background:var(--' + r.id + ')"></div>'
+          : '<div class="gc-cell"></div>';
       }
       return '<div class="gc-track-row">'
-        + '<div class="gc-track-label">' + t.label + '</div>'
+        + '<div class="gc-track-label">' + (ROW_ABBR[r.id] || r.id) + '</div>'
         + '<div class="gc-track-cells" style="grid-template-columns:repeat(' + totalSteps + ',1fr)">' + cells + '</div>'
         + '</div>';
     }).join('');
