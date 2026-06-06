@@ -9,10 +9,21 @@ DH.pages.home = function () {
   // Rank all grooves by real likes. NOTE: likes are a cumulative count with no per-like
   // timestamp, so "de la semana" is most-liked overall (we can't filter a real 7-day window).
   var byLikes = DH.GROOVES.slice().sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); });
-  var featured = byLikes[0] || DH.GROOVES[0];          // Groove de la semana = el más likeado
-  var sideGrooves = byLikes.slice(1, 4);               // los 3 que le siguen (a la derecha)
-  var trending = byLikes.slice(4, 10);                 // tendencia: continúa después del bloque destacado (sin repetir)
+  // Pinned featured groove: manu_bata4's "groove ghost1". Falls back to the most-liked
+  // groove if it isn't among the grooves loaded at boot.
+  var featured = (DH.GROOVES || []).filter(function (g) { return g.slug === 'groove-ghost1'; })[0]
+    || byLikes[0] || DH.GROOVES[0];
+  var rest = byLikes.filter(function (g) { return g.id !== featured.id; });
+  var sideGrooves = rest.slice(0, 3);                  // 2°–4° (más likeados, sin repetir el destacado)
+  var trending = rest.slice(3, 9);                     // tendencia: continúa después
   var esc = DH.UI.escape;
+
+  // Featured author's profile picture + ring color (same resolution as the social cards).
+  var featAuthor = DH.UI.drummerOrFallback(featured.author);
+  var featAvatarSrc = featured.authorAvatarUrl || featAuthor.avatarUrl
+    || DH.avatarUrl(featured.authorAvatarSeed || featAuthor.avatar || featAuthor.user);
+  var featAvatarColor = (featAuthor && featAuthor.color) || DH.UI.avatarColor(featured.author || '?');
+  var featInit = (featured.author || '?').substring(0, 2).toUpperCase();
 
   app.innerHTML = ''
     + '<section class="hero">'
@@ -58,8 +69,14 @@ DH.pages.home = function () {
     +   '<div class="section-head"><div><div class="section-eyebrow"><em>[ 01 ]</em> Pick of the week</div><div class="section-title">Groove <em>destacado</em></div></div></div>'
     +   '<div class="featured-main">'
     +     '<div class="featured-badge">⭐ Groove de la semana</div>'
+    +     '<div class="featured-author-row" data-go="/profile/' + esc(featured.author) + '">'
+    +       '<div class="featured-avatar" style="border-color:' + featAvatarColor + ';background:' + featAvatarColor + '20;color:' + featAvatarColor + '"><img src="' + featAvatarSrc + '" alt="' + esc(featured.author) + '" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + featInit + '\'"></div>'
+    +       '<div class="featured-author-info">'
+    +         '<div class="featured-author-name">' + esc(featured.author) + '</div>'
+    +         '<div class="featured-author-handle">@' + esc(featured.author) + '</div>'
+    +       '</div>'
+    +     '</div>'
     +     '<div class="featured-title" id="feat-title">' + esc(featured.title) + '</div>'
-    +     '<div class="featured-author">por <a href="#/profile/' + esc(featured.author) + '">' + esc(featured.author) + '</a></div>'
     +     '<div class="featured-tags">'
     +       '<span class="ftag">' + esc(featured.genre) + '</span>'
     +       '<span class="ftag">' + featured.bpm + ' BPM</span>'
@@ -68,6 +85,16 @@ DH.pages.home = function () {
     +     '</div>'
     +     '<p class="featured-desc">' + esc(featured.desc) + '</p>'
     +     '<div id="feat-player-host"></div>'
+    +     '<div class="featured-social">'
+    +       '<button class="featured-social-btn" id="feat-like" type="button" title="Me gusta">'
+    +         '<svg width="17" height="16" viewBox="0 0 15 14"><path d="M7.5 12.5C7.5 12.5 1 8.8 1 4.5C1 2.57 2.57 1 4.5 1C5.61 1 6.6 1.54 7.5 2.5C8.4 1.54 9.39 1 10.5 1C12.43 1 14 2.57 14 4.5C14 8.8 7.5 12.5 7.5 12.5Z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>'
+    +         '<span id="feat-like-count">' + (featured.likes || 0) + '</span>'
+    +       '</button>'
+    +       '<button class="featured-social-btn" id="feat-comments" type="button" title="Comentarios">'
+    +         '<svg width="17" height="16" viewBox="0 0 15 14" fill="none"><path d="M1 1H14V10H8L4.5 13V10H1V1Z" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +         '<span>Comentarios</span>'
+    +       '</button>'
+    +     '</div>'
     +     '<div class="featured-actions">'
     +       '<button class="btn-sm btn-play-feat" id="feat-play">▶ Escuchar</button>'
     +       '<button class="btn-sm btn-save-feat" id="feat-save">♥ Guardar</button>'
@@ -336,12 +363,28 @@ DH.pages.home = function () {
     else { DH.Router.go('/groove/' + featured.slug); }
   });
   var saveBtn = document.getElementById('feat-save');
-  function refreshSave() { saveBtn.classList.toggle('saved', DH.Store.isFavorite(featured.id)); saveBtn.textContent = DH.Store.isFavorite(featured.id) ? '♥ Guardado' : '♥ Guardar'; }
+  var likeBtn = document.getElementById('feat-like');
+  var likePath = likeBtn.querySelector('path');
+  var likeCount = document.getElementById('feat-like-count');
+  function refreshSave() {
+    var liked = DH.Store.isFavorite(featured.id);
+    saveBtn.classList.toggle('saved', liked);
+    saveBtn.textContent = liked ? '♥ Guardado' : '♥ Guardar';
+    likeBtn.classList.toggle('liked', liked);
+    if (liked) { likePath.setAttribute('fill', 'currentColor'); likePath.removeAttribute('stroke-width'); }
+    else { likePath.setAttribute('fill', 'none'); likePath.setAttribute('stroke-width', '1.5'); }
+  }
   refreshSave();
-  saveBtn.addEventListener('click', function () {
+  function toggleFeatLike() {
     if (!DH.Store.isLoggedIn()) { DH.UI.openModal('login'); return; }
-    DH.Store.toggleFavorite(featured.id); refreshSave();
-  });
+    var added = DH.Store.toggleFavorite(featured.id);
+    featured.likes = Math.max(0, (featured.likes || 0) + (added ? 1 : -1));
+    likeCount.textContent = featured.likes;
+    refreshSave();
+  }
+  saveBtn.addEventListener('click', toggleFeatLike);
+  likeBtn.addEventListener('click', toggleFeatLike);
+  document.getElementById('feat-comments').addEventListener('click', function () { DH.Router.go('/groove/' + featured.slug); });
   document.getElementById('feat-share').addEventListener('click', function () {
     var url = location.origin + location.pathname + '#/groove/' + featured.slug;
     try { navigator.clipboard.writeText(url); alert('Link copiado: ' + url); }

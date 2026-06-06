@@ -164,6 +164,17 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .featured-title:hover { color: var(--accent); }
 .featured-author { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
 .featured-author a { color: var(--accent); }
+/* Featured social header (author avatar + info) and like/comment icons */
+.featured-author-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; cursor: pointer; width: fit-content; }
+.featured-avatar { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; }
+.featured-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+.featured-author-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: 0.02em; color: var(--text); line-height: 1; }
+.featured-author-handle { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-top: 3px; }
+.featured-author-row:hover .featured-author-name { color: var(--accent); }
+.featured-social { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.featured-social-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--muted); font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.03em; padding: 4px 0; transition: color 0.15s; }
+.featured-social-btn:hover { color: var(--text); }
+.featured-social-btn.liked { color: #ff3b3b; }
 .featured-tags { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
 .ftag { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border2); border-radius: 2px; color: var(--muted); font-family: 'DM Mono', monospace; }
 .featured-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; font-weight: 300; margin-bottom: 24px; max-width: 400px; }
