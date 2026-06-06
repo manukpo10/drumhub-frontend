@@ -548,25 +548,28 @@ DH.UI = (function () {
     // if DH.ROWS isn't available.)
     var ROW_ABBR = {
       china: 'CH', crash: 'CR', splash: 'SP', ride: 'RD', ride_bell: 'RB',
-      hihat: 'HH', hihat_open: 'OH', snare: 'SN', tom1: 'T1', tom2: 'T2', tom3: 'T3', kick: 'KK'
+      hihat: 'HH', hihat_open: 'OH', snare: 'SN', snare_ghost: 'GH', snare_flam: 'FL',
+      clap: 'CP', stick: 'ST', cowbell: 'CW', cabasa: 'CB', tamb: 'TB', conga: 'CG',
+      tom1: 'T1', tom2: 'T2', tom3: 'T3', kick: 'KK'
     };
-    var rowOrder = (DH.ROWS && DH.ROWS.length)
-      ? DH.ROWS
-      : [{ id: 'hihat' }, { id: 'snare' }, { id: 'kick' }];
-    var usedRows = rowOrder.filter(function (r) {
-      var arr = g.pattern && g.pattern[r.id];
+    // Full drum-kit piece order (cymbals → snare + ghost/flam → percussion → toms → kick),
+    // so ghost notes, flams and aux percussion show up — not just the 3 main voices.
+    var pieceOrder = (DH.Audio && DH.Audio.pieceOrder)
+      || ['hihat', 'snare', 'snare_ghost', 'snare_flam', 'kick'];
+    var usedRows = pieceOrder.filter(function (id) {
+      var arr = g.pattern && g.pattern[id];
       return arr && arr.some(function (v) { return v; });
     });
-    var gridRows = usedRows.map(function (r) {
-      var arr = (g.pattern && g.pattern[r.id]) || [];
+    var gridRows = usedRows.map(function (id) {
+      var arr = (g.pattern && g.pattern[id]) || [];
       var cells = '';
       for (var ci = 0; ci < totalSteps; ci++) {
         cells += arr[ci]
-          ? '<div class="gc-cell on" style="background:var(--' + r.id + ')"></div>'
+          ? '<div class="gc-cell on" style="background:var(--' + id + ')"></div>'
           : '<div class="gc-cell"></div>';
       }
       return '<div class="gc-track-row">'
-        + '<div class="gc-track-label">' + (ROW_ABBR[r.id] || r.id) + '</div>'
+        + '<div class="gc-track-label">' + (ROW_ABBR[id] || id) + '</div>'
         + '<div class="gc-track-cells" style="grid-template-columns:repeat(' + totalSteps + ',1fr)">' + cells + '</div>'
         + '</div>';
     }).join('');

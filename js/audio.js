@@ -521,6 +521,7 @@ DH.Audio = (function () {
   return {
     getCtx: getCtx, trigger: trigger,
     setKit: setKit, getKit: getKit, listKits: listKits, getKitPieces: getKitPieces,
+    pieceOrder: PIECE_ORDER, pieceInfo: PIECE_INFO,
     preloadKit: preloadKit,
     getBuffers: function(kitId) { return buffers[kitId || currentKit] || {}; },
     getKitConfig: function(kitId) { return KITS[kitId || currentKit] || null; },
