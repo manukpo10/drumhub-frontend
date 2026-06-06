@@ -35,7 +35,7 @@ DH.Export = (function () {
   // ── MIDI ──
   // GM drum note map (channel 10, 0-indexed = channel 9)
   var MIDI_NOTES = {
-    kick: 36, snare: 38, hihat: 42, hihat_open: 46,
+    kick: 36, snare: 38, snare_ghost: 38, snare_flam: 38, hihat: 42, hihat_open: 46,
     crash: 49, ride: 51, ride_bell: 53, splash: 55,
     china: 52, tom1: 50, tom2: 47, tom3: 43,
     clap: 39, cowbell: 56, cabasa: 70, tamb: 54, conga: 63
@@ -137,7 +137,7 @@ DH.Export = (function () {
     var COLORS = {
       china:'#e8622a', crash:'#9b59b6', splash:'#c8a000', ride:'#16a085',
       ride_bell:'#1abc9c', hihat:'#d4a000', hihat_open:'#e67e22',
-      snare:'#e74c3c', clap:'#e74c3c', stick:'#5d8aa8',
+      snare:'#e74c3c', snare_ghost:'#e74c3c', snare_flam:'#e74c3c', clap:'#e74c3c', stick:'#5d8aa8',
       cowbell:'#c0980a', cabasa:'#5d8aa8', tamb:'#e67e22',
       conga:'#8e44ad', tom1:'#27ae60', tom2:'#1e8449', tom3:'#196f3d',
       kick:'#2980b9'
@@ -174,9 +174,15 @@ DH.Export = (function () {
       for (var s = 0; s < steps; s++) {
         var isNB = s > 0 && s % stepsPerBar === 0;
         var hit  = !!arr[s];
+        var gcBg = '', gcTxt = '';
+        if (hit) {
+          if (r.id === 'snare_ghost') { gcBg = 'background:' + c + '55;color:#fff;border-color:' + c; gcTxt = '(' + (s+1) + ')'; }
+          else if (r.id === 'snare_flam') { gcBg = 'background:' + c + ';color:#fff;border-color:' + c; gcTxt = 'f' + (s+1); }
+          else { gcBg = 'background:' + c + ';color:#fff;border-color:' + c; gcTxt = String(s+1); }
+        }
         cells += '<td class="gcell' + (hit?' hit':'') + (isNB?' nbar':'') + '"'
-          + (hit ? ' style="background:' + c + ';color:#fff;border-color:' + c + '"' : '') + '>'
-          + (hit ? (s+1) : '') + '</td>';
+          + (hit ? ' style="' + gcBg + '"' : '') + '>'
+          + gcTxt + '</td>';
       }
       gridRows += '<tr>'
         + '<td class="lbl-col"><span class="dot" style="background:' + c + '"></span>' + esc(r.name) + '</td>'
@@ -194,8 +200,13 @@ DH.Export = (function () {
       var c = clr(r);
       var cells = '';
       for (var s = 0; s < steps; s++) {
-        cells += '<td class="dtd' + (arr[s]?' dhit':'') + '">'
-          + (arr[s] ? '<span class="ddot" style="background:' + c + '">&#9679;</span>' : '') + '</td>';
+        var dDot = '';
+        if (arr[s]) {
+          if (r.id === 'snare_ghost') dDot = '<span style="font-size:9px;color:' + c + ';opacity:0.55">(&#9679;)</span>';
+          else if (r.id === 'snare_flam') dDot = '<span class="ddot" style="background:' + c + ';font-size:8px;padding:0 2px">f&#9679;</span>';
+          else dDot = '<span class="ddot" style="background:' + c + '">&#9679;</span>';
+        }
+        cells += '<td class="dtd' + (arr[s]?' dhit':'') + '">' + dDot + '</td>';
       }
       detailRows += '<tr>'
         + '<td class="dtd dlbl"><span class="dot sm" style="background:' + c + '"></span>' + esc(r.name) + '</td>'
@@ -247,7 +258,7 @@ DH.Export = (function () {
         china: -3.5*G, crash: -2.5*G, splash: -2*G, ride: -1.5*G,
         hihat_open: -G, hihat: -G, ride_bell: -0.5*G, cowbell: -0.5*G,
         tamb: -2*G, stick: 3*G, cabasa: 3.5*G,
-        tom1: 0.5*G, snare: 1.5*G, clap: 1.5*G,
+        tom1: 0.5*G, snare: 1.5*G, snare_ghost: 1.5*G, snare_flam: 1.5*G, clap: 1.5*G,
         tom2: 2.5*G, conga: 3*G, tom3: 3.5*G, kick: 4.5*G
       };
 
@@ -356,6 +367,16 @@ DH.Export = (function () {
                 if (h.r.id === 'hihat_open') {
                   o.push('<circle cx="' + cx + '" cy="' + (h.y-8) + '" r="3" fill="none" stroke="#000" stroke-width="1.2"/>');
                 }
+              } else if (h.r.id === 'snare_ghost') {
+                o.push('<text x="' + (cx-7) + '" y="' + (h.y+4) + '" font-size="11" font-family="serif" fill="#000">(</text>');
+                o.push('<ellipse cx="' + cx + '" cy="' + h.y + '" rx="4" ry="2.8" fill="#888" transform="rotate(-15 ' + cx + ' ' + h.y + ')"/>');
+                o.push('<text x="' + (cx+3) + '" y="' + (h.y+4) + '" font-size="11" font-family="serif" fill="#000">)</text>');
+              } else if (h.r.id === 'snare_flam') {
+                var flamGx = cx - 9;
+                o.push('<ellipse cx="' + flamGx + '" cy="' + (h.y-3) + '" rx="3" ry="2" fill="#000"/>');
+                o.push('<line x1="' + (flamGx+3) + '" y1="' + (h.y-3) + '" x2="' + (flamGx+3) + '" y2="' + (h.y-14) + '" stroke="#000" stroke-width="1"/>');
+                o.push('<line x1="' + flamGx + '" y1="' + (h.y-12) + '" x2="' + (flamGx+7) + '" y2="' + (h.y-15) + '" stroke="#000" stroke-width="1.2"/>');
+                o.push('<ellipse cx="' + cx + '" cy="' + h.y + '" rx="5" ry="3.5" fill="#000" transform="rotate(-15 ' + cx + ' ' + h.y + ')"/>');
               } else {
                 o.push('<ellipse cx="' + cx + '" cy="' + h.y + '" rx="5" ry="3.5" fill="#000" transform="rotate(-15 ' + cx + ' ' + h.y + ')"/>');
               }
@@ -552,7 +573,9 @@ DH.Export = (function () {
             tom2:       { pos: 'Espacio 2 — tom medio', x: false },
             conga:      { pos: 'Línea 2 del pentagrama', x: false },
             tom3:       { pos: 'Espacio 1 — tom grave / chancha', x: false },
-            kick:       { pos: 'Línea auxiliar inferior — bombo', x: false }
+            kick:       { pos: 'Línea auxiliar inferior — bombo', x: false },
+            snare_ghost: { pos: 'Espacio 3 — ghost note (suave, entre paréntesis)', x: false, ghost: true },
+            snare_flam:  { pos: 'Espacio 3 — flam (apoyatura + nota principal)', x: false, flam: true }
           };
           return rows.map(function(r) {
             var info = NOTA_DESC[r.id] || { pos: 'Pentagrama', x: false };
@@ -563,6 +586,19 @@ DH.Export = (function () {
                 + '<line x1="2" y1="2" x2="14" y2="14" stroke="' + c + '" stroke-width="2.2"/>'
                 + '<line x1="14" y1="2" x2="2" y2="14" stroke="' + c + '" stroke-width="2.2"/>'
                 + (info.open ? '<circle cx="8" cy="-1" r="3" fill="none" stroke="' + c + '" stroke-width="1.4"/>' : '')
+                + '</svg>';
+            } else if (info.ghost) {
+              sym = '<svg width="20" height="16" style="vertical-align:middle;flex-shrink:0">'
+                + '<text x="1" y="12" font-size="11" font-family="serif" fill="' + c + '">(</text>'
+                + '<ellipse cx="10" cy="9" rx="4" ry="2.8" fill="' + c + '" opacity="0.55" transform="rotate(-15 10 9)"/>'
+                + '<text x="13" y="12" font-size="11" font-family="serif" fill="' + c + '">)</text>'
+                + '</svg>';
+            } else if (info.flam) {
+              sym = '<svg width="20" height="16" style="vertical-align:middle;flex-shrink:0">'
+                + '<ellipse cx="4" cy="6" rx="2.5" ry="1.8" fill="' + c + '"/>'
+                + '<line x1="6.5" y1="6" x2="6.5" y2="1" stroke="' + c + '" stroke-width="1"/>'
+                + '<line x1="4" y1="3" x2="9" y2="1" stroke="' + c + '" stroke-width="1.2"/>'
+                + '<ellipse cx="14" cy="9" rx="5" ry="3.5" fill="' + c + '" transform="rotate(-15 14 9)"/>'
                 + '</svg>';
             } else {
               sym = '<svg width="16" height="16" style="vertical-align:middle;flex-shrink:0">'

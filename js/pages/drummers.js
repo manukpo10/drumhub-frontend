@@ -226,6 +226,10 @@ DH.pages.drummers = function (_params, query) {
     state.q = document.getElementById('d-q').value.trim();
     render();
   });
+  document.getElementById('d-q').addEventListener('input', function () {
+    state.q = this.value.trim();
+    render();
+  });
   document.getElementById('d-sort').addEventListener('change', function (e) {
     state.sort = e.target.value;
     render();
