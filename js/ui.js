@@ -524,9 +524,9 @@ DH.UI = (function () {
       else timeStr = 'hace ' + Math.floor(diffMin / 1440) + 'd';
     }
 
-    // Genre color from global catalog (loaded at boot)
-    var genreObj = DH.GENRES && DH.GENRES.find(function (gen) { return gen.name === g.genre; });
-    var genreColor = genreObj ? genreObj.color : '#6b6860';
+    // Genre color from GENRE_INFO metadata
+    var genreInfo = DH.GENRE_INFO && DH.GENRE_INFO[g.genre];
+    var genreColor = (genreInfo && genreInfo.color) || '#6b6860';
 
     // Grid dimensions from timeSig + bars
     var spbMap = { '3/4': 12, '5/4': 20, '6/8': 12, '7/8': 14 };

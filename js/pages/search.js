@@ -701,8 +701,8 @@ DH.pages.search = function (_params, query) {
       .sort(function (a, b) { return b.count - a.count; })
       .slice(0, 8);
     ranked.forEach(function (g) {
-      var genreObj = genres.filter(function (gen) { return gen.name === g.name; })[0];
-      var color = genreObj ? genreObj.color : '#6b6860';
+      var genreInfo = DH.GENRE_INFO && DH.GENRE_INFO[g.name];
+      var color = (genreInfo && genreInfo.color) || '#6b6860';
       var el = document.createElement('span');
       el.className = 'esb-genre-pill';
       el.style.color = color;
@@ -760,8 +760,8 @@ DH.pages.search = function (_params, query) {
       .sort(function (a, b) { return b.count - a.count; })
       .slice(0, 8);
     ranked.forEach(function (g) {
-      var genreObj = genres.filter(function (gen) { return gen.name === g.name; })[0];
-      var color = genreObj ? genreObj.color : '#6b6860';
+      var genreInfo = DH.GENRE_INFO && DH.GENRE_INFO[g.name];
+      var color = (genreInfo && genreInfo.color) || '#6b6860';
       var el = document.createElement('span');
       el.className = 'esb-genre-pill';
       el.style.color = color;

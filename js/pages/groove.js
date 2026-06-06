@@ -38,6 +38,8 @@ DH.pages.groove = function (params) {
     related = related.concat(DH.GROOVES.filter(function (x) { return x.id !== g.id && related.indexOf(x) === -1; }).slice(0, 3 - related.length));
   }
   var comments = DH.Store.getComments(g.id);
+  var genreInfo = DH.GENRE_INFO && DH.GENRE_INFO[g.genre];
+  var genreColor = (genreInfo && genreInfo.color) || 'var(--accent2)';
 
   // Difficulty pips count
   var diffMap = { 'Básico': 2, 'Intermedio': 3, 'Avanzado': 5 };
@@ -72,7 +74,7 @@ DH.pages.groove = function (params) {
     +     '<div class="groove-hero-v2">'
     +       '<div class="groove-top">'
     +         '<div>'
-    +           '<div class="groove-genre-tag">' + esc(g.genre) + '</div>'
+    +           '<div class="groove-genre-tag" style="color:' + genreColor + ';border-color:' + genreColor + '55">' + esc(g.genre) + '</div>'
     +           '<div class="groove-title-v2">' + esc(g.title) + '</div>'
     +           '<div class="groove-author-v2">por <a data-go="/profile/' + esc(g.author) + '">' + esc(g.author) + '</a></div>'
     +           '<div class="groove-tags-v2">'
