@@ -294,9 +294,15 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .gc-comment-btn.has-comments { color: var(--accent3); }
 .gc-comment-btn.has-comments:hover { color: var(--accent3); filter: brightness(1.2); }
 .gc-comment-count { font-family: 'DM Mono', monospace; font-size: 12px; }
-/* Rank badge on the home runners-up (2nd–4th) cards */
-.runner-card { position: relative; }
-.runner-badge { position: absolute; top: 10px; left: 10px; z-index: 3; background: var(--accent); color: #080807; font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.04em; padding: 2px 9px; border-radius: 3px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+/* Runner cards (2nd–4th) — compact with medal strip at top */
+.runner-medal-strip { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.runner-medal-emoji { font-size: 1.15rem; line-height: 1; }
+.runner-rank-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.runner-card .gc-groove-name { font-size: 18px; }
+.runner-card .gc-desc { display: none; }
+.runner-card .gc-cell { height: 9px; }
+.runner-card .gc-header { padding: 8px 12px 6px; }
+.runner-card .gc-title-block { padding-bottom: 6px; }
 
 /* ====== GENRES ====== */
 .genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 2px; }

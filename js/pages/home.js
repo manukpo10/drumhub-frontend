@@ -371,15 +371,24 @@ DH.pages.home = function () {
     DH.Router.setPlayer(featPlayer);
   }
 
-  // ── Runners-up (2nd–4th) as full social cards, each tagged with its rank ──
+  // ── Runners-up (2nd–4th) — compact cards with medal strip ──
   var fr = document.getElementById('featured-runners');
+  var MEDALS = ['🥈', '🥉', '🎖️'];
+  var RANK_LABELS = ['2° lugar', '3° lugar', '4° lugar'];
   sideGrooves.forEach(function (g, i) {
     var card = DH.UI.grooveCard(g);
     card.classList.add('runner-card');
-    var badge = document.createElement('div');
-    badge.className = 'runner-badge';
-    badge.textContent = (i + 2) + '°';
-    card.insertBefore(badge, card.firstChild);
+    var strip = document.createElement('div');
+    strip.className = 'runner-medal-strip';
+    var emo = document.createElement('span');
+    emo.className = 'runner-medal-emoji';
+    emo.textContent = MEDALS[i];
+    var lbl = document.createElement('span');
+    lbl.className = 'runner-rank-label';
+    lbl.textContent = RANK_LABELS[i];
+    strip.appendChild(emo);
+    strip.appendChild(lbl);
+    card.insertBefore(strip, card.firstChild);
     fr.appendChild(card);
   });
 
