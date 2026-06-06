@@ -703,11 +703,19 @@ DH.UI = (function () {
       DH.Router.go('/groove/' + g.slug);
     });
 
-    // ── Share → clipboard ──
+    // ── Share → copy canonical link, with feedback and a fallback ──
     el.querySelector('.gc-share-btn').addEventListener('click', function (e) {
       e.stopPropagation();
-      var url = location.origin + location.pathname + '#/groove/' + g.slug;
-      if (navigator.clipboard) navigator.clipboard.writeText(url);
+      var url = location.origin + '/groove/' + g.slug;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          toast('Link copiado al portapapeles', 'success');
+        }).catch(function () {
+          window.prompt('Copiá el link al groove:', url);
+        });
+      } else {
+        window.prompt('Copiá el link al groove:', url);
+      }
     });
 
     el.addEventListener('click', function () { DH.Router.go('/groove/' + g.slug); });

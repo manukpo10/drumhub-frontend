@@ -413,9 +413,11 @@ DH.pages.home = function () {
   likeBtn.addEventListener('click', toggleFeatLike);
   document.getElementById('feat-comments').addEventListener('click', function () { DH.Router.go('/groove/' + featured.slug); });
   document.getElementById('feat-share').addEventListener('click', function () {
-    var url = location.origin + location.pathname + '#/groove/' + featured.slug;
-    try { navigator.clipboard.writeText(url); alert('Link copiado: ' + url); }
-    catch (e) { prompt('Link al groove:', url); }
+    var url = location.origin + '/groove/' + featured.slug;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { DH.UI.toast('Link copiado al portapapeles', 'success'); })
+        .catch(function () { prompt('Copiá el link al groove:', url); });
+    } else { prompt('Copiá el link al groove:', url); }
   });
 
   // ── Trending grid ──

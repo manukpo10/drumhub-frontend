@@ -608,13 +608,15 @@ DH.pages.groove = function (params) {
   });
 
   document.getElementById('g-share').addEventListener('click', function () {
-    var url = location.origin + location.pathname + '#/groove/' + g.slug;
-    try { navigator.clipboard.writeText(url); alert('Link copiado al portapapeles'); }
-    catch (e) { prompt('Link al groove:', url); }
+    var url = location.origin + '/groove/' + g.slug;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () { DH.UI.toast('Link copiado al portapapeles', 'success'); })
+        .catch(function () { prompt('Copiá el link al groove:', url); });
+    } else { prompt('Copiá el link al groove:', url); }
   });
   app.querySelectorAll('[data-share]').forEach(function (b) {
     b.addEventListener('click', function () {
-      var url = location.origin + location.pathname + '#/groove/' + g.slug;
+      var url = location.origin + '/groove/' + g.slug;
       var kind = b.getAttribute('data-share');
       if (kind === 'copy') { try { navigator.clipboard.writeText(url); alert('Link copiado'); } catch (e) { prompt('Link:', url); } }
       else if (kind === 'whatsapp') window.open('https://wa.me/?text=' + encodeURIComponent(g.title + ' — ' + url), '_blank');
