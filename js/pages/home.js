@@ -337,6 +337,21 @@ DH.pages.home = function () {
   var featPlayer = null;
   var featPlayBtn = document.getElementById('feat-play');
   if (DH.createPlayer && featured.pattern) {
+    // Build the row set from EVERY voice the groove uses (incl. ghost/flam/percussion),
+    // not just the 12 base rows — so the featured player shows and plays the full groove.
+    var featOrder = (DH.Audio && DH.Audio.pieceOrder) || (DH.ROWS || []).map(function (r) { return r.id; });
+    var featInfo = (DH.Audio && DH.Audio.pieceInfo) || {};
+    var featRows = featOrder
+      .filter(function (id) { var a = featured.pattern[id]; return a && a.some(function (v) { return v; }); })
+      .map(function (id) { var i = featInfo[id] || {}; return { id: id, name: i.name || id, color: i.color || id }; });
+    if (!featRows.length) featRows = DH.ROWS;
+    // Real length of the pattern (stepsPerBar × bars) so multi-bar grooves show/play complete.
+    var featSteps = 0;
+    Object.keys(featured.pattern).forEach(function (k) { var a = featured.pattern[k]; if (a && a.length > featSteps) featSteps = a.length; });
+    if (!featSteps) featSteps = DH.STEPS;
+    var featTs = (DH.TIME_SIGS && featured.timeSig) ? DH.TIME_SIGS.filter(function (t) { return t.id === featured.timeSig; })[0] : null;
+    var featSPB = featTs ? featTs.stepsPerBeat : 4;
+
     featPlayer = DH.createPlayer({
       container: document.getElementById('feat-player-host'),
       pattern: featured.pattern,
@@ -344,6 +359,10 @@ DH.pages.home = function () {
       editable: false,
       chrome: 'minimal',
       idPrefix: 'feat',
+      rows: featRows,
+      steps: featSteps,
+      stepsPerBeat: featSPB,
+      shakeTarget: document.querySelector('.featured-main'),
       onPlayStateChange: function (playing) {
         featPlayBtn.textContent = playing ? '■ Detener' : '▶ Escuchar';
         featPlayBtn.classList.toggle('on', playing);

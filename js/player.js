@@ -215,9 +215,10 @@ DH.createPlayer = function (opts) {
         }
       }
     });
-    // Micro-shake on kick
+    // Micro-shake on kick. opts.shakeTarget lets the page shake a bigger element
+    // (e.g. the whole featured card) instead of just the player container.
     if (DH.shakeEnabled && kickRowId && grid[kickRowId] && grid[kickRowId][step]) {
-      var shakeTarget = root.querySelector('.player-card') || root;
+      var shakeTarget = opts.shakeTarget || root.querySelector('.player-card') || root;
       shakeTarget.classList.remove('card-shake'); void shakeTarget.offsetWidth; shakeTarget.classList.add('card-shake');
     }
   }
