@@ -15,7 +15,7 @@ DH.pages.search = function (_params, query) {
     genre: query.genre || '',
     level: query.level || '',
     tags: query.tags ? query.tags.split(',').filter(Boolean) : [],
-    sort: query.sort || 'trending',
+    sort: query.sort || 'new',
     bpmMin: parseInt(query.bpmMin, 10) || 40,
     bpmMax: parseInt(query.bpmMax, 10) || 200,
     page: parseInt(query.page, 10) || 1
@@ -30,8 +30,10 @@ DH.pages.search = function (_params, query) {
   var lastApiGrooves = null;
   // Auto-rotation timer for the trending strip (cleared on re-render / navigation)
   var trendingTimer = null;
+  // Cached real per-level totals from the backend (one lazy fetch per level).
+  var levelCountCache = null;
 
-  var sortLabels = { trending: 'Tendencia', likes: 'Mas likes', new: 'Mas nuevos', bpm: 'BPM' };
+  var sortLabels = { trending: 'Tendencia', likes: 'Mas likes', new: 'Recientes', bpm: 'BPM' };
 
   // ── URL state sync ──
   function syncUrl() {
@@ -40,7 +42,7 @@ DH.pages.search = function (_params, query) {
     if (state.genre) params.push('genre=' + encodeURIComponent(state.genre));
     if (state.level) params.push('level=' + encodeURIComponent(state.level));
     if (state.tags && state.tags.length) params.push('tags=' + encodeURIComponent(state.tags.join(',')));
-    if (state.sort && state.sort !== 'trending') params.push('sort=' + encodeURIComponent(state.sort));
+    if (state.sort && state.sort !== 'new') params.push('sort=' + encodeURIComponent(state.sort));
     if (state.bpmMin !== 40) params.push('bpmMin=' + state.bpmMin);
     if (state.bpmMax !== 200) params.push('bpmMax=' + state.bpmMax);
     if (state.page > 1) params.push('page=' + state.page);
@@ -107,9 +109,8 @@ DH.pages.search = function (_params, query) {
     +   '</div>'
     +   '<div class="explore-trending" id="trending-strip-wrap"></div>'
     +   '<div class="explore-tabs">'
-    +     '<div class="explore-tab' + (state.sort === 'trending' ? ' active' : '') + '" data-tab="trending">Para vos</div>'
     +     '<div class="explore-tab' + (state.sort === 'new' ? ' active' : '') + '" data-tab="new">Recientes</div>'
-    +     '<div class="explore-tab' + (state.sort === 'likes' ? ' active' : '') + '" data-tab="likes">Top</div>'
+    +     '<div class="explore-tab' + (state.sort === 'likes' ? ' active' : '') + '" data-tab="likes">Más likes</div>'
     +   '</div>'
     +   '<div class="explore-active-filters" id="active-filters-bar">'
     +     '<div class="explore-results-count" id="results-count-inline"></div>'
@@ -232,9 +233,8 @@ DH.pages.search = function (_params, query) {
     // Sort options
     var sortHost = document.getElementById('esb-sort');
     var sortOptions = [
-      { label: 'Recientes', value: 'trending' },
-      { label: 'Mas likes', value: 'likes' },
-      { label: 'Mas nuevos', value: 'new' }
+      { label: 'Recientes', value: 'new' },
+      { label: 'Mas likes', value: 'likes' }
     ];
     sortHost.innerHTML = '';
     sortOptions.forEach(function (opt) {
@@ -258,9 +258,10 @@ DH.pages.search = function (_params, query) {
     genreHost.innerHTML = '';
     var genres = DH.GENRES || [];
     genres.forEach(function (g) {
-      var sim = Object.assign({}, state);
-      sim.genre = g.name;
-      var count = countWith(all, sim, 'genre');
+      // Real backend total per genre (DH.GENRES carries grooveCount from the API).
+      var count = (typeof g.count === 'number')
+        ? g.count
+        : countWith(all, Object.assign({}, state, { genre: g.name }), null);
       var el = document.createElement('div');
       el.className = 'esb-item' + (state.genre === g.name ? ' active' : '');
       el.innerHTML = '<span>' + esc(g.name) + '</span><span class="esb-item-count">' + count + '</span>';
@@ -286,13 +287,12 @@ DH.pages.search = function (_params, query) {
     var levelColors = { 'Basico': 'var(--accent3)', 'Intermedio': 'var(--accent)', 'Avanzado': 'var(--accent2)' };
     var levels = DH.LEVELS || ['Basico', 'Intermedio', 'Avanzado'];
     levels.forEach(function (lv) {
-      var sim = Object.assign({}, state);
-      sim.level = lv;
-      var count = countWith(all, sim, 'level');
       var color = levelColors[lv] || 'var(--muted)';
+      // Real backend total per level, lazily fetched and cached. Blank until it loads.
+      var count = (levelCountCache && typeof levelCountCache[lv] === 'number') ? levelCountCache[lv] : '';
       var el = document.createElement('div');
       el.className = 'esb-item' + (state.level === lv ? ' active' : '');
-      el.innerHTML = '<span style="display:flex;align-items:center;gap:7px"><span class="esb-dot" style="background:' + color + '"></span>' + esc(lv) + '</span><span class="esb-item-count">' + count + '</span>';
+      el.innerHTML = '<span style="display:flex;align-items:center;gap:7px"><span class="esb-dot" style="background:' + color + '"></span>' + esc(lv) + '</span><span class="esb-item-count" data-level-count="' + esc(lv) + '">' + count + '</span>';
       el.addEventListener('click', function () {
         state.level = (state.level === lv) ? '' : lv;
         state.page = 1;
@@ -300,6 +300,7 @@ DH.pages.search = function (_params, query) {
       });
       levelHost.appendChild(el);
     });
+    loadLevelCounts(levels);
 
     // Tags: top 8
     var tagHost = document.getElementById('esb-tags');
@@ -322,6 +323,28 @@ DH.pages.search = function (_params, query) {
         render();
       });
       tagHost.appendChild(el);
+    });
+  }
+
+  // Fetch the real total per difficulty level once (size=1, read totalElements),
+  // cache it, and fill in the sidebar counts when they arrive.
+  function loadLevelCounts(levels) {
+    if (levelCountCache) return;
+    Promise.all(levels.map(function (lv) {
+      return DH.Api.getGrooves({ size: 1, level: lv })
+        .then(function (p) { return { lv: lv, n: (p && typeof p.totalElements === 'number') ? p.totalElements : 0 }; })
+        .catch(function () { return { lv: lv, n: null }; });
+    })).then(function (results) {
+      var cache = {};
+      var anyResolved = false;
+      results.forEach(function (r) { if (r.n !== null) { cache[r.lv] = r.n; anyResolved = true; } });
+      if (!anyResolved) return; // backend unavailable — leave blank, retry on next render
+      levelCountCache = cache;
+      // Patch the counts into the DOM without a full re-render.
+      Object.keys(cache).forEach(function (lv) {
+        var span = document.querySelector('[data-level-count="' + lv.replace(/"/g, '') + '"]');
+        if (span) span.textContent = cache[lv];
+      });
     });
   }
 
