@@ -698,4 +698,13 @@ DH.pages.groove = function (params) {
   app.querySelectorAll('[data-go]').forEach(function (el) {
     el.addEventListener('click', function (ev) { ev.preventDefault(); DH.Router.go(el.getAttribute('data-go')); });
   });
+
+  // If we arrived from a card's comment icon, scroll straight to the comments section.
+  if (DH.focusComments) {
+    DH.focusComments = false;
+    setTimeout(function () {
+      var cs = app.querySelector('.comments-section-v2');
+      if (cs) cs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
 };

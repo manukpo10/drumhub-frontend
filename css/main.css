@@ -290,6 +290,13 @@ h1.hero-title span { color: var(--muted); font-size: 0.45em; letter-spacing: 0.1
 .gc-action-btn svg { flex-shrink: 0; }
 .gc-like-btn.liked { color: #ff3b3b; }
 .gc-like-btn.liked:hover { color: #ff6060; }
+/* Comment icon lights up (accent) when the groove has comments */
+.gc-comment-btn.has-comments { color: var(--accent3); }
+.gc-comment-btn.has-comments:hover { color: var(--accent3); filter: brightness(1.2); }
+.gc-comment-count { font-family: 'DM Mono', monospace; font-size: 12px; }
+/* Rank badge on the home runners-up (2nd–4th) cards */
+.runner-card { position: relative; }
+.runner-badge { position: absolute; top: 10px; left: 10px; z-index: 3; background: var(--accent); color: #080807; font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.04em; padding: 2px 9px; border-radius: 3px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
 
 /* ====== GENRES ====== */
 .genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 2px; }

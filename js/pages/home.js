@@ -371,9 +371,17 @@ DH.pages.home = function () {
     DH.Router.setPlayer(featPlayer);
   }
 
-  // ── Runners-up (2nd–4th) as full social cards, same as the trending grid ──
+  // ── Runners-up (2nd–4th) as full social cards, each tagged with its rank ──
   var fr = document.getElementById('featured-runners');
-  sideGrooves.forEach(function (g) { fr.appendChild(DH.UI.grooveCard(g)); });
+  sideGrooves.forEach(function (g, i) {
+    var card = DH.UI.grooveCard(g);
+    card.classList.add('runner-card');
+    var badge = document.createElement('div');
+    badge.className = 'runner-badge';
+    badge.textContent = (i + 2) + '°';
+    card.insertBefore(badge, card.firstChild);
+    fr.appendChild(card);
+  });
 
   // ── Featured actions ──
   document.getElementById('feat-title').addEventListener('click', function () { DH.Router.go('/groove/' + featured.slug); });

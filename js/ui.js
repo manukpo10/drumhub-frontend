@@ -630,8 +630,9 @@ DH.UI = (function () {
       +     '</svg>'
       +     '<span class="gc-like-count">' + (g.likes || 0) + '</span>'
       +   '</button>'
-      +   '<button class="gc-action-btn gc-comment-btn" type="button" title="Ver comentarios">'
+      +   '<button class="gc-action-btn gc-comment-btn' + ((g.commentCount || 0) > 0 ? ' has-comments' : '') + '" type="button" title="Ver comentarios">'
       +     '<svg width="15" height="14" viewBox="0 0 15 14" fill="none"><path d="M1 1H14V10H8L4.5 13V10H1V1Z" stroke="currentColor" stroke-width="1.5"/></svg>'
+      +     ((g.commentCount || 0) > 0 ? '<span class="gc-comment-count">' + g.commentCount + '</span>' : '')
       +   '</button>'
       +   '<button class="gc-action-btn gc-share-btn" type="button">'
       +     '<svg width="15" height="14" viewBox="0 0 15 14" fill="none">'
@@ -695,9 +696,10 @@ DH.UI = (function () {
       refreshLike();
     });
 
-    // ── Comment → groove detail ──
+    // ── Comment → groove detail, scrolled to the comments section ──
     el.querySelector('.gc-comment-btn').addEventListener('click', function (e) {
       e.stopPropagation();
+      DH.focusComments = true;
       DH.Router.go('/groove/' + g.slug);
     });
 
