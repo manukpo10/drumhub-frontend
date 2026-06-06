@@ -1726,8 +1726,6 @@ input.bpm-range-sm::-webkit-slider-thumb { -webkit-appearance: none; width: 12px
   flex-direction: column;
   min-height: 200px;
   transition: background 0.2s;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
-  background-size: 18px 18px;
   --gx-color: var(--accent);
 }
 .genre-index-card.gx-featured-card { grid-column: span 2; }
@@ -1736,6 +1734,16 @@ input.bpm-range-sm::-webkit-slider-thumb { -webkit-appearance: none; width: 12px
 .genre-index-card:hover { background: var(--surface2); }
 .genre-index-card:hover .gx-watermark { opacity: 0.13; }
 .genre-index-card:hover .gx-cta { color: var(--gx-color); }
+
+/* Per-genre background patterns */
+.gx-pat-0 { background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 18px 18px; }
+.gx-pat-1 { background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 20px 20px; }
+.gx-pat-2 { background-image: repeating-linear-gradient(0deg, transparent, transparent 17px, rgba(255,255,255,0.04) 17px, rgba(255,255,255,0.04) 18px); }
+.gx-pat-3 { background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1.5px, transparent 1.5px); background-size: 28px 28px; }
+.gx-pat-4 { background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 11px); }
+.gx-pat-5 { background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px); background-size: 10px 10px; }
+.gx-pat-6 { background-image: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.03) 10px, rgba(255,255,255,0.03) 11px); }
+.gx-pat-7 { background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 12px 12px; }
 
 .gx-badge { position: absolute; top: 14px; right: 14px; font-family: 'DM Mono', monospace; font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 4px 9px; background: var(--gx-color); color: #080807; font-weight: 500; z-index: 2; }
 .gx-body { flex: 1; display: flex; flex-direction: column; }

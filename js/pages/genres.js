@@ -61,7 +61,8 @@ DH.pages.genres = function () {
     if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'k';
     return String(n);
   }
-  var GX_BADGES = ['#1 Popular', 'Trending'];
+  var GX_BADGES   = ['#1 Popular', 'Trending'];
+  var GX_PATTERNS = ['gx-pat-0', 'gx-pat-1', 'gx-pat-2', 'gx-pat-3', 'gx-pat-4', 'gx-pat-5', 'gx-pat-6', 'gx-pat-7'];
 
   var grid = document.getElementById('genres-index-grid');
   genres.forEach(function (g, i) {
@@ -72,7 +73,7 @@ DH.pages.genres = function () {
     var topDrummer = (info.drummers && info.drummers[0]) || null;
 
     var el = document.createElement('div');
-    el.className = 'genre-index-card' + (i === 0 ? ' gx-featured-card' : '');
+    el.className = 'genre-index-card ' + GX_PATTERNS[i % GX_PATTERNS.length] + (i === 0 ? ' gx-featured-card' : '');
     el.style.setProperty('--gx-color', color);
     el.innerHTML = ''
       + (i < 2 ? '<div class="gx-badge">' + GX_BADGES[i] + '</div>' : '')
