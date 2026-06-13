@@ -3,8 +3,8 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/sitemap.xml",    "destination": "/api/sitemap" },
-    { "source": "/groove/:slug",   "destination": "/api/groove/:slug" },
-    { "source": "/genre/:slug",    "destination": "/api/genre/:slug" },
+    { "source": "/groove/:slug",   "destination": "/api/groove?slug=:slug" },
+    { "source": "/genre/:slug",    "destination": "/api/genre?slug=:slug" },
     { "source": "/:path*",         "destination": "/" }
   ],
   "headers": [

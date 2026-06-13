@@ -1,6 +1,6 @@
 'use strict';
 
-const { esc, fetchJson, readIndex, patchHtml, SITE, BACKEND } = require('../_lib');
+const { esc, fetchJson, readIndex, patchHtml, SITE, BACKEND } = require('./_lib');
 
 module.exports = async function handler(req, res) {
   const { slug } = req.query;
