@@ -15,9 +15,15 @@ module.exports = async function handler(req, res) {
     groove = json.data ?? json;
     if (!groove?.slug) throw new Error('empty groove');
   } catch (_) {
-    // Backend unavailable or groove not found — fall back to the SPA shell
+    // Backend unavailable — serve SPA shell with correct canonical so Google doesn't Soft 404
+    const fallbackHtml = patchHtml(base, {
+      title: `${decodeURIComponent(slug)} — DrumHub`,
+      description: 'DrumHub — La biblioteca de grooves para bateristas.',
+      canonical: `${SITE}/groove/${slug}`,
+    });
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(200).send(base);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).send(fallbackHtml);
   }
 
   const canonical   = `${SITE}/groove/${groove.slug}`;
