@@ -34,6 +34,11 @@ DH.pages.genre = function (params, query) {
   var info = (DH.GENRE_INFO && DH.GENRE_INFO[genre.name]) || DH.DEFAULT_GENRE_INFO;
   var color = info.color || 'var(--accent)';
   DH.Router.setTitle(genre.name + ' · Grooves');
+  if (DH.Seo) DH.Seo.update({
+    title: 'Grooves de ' + genre.name + ' — DrumHub',
+    description: 'Explorá' + (genre.count > 0 ? ' ' + genre.count : '') + ' grooves de ' + genre.name + '. Reproducí y practicá patrones de batería en DrumHub.',
+    canonical: 'https://drumhub.io/genre/' + (genre.slug || params.slug)
+  });
 
   var grooves = DH.Store.allGrooves().filter(function (g) { return g.genre === genre.name; });
 

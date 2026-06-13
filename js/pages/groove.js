@@ -25,6 +25,17 @@ DH.pages.groove = function (params) {
 
   var esc = DH.UI.escape;
   DH.Router.setTitle(g.title + ' · ' + g.genre);
+  if (DH.Seo) DH.Seo.update({
+    title: g.title + ' · ' + g.genre + ' — DrumHub',
+    description: [
+      'Groove de ' + g.genre + ' a ' + g.bpm + ' BPM, nivel ' + g.level + '.',
+      g.authorName && ('Por ' + g.authorName + '.'),
+      g.desc && g.desc.slice(0, 80),
+      'DrumHub — La biblioteca de grooves para bateristas.'
+    ].filter(Boolean).join(' '),
+    canonical: 'https://drumhub.io/groove/' + g.slug,
+    ogType: 'music.song'
+  });
   var author = DH.UI.drummerOrFallback(g.author);
   var isFav = DH.Store.isFavorite(g.id);
   var session = DH.Store.getUser();

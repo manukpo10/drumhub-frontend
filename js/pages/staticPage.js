@@ -107,6 +107,23 @@ DH.pages.staticPage = function (params) {
   var esc = DH.UI.escape;
   var page = DH.STATIC_PAGES[params.slug];
   if (page) DH.Router.setTitle(page.title);
+  if (page && DH.Seo) {
+    DH.Seo.update({
+      title: page.title + ' — DrumHub',
+      canonical: 'https://drumhub.io/page/' + params.slug
+    });
+    if (params.slug === 'faq') {
+      DH.Seo.injectJsonLd({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: page.blocks
+          .filter(function (b) { return b.type === 'q'; })
+          .map(function (b) {
+            return { '@type': 'Question', name: b.q, acceptedAnswer: { '@type': 'Answer', text: b.a } };
+          })
+      });
+    }
+  }
   if (!page) {
     app.innerHTML = '<div class="page"><div class="empty"><h4>Página no encontrada</h4><p>El recurso que buscás no existe.</p><button class="btn-primary" onclick="DH.Router.go(\'/\')">Volver al inicio</button></div></div>';
     return;
