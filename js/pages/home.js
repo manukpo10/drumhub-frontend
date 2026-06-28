@@ -176,7 +176,7 @@ DH.pages.home = function () {
     +         '<div class="plan-period" id="plan-period-pro">/ mes</div>'
     +       '</div>'
     +       '<div class="plan-price-ref" id="plan-price-ref-pro"></div>'
-    +       '<div class="plan-desc">Para bateristas que practican en serio.</div>'
+    +       '<div class="plan-desc">Exportá en MIDI, PDF y MP3. Grooves y favoritos ilimitados. Stats de tus reproducciones.</div>'
     +       '<ul class="plan-features">'
     +         '<li class="plan-feature">Todo lo del plan Gratis</li>'
     +         '<li class="plan-feature">Grooves ilimitados</li>'
@@ -208,7 +208,7 @@ DH.pages.home = function () {
     +         '<li class="plan-feature">Badge ESTUDIO en el perfil</li>'
     +         '<li class="plan-feature">Hasta 5 cuentas colaboradoras</li>'
     +       '</ul>'
-    +       '<button class="plan-btn studio" id="plan-btn-studio">Contactar</button>'
+    +       '<button class="plan-btn studio" id="plan-btn-studio">Anotarme →</button>'
     +     '</div>'
 
     +   '</div>'
