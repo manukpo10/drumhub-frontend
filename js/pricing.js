@@ -99,40 +99,28 @@ DH.Pricing = (function () {
    * @returns {{ main: string, period: string, old: string|null, ref: string|null }}
    */
   function getCard(plan, period) {
-    var uBase = period === 'annual' ? USD[plan].annual     : USD[plan].monthly;
-    var uOld  = period === 'annual' ? USD[plan].annualFull : null;
+    var uBase  = period === 'annual' ? USD[plan].annual     : USD[plan].monthly;
+    var uOld   = period === 'annual' ? USD[plan].annualFull : null;
     var suffix = period === 'annual' ? '/ año' : '/ mes';
 
+    // Always lead with USD — it's the canonical price.
+    // Show ARS equivalent as a reference line for AR users so they know what Mercado Pago will charge.
+    var arsRef = null;
     if (_isAR) {
-      // Primary: use backend-provided ARS (same value the payment will charge)
       var bk = _backendArs && _backendArs[plan];
       if (bk) {
-        var arsMain = period === 'annual' ? bk.annualArs    : bk.monthlyArs;
-        var arsOld  = period === 'annual' ? bk.annualFullArs : null;
-        return {
-          main:   fmtARS(arsMain),
-          period: suffix,
-          old:    arsOld ? fmtARS(arsOld) : null,
-          ref:    fmtUSD(uBase)
-        };
-      }
-      // Fallback: USD × locally-fetched MEP rate
-      if (_mep) {
-        return {
-          main:   fmtARS(toARS(uBase)),
-          period: suffix,
-          old:    uOld ? fmtARS(toARS(uOld)) : null,
-          ref:    fmtUSD(uBase)
-        };
+        var arsMain = period === 'annual' ? bk.annualArs : bk.monthlyArs;
+        arsRef = '≈ ' + fmtARS(arsMain);
+      } else if (_mep) {
+        arsRef = '≈ ' + fmtARS(toARS(uBase));
       }
     }
 
-    // International (or no rate at all): show USD, ARS as reference if rate available
     return {
       main:   fmtUSD(uBase),
       period: suffix,
       old:    uOld ? fmtUSD(uOld) : null,
-      ref:    (_mep ? '≈ ' + fmtARS(toARS(uBase)) : null)
+      ref:    arsRef
     };
   }
 
