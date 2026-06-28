@@ -58,18 +58,22 @@ DH.pages.pricing = function () {
   // Builds the action button(s) for a paid plan card, honoring the current plan state.
   function paidActions(plan, period, btnClass) {
     if (COMING_SOON[plan]) {
-      return '<button class="plan-btn" disabled style="opacity:0.5;cursor:not-allowed">Próximamente</button>';
+      return '<p style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;text-align:center">Anotate para ser el primero en acceder:</p>'
+        + '<input type="email" id="studio-waitlist-email" placeholder="tu@email.com" '
+        + 'style="width:100%;padding:9px 12px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px;margin-bottom:8px;font-size:0.85rem;box-sizing:border-box">'
+        + '<button class="plan-btn" id="studio-waitlist-btn" style="width:100%">Notificarme →</button>';
     }
     if (currentPlan === plan) {
       return '<button class="plan-btn" disabled style="opacity:0.5;cursor:not-allowed">Plan actual</button>';
     }
-    var html = '<button class="plan-btn ' + btnClass + '" id="checkout-' + plan + '" '
-      + 'data-plan="' + plan + '" data-period="' + period + '">Suscribirse</button>';
-    // Trial only offered to free users, on the Pro card.
+    // Trial is PRIMARY for free users on Pro card
     if (plan === 'pro' && currentPlan === 'free') {
-      html += '<button class="plan-btn" id="trial-pro" style="margin-top:8px">Probar 7 días gratis</button>';
+      return '<button class="plan-btn ' + btnClass + '" id="trial-pro">Probar 7 días gratis</button>'
+        + '<button class="plan-btn" id="checkout-' + plan + '" data-plan="' + plan + '" data-period="' + period + '" '
+        + 'style="margin-top:8px;background:transparent;border:1px solid var(--muted);color:var(--muted)">Suscribirse directamente</button>';
     }
-    return html;
+    return '<button class="plan-btn ' + btnClass + '" id="checkout-' + plan + '" '
+      + 'data-plan="' + plan + '" data-period="' + period + '">Suscribirse</button>';
   }
 
   function renderPage(period) {
@@ -123,7 +127,7 @@ DH.pages.pricing = function () {
       +       '<div class="plan-period">' + proCard.period + '</div>'
       +     '</div>'
       +     '<div class="plan-price-ref">' + (proCard.ref || '') + '</div>'
-      +     '<div class="plan-desc">Para bateristas que practican en serio.</div>'
+      +     '<div class="plan-desc">Exportá en MIDI, PDF y MP3. Grooves y favoritos ilimitados. Stats de tus reproducciones.</div>'
       +     '<ul class="plan-features">' + featuresHtml(FEATURES.pro) + '</ul>'
       +     paidActions('pro', period, 'pro')
       +   '</div>'
@@ -146,6 +150,23 @@ DH.pages.pricing = function () {
       + '</div>' // end plans-grid
 
       + '<div id="pricing-msg" style="text-align:center;min-height:24px;font-size:0.8rem;color:var(--accent2);margin-top:24px"></div>'
+
+      + '<div class="pricing-faq" style="max-width:640px;margin:48px auto 0;padding-bottom:48px">'
+      +   '<div class="section-title" style="margin-bottom:24px">Preguntas <em>frecuentes</em></div>'
+      +   '<div class="faq-item" style="border-bottom:1px solid var(--border);padding:16px 0">'
+      +     '<div style="font-weight:600;margin-bottom:6px">¿Puedo cancelar cuando quiero?</div>'
+      +     '<div style="color:var(--muted);font-size:0.9rem;line-height:1.5">Sí, cancelás cuando quieras desde la sección de configuración. No hay permanencia mínima ni cargos por cancelación.</div>'
+      +   '</div>'
+      +   '<div class="faq-item" style="border-bottom:1px solid var(--border);padding:16px 0">'
+      +     '<div style="font-weight:600;margin-bottom:6px">¿Con qué medios puedo pagar?</div>'
+      +     '<div style="color:var(--muted);font-size:0.9rem;line-height:1.5">Procesamos pagos con Mercado Pago — aceptamos tarjetas de crédito, débito y otros medios disponibles en tu país.</div>'
+      +   '</div>'
+      +   '<div class="faq-item" style="padding:16px 0">'
+      +     '<div style="font-weight:600;margin-bottom:6px">¿Qué pasa con mis grooves si cancelo?</div>'
+      +     '<div style="color:var(--muted);font-size:0.9rem;line-height:1.5">Tus grooves publicados quedan en la plataforma. Solo perdés acceso a las funciones Pro (exportaciones, stats). Podés volver a suscribirte cuando quieras.</div>'
+      +   '</div>'
+      + '</div>'
+
       + '</div>'; // end page
 
     wireEvents(period);
@@ -187,6 +208,27 @@ DH.pages.pricing = function () {
     }
     handleCheckout(document.getElementById('checkout-pro'));
     handleCheckout(document.getElementById('checkout-studio'));
+
+    // Studio waitlist
+    var waitlistBtn = document.getElementById('studio-waitlist-btn');
+    if (waitlistBtn) {
+      waitlistBtn.addEventListener('click', function () {
+        var emailEl = document.getElementById('studio-waitlist-email');
+        var email = emailEl ? emailEl.value.trim() : '';
+        if (!email || !email.includes('@')) {
+          if (emailEl) emailEl.style.borderColor = 'var(--accent)';
+          return;
+        }
+        try {
+          var list = JSON.parse(localStorage.getItem('dh.studio-waitlist') || '[]');
+          if (list.indexOf(email) === -1) list.push(email);
+          localStorage.setItem('dh.studio-waitlist', JSON.stringify(list));
+        } catch (e) {}
+        waitlistBtn.textContent = '✓ ¡Anotado!';
+        waitlistBtn.disabled = true;
+        if (emailEl) { emailEl.disabled = true; emailEl.style.opacity = '0.5'; }
+      });
+    }
 
     // Trial button
     var trialBtn = document.getElementById('trial-pro');

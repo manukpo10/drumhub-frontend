@@ -241,18 +241,18 @@ DH.pages.groove = function (params) {
     +     '<div class="upgrade-plans">'
     +       '<div class="upgrade-plan">'
     +         '<div class="upgrade-plan-name">Pro</div>'
-    +         '<div class="upgrade-plan-price">$5.990/mes</div>'
+    +         '<div class="upgrade-plan-price">USD 5/mes</div>'
     +         '<div class="upgrade-plan-features">MIDI · PDF · MP3 · Stats</div>'
     +         '<button class="upgrade-btn-pro" id="upgrade-btn-pro">Obtener Pro</button>'
     +       '</div>'
     +       '<div class="upgrade-plan studio">'
     +         '<div class="upgrade-plan-name">Estudio</div>'
-    +         '<div class="upgrade-plan-price">$14.990/mes</div>'
+    +         '<div class="upgrade-plan-price">USD 12/mes</div>'
     +         '<div class="upgrade-plan-features">Todo Pro + API + Privados</div>'
     +         '<button class="upgrade-btn-studio" id="upgrade-btn-studio">Obtener Estudio</button>'
     +       '</div>'
     +     '</div>'
-    +     '<button class="upgrade-btn-demo" id="upgrade-btn-demo">Simular Pro (demo)</button>'
+    +     '<a class="upgrade-btn-demo" id="upgrade-btn-demo" style="cursor:pointer;text-decoration:none">Ver planes y precios →</a>'
     +   '</div>'
     + '</div>';
 
@@ -696,14 +696,9 @@ DH.pages.groove = function (params) {
   var demoPro   = document.getElementById('upgrade-btn-demo');
   var upgPro    = document.getElementById('upgrade-btn-pro');
   var upgStudio = document.getElementById('upgrade-btn-studio');
-  if (demoPro) demoPro.addEventListener('click', function() {
-    DH.Store.setPlan('pro');
-    closeUpgradeModal();
-    document.querySelectorAll('.export-btn.pro-gate').forEach(function(b) { b.classList.add('unlocked'); });
-    alert('Plan Pro activado (modo demo).');
-  });
-  if (upgPro)    upgPro.addEventListener('click',    function() { DH.UI.openModal('register'); closeUpgradeModal(); });
-  if (upgStudio) upgStudio.addEventListener('click', function() { DH.UI.openModal('register'); closeUpgradeModal(); });
+  if (demoPro) demoPro.addEventListener('click', function() { closeUpgradeModal(); DH.Router.go('/pricing'); });
+  if (upgPro)    upgPro.addEventListener('click',    function() { closeUpgradeModal(); DH.Router.go('/pricing'); });
+  if (upgStudio) upgStudio.addEventListener('click', function() { closeUpgradeModal(); DH.Router.go('/pricing'); });
 
   // Update button styles based on current plan
   if (DH.Store.isPro()) {

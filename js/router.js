@@ -34,6 +34,7 @@ DH.Router = (function () {
         if (DH.PreviewPlayer && DH.PreviewPlayer.isPlaying()) { try { DH.PreviewPlayer.stop(); } catch (e) {} }
         if (DH.UI && DH.UI.stopAllHeroIntervals) DH.UI.stopAllHeroIntervals();
         setTitle('');
+        setMeta({ url: location.href });
         window.scrollTo(0, 0);
         routes[i].handler(params, parsed.query);
         DH.UI && DH.UI.updateNav && DH.UI.updateNav(parsed.path);
@@ -60,7 +61,30 @@ DH.Router = (function () {
   }
 
   function setPlayer(p) { currentPlayer = p; }
-  function setTitle(t) { document.title = t ? (t + ' — DrumHub') : 'DrumHub'; }
+  function setTitle(t) {
+    var full = t ? (t + ' — DrumHub') : 'DrumHub';
+    document.title = full;
+    var og = document.querySelector('meta[property="og:title"]');
+    if (og) og.setAttribute('content', full);
+    var tw = document.querySelector('meta[name="twitter:title"]');
+    if (tw) tw.setAttribute('content', full);
+  }
+
+  function setMeta(opts) {
+    function setTag(sel, attr, val) { var el = document.querySelector(sel); if (el && val) el.setAttribute(attr, val); }
+    if (opts.desc) {
+      setTag('meta[name="description"]',        'content', opts.desc);
+      setTag('meta[property="og:description"]', 'content', opts.desc);
+      setTag('meta[name="twitter:description"]','content', opts.desc);
+    }
+    if (opts.image) {
+      setTag('meta[property="og:image"]',  'content', opts.image);
+      setTag('meta[name="twitter:image"]', 'content', opts.image);
+    }
+    var url = opts.url || location.href;
+    setTag('meta[property="og:url"]', 'content', url);
+    setTag('link[rel="canonical"]',   'href',    url);
+  }
 
   function start() {
     // Backwards compatibility: silently redirect old hash-based links (#/path → /path).
@@ -86,5 +110,5 @@ DH.Router = (function () {
     resolve();
   }
 
-  return { add: add, start: start, go: go, setPlayer: setPlayer, setTitle: setTitle };
+  return { add: add, start: start, go: go, setPlayer: setPlayer, setTitle: setTitle, setMeta: setMeta };
 })();

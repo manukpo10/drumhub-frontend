@@ -220,7 +220,7 @@ DH.pages.home = function () {
     +     '<div>'
     +       '<div class="cta-eyebrow">¿Ya tenés cuenta?</div>'
     +       '<div class="cta-title">Tu groove puede<br>ayudar a <em>miles.</em></div>'
-    +       '<p class="cta-desc">Subí tus patrones, construí tu perfil, y formá parte de la comunidad de bateristas más grande de habla hispana.</p>'
+    +       '<p class="cta-desc">Subí tus patrones, construí tu perfil, y formá parte de la primera biblioteca de grooves para bateristas en español.</p>'
     +     '</div>'
     +     '<div class="upload-btns">'
     +       '<button class="btn-upload" id="cta-upload">+ Subir mi groove</button>'
@@ -275,9 +275,9 @@ DH.pages.home = function () {
   var planBtnFree = document.getElementById('plan-btn-free');
   var planBtnPro  = document.getElementById('plan-btn-pro');
   var planBtnStudio = document.getElementById('plan-btn-studio');
-  if (planBtnFree)   planBtnFree.addEventListener('click',   function () { DH.UI.openModal('register'); });
-  if (planBtnPro)    planBtnPro.addEventListener('click',    function () { DH.UI.openModal('register'); });
-  if (planBtnStudio) planBtnStudio.addEventListener('click', function () { alert('Escribinos a hola@drumhub.com'); });
+  if (planBtnFree)   planBtnFree.addEventListener('click',   function () { DH.Store.isLoggedIn() ? DH.Router.go('/settings') : DH.UI.openModal('register'); });
+  if (planBtnPro)    planBtnPro.addEventListener('click',    function () { DH.Store.isLoggedIn() ? DH.Router.go('/pricing') : DH.UI.openModal('register'); });
+  if (planBtnStudio) planBtnStudio.addEventListener('click', function () { DH.Router.go('/pricing'); });
 
   // ── Hero BG ──
   DH.UI.heroBg(document.getElementById('hero-bg'));
