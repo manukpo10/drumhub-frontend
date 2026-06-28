@@ -240,7 +240,7 @@ DH.UI = (function () {
       +   '</div>'
       +   '<div class="footer-col"><h4>Proyecto</h4>'
       +     '<a href="/page/about">Sobre DrumHub</a>'
-      +     '<a href="/page/contact">Contacto</a>'
+      +     '<a href="mailto:hola@drumhub.com">hola@drumhub.com</a>'
       +     '<a href="/page/terms">Términos</a>'
       +     '<a href="/page/privacy">Privacidad</a>'
       +   '</div>'

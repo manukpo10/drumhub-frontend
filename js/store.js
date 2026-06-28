@@ -98,6 +98,14 @@ DH.Store = (function () {
               // Ensure the id is present in case a bad sync wiped it from localStorage.
               var current = getFavorites();
               if (current.indexOf(id) === -1) { current.push(id); write(KEY_FAVS, current); }
+            } else if (err && err.status === 403) {
+              // Plan limit reached — undo optimistic add and nudge to upgrade.
+              var cur = getFavorites();
+              var i = cur.indexOf(id);
+              if (i !== -1) { cur.splice(i, 1); write(KEY_FAVS, cur); }
+              if (DH.UI && DH.UI.toast) {
+                DH.UI.toast('Llegaste al límite de 20 favoritos del plan Gratis.', 'info', { label: 'Ver Plan Pro →', href: '/pricing' });
+              }
             }
           });
         } else {
@@ -139,6 +147,12 @@ DH.Store = (function () {
         write(KEY_USER_GROOVES, owned);
         return adapted;
       }).catch(function (e) {
+        if (e && e.status === 403) {
+          if (DH.UI && DH.UI.toast) {
+            DH.UI.toast('Llegaste al límite de 5 grooves del plan Gratis.', 'info', { label: 'Ver Plan Pro →', href: '/pricing' });
+          }
+          throw e;
+        }
         console.error('Failed to create groove via API:', e);
         // Fallback to local
         var list = getUserGrooves();
