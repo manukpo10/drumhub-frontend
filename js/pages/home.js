@@ -41,7 +41,7 @@ DH.pages.home = function () {
     +       '<div class="stat"><div class="stat-num" id="hs-grooves">' + (DH.GROOVES || []).length + '</div><div class="stat-label">Grooves</div></div>'
     +       '<div class="stat"><div class="stat-num" id="hs-users">' + (DH.DRUMMERS || []).length + '</div><div class="stat-label">Bateristas</div></div>'
     +       '<div class="stat"><div class="stat-num" id="hs-genres">' + (DH.GENRES || []).length + '</div><div class="stat-label">Géneros</div></div>'
-    +       '<div class="stat"><div class="stat-num" id="hs-plays">—</div><div class="stat-label">Reproducciones</div></div>'
+    +       '<div class="stat"><div class="stat-num" id="hs-plays">' + (function() { var p = (DH.GROOVES || []).reduce(function(a,g){return a+(g.plays||0);},0); return p >= 1000 ? (p/1000).toFixed(1).replace(/\.0$/,'')+'K' : (p||'—'); })() + '</div><div class="stat-label">Reproducciones</div></div>'
     +     '</div>'
     +   '</div>'
     + '</section>'
@@ -595,5 +595,16 @@ DH.pages.home = function () {
         ? (totalPlays / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em>'
         : String(totalPlays);
     }
-  }).catch(function () {});
+  }).catch(function () {
+    // Backend unavailable (cold start / network). Fall back to local groove data.
+    var elP = document.getElementById('hs-plays');
+    if (elP && elP.textContent === '—') {
+      var localPlays = (DH.GROOVES || []).reduce(function (a, g) { return a + (g.plays || 0); }, 0);
+      if (localPlays > 0) {
+        elP.innerHTML = localPlays >= 1000
+          ? (localPlays / 1000).toFixed(1).replace(/\.0$/, '') + '<em>K</em>'
+          : String(localPlays);
+      }
+    }
+  });
 };
