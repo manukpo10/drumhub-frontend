@@ -11,17 +11,27 @@ var WEB3FORMS_ACCESS_KEY = '7f6332be-2358-4b1e-8caf-201cd7aa3421';
 DH.STATIC_PAGES = {
   about: {
     title: 'Sobre DrumHub',
-    eyebrow: 'Quiénes somos',
+    eyebrow: 'El proyecto',
     blocks: [
-      { type: 'p', text: 'DrumHub es la biblioteca de grooves para bateristas de habla hispana. Nació como un proyecto para que los bateristas tengamos un lugar donde compartir, escuchar y practicar patrones sin tener que volver a YouTube cada vez.' },
-      { type: 'h', text: 'Por qué existe' },
-      { type: 'p', text: 'Aprender batería es difícil porque el conocimiento está disperso: tutoriales en video, transcripciones en PDF, grabaciones en SoundCloud. Cada formato tiene su fricción. DrumHub junta todo en un solo lugar — el patrón se ve como grilla, se reproduce en el browser y se puede modificar.' },
-      { type: 'h', text: 'Cómo se construye' },
-      { type: 'p', text: 'La plataforma se nutre de la comunidad. Los bateristas suben sus grooves, los etiquetan por género, dificultad y BPM, y otros los descubren, escuchan, guardan y aprenden. Sin paywalls, sin algoritmos opacos.' },
-      { type: 'h', text: 'Más que on/off' },
-      { type: 'p', text: 'A diferencia de otros step sequencers web, DrumHub soporta notación real: ghost notes (notas fantasma, muy suaves y apagadas) y flams (gracia note + golpe principal) en todos los kits. Esos matices son los que separan un patrón mecánico de un groove que realmente suena a batería.' },
-      { type: 'h', text: 'Quién está detrás' },
-      { type: 'p', text: 'Un baterista que se cansó de no encontrar grooves en formato decente y decidió construir la herramienta que le hubiera gustado tener. Es un proyecto independiente, hecho con cuidado para la comunidad. ¿Querés sumarte? Escribinos desde la página de contacto.' }
+      { type: 'p', text: 'DrumHub nació en La Plata, Argentina, de la frustración de un baterista que no encontraba lo que buscaba.' },
+      { type: 'h', text: 'El problema' },
+      { type: 'p', text: 'Aprender batería online en español es difícil. Los grooves están repartidos en videos de YouTube, PDFs descargables, transcripciones en inglés y capturas de pantalla que se comparten por WhatsApp. Cada vez que querés mostrarle un patrón a un alumno o a un compañero de banda, el proceso es enredado: grabarlo, subirlo a algún lado, esperar que lo bajen, rezar para que lo entiendan. No había un lugar central, en español, pensado para la comunidad de bateristas latinoamericanos.' },
+      { type: 'h', text: 'La idea' },
+      { type: 'p', text: 'Manuel Robles es baterista de La Plata, Argentina. Lleva años tocando y enseñando batería, y esa frustración cotidiana — no encontrar los grooves en el formato que necesitaba — lo llevó a preguntarse: ¿por qué no existe esto? Una biblioteca donde un patrón se vea como grilla, se escuche en el browser con kits reales, y se pueda compartir con un solo link. En español. Sin tener que descargar nada.' },
+      { type: 'h', text: 'El producto' },
+      { type: 'p', text: 'DrumHub es el resultado de esa idea. Es una plataforma donde los bateristas publican sus patrones, los organizan por género, dificultad y BPM, y otros los descubren, los escuchan, los guardan y los aprenden. Hay un editor de 16 pasos para crear desde cero, soporte para ghost notes y flams (los matices que le dan vida a un groove real), exportaciones a MIDI, PDF y MP3, y una capa social para seguir bateristas y descubrir contenido nuevo.' },
+      { type: 'h', text: 'Para quién es' },
+      { type: 'ul', items: [
+        'Para el baterista que empieza y quiere ver cómo se toca un groove de funk antes de intentarlo.',
+        'Para el profe que da clases y quiere compartir un patrón sin mandar capturas de pantalla.',
+        'Para el músico de sesión que lleva años tocando y quiere documentar sus grooves en un formato digital decente.',
+        'Para cualquiera que entienda que un buen groove es el corazón de una canción.'
+      ]},
+      { type: 'h', text: 'El estado actual' },
+      { type: 'p', text: 'DrumHub está en beta activo. Hay grooves cargados, usuarios reales y una comunidad que crece semana a semana. El producto se itera constantemente según el feedback de los bateristas que lo usan. Si encontrás algo roto, si tenés una idea, o si simplemente querés decir hola, escribile directamente a Manuel.' },
+      { type: 'links', items: [
+        { label: 'hola@drumhub.com', href: 'mailto:hola@drumhub.com' }
+      ] }
     ]
   },
   faq: {
